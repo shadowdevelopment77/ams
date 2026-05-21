@@ -24,6 +24,7 @@ model Company {
   created_at DateTime @default(now())
 
   divisions   Division[]
+  checklist_templates ChecklistTemplate[]
   user_roles  UserCompanyRole[]
   attendances Attendance[]
   reports     Report[]
@@ -32,32 +33,29 @@ model Company {
 model Division {
   id         Int     @id @default(autoincrement())
   company_id Int
-  name       String // divison name anything from admin input!
-  is_system  Boolean @default(false) //user who has internal access to the system like, admin internal, supervisor, etc   
-
+  name       String // divison name anything from admin input!   
   has_checklist        Boolean @default(true)
   has_evidence_photo   Boolean @default(true)
   has_work_log         Boolean @default(false)
   min_photo_per_day    Int     @default(1) //minimum photo per day
   photo_highlight_only Boolean @default(false) //only admin can choose about highlighted photo
-
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  company             Company             @relation(fields: [company_id], references: [id])
-  users               User[]
+  company             Company @relation(fields: [company_id], references: [id])
+  user_roles          UserCompanyRole[]
   checklist_templates ChecklistTemplate[]
   report_template     ReportTemplate?
   reports             Report[]
   shifts              Shift[]
 
+  @@unique([company_id, name])
   @@index([company_id])
 }
 
 model User {
   id          Int       @id @default(autoincrement())
-  division_id Int
   name        String
   email       String    @unique
   password    String
@@ -69,28 +67,31 @@ model User {
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 
-  division          Division          @relation(fields: [division_id], references: [id])
+  
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   work_logs         WorkLog[]
   notifications     Notification[]
-  generated_reports Report[]          @relation("ReportGeneratedBy")
+  generated_reports Report[]@relation("ReportGeneratedBy")
 
-  @@index([division_id])
 }
 
 model UserCompanyRole {
-  id         Int      @id @default(autoincrement())
+  id         Int @id @default(autoincrement())
   user_id    Int
   company_id Int
   role       Role
+  division_id Int?
   created_at DateTime @default(now())
 
   user    User    @relation(fields: [user_id], references: [id])
   company Company @relation(fields: [company_id], references: [id])
+  division Division? @relation(fields: [division_id], references: [id])
+
 
   @@unique([user_id, company_id]) // a user can only have one role per company
   @@index([company_id, role])
+  @@index([division_id])
 }
 
 enum Role {
@@ -124,9 +125,9 @@ model Attendance {
   status       AttendanceStatus @default(EXPECTED)
   created_at   DateTime         @default(now())
 
-  user        User                  @relation(fields: [user_id], references: [id])
-  company     Company               @relation(fields: [company_id], references: [id])
-  shift       Shift?                @relation(fields: [shift_id], references: [id])
+  user        User @relation(fields: [user_id], references: [id])
+  company     Company @relation(fields: [company_id], references: [id])
+  shift       Shift? @relation(fields: [shift_id], references: [id])
   submissions ChecklistSubmission[]
   work_logs   WorkLog[]
 
@@ -158,14 +159,16 @@ model Shift {
 model ChecklistTemplate {
   id          Int      @id @default(autoincrement())
   division_id Int
+  company_id  Int
   title       String
   is_active   Boolean  @default(true)
   created_by  Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  division Division        @relation(fields: [division_id], references: [id])
-  items    ChecklistItem[]
+  division Division @relation(fields: [division_id], references: [id])
+  company Company @relation(fields: [company_id], references: [id])
+  items ChecklistItem[]
 
   @@index([division_id])
 }
@@ -178,7 +181,7 @@ model ChecklistItem {
   requires_photo Boolean  @default(true)
   created_at     DateTime @default(now())
 
-  template    ChecklistTemplate     @relation(fields: [template_id], references: [id])
+  template    ChecklistTemplate @relation(fields: [template_id], references: [id])
   submissions ChecklistSubmission[]
 
   @@index([template_id])
@@ -193,14 +196,14 @@ model ChecklistSubmission {
   submitted_at  DateTime @default(now())
 
   attendance Attendance      @relation(fields: [attendance_id], references: [id])
-  item       ChecklistItem   @relation(fields: [item_id], references: [id])
-  photos     EvidencePhoto[]
+  item ChecklistItem   @relation(fields: [item_id], references: [id])
+  photos EvidencePhoto[]
 
   @@index([attendance_id])
 }
 
 model EvidencePhoto {
-  id             Int         @id @default(autoincrement())
+  id             Int @id @default(autoincrement())
   submission_id  Int
   photo_url      String
   status         PhotoStatus @default(PENDING)
@@ -284,7 +287,7 @@ model ReportTemplate {
 
   // Header laporan
   report_title       String?
-  client_name        String?
+  made_by            String?
   show_logo          Boolean @default(true)
   section_intro      String? // I. PENDAHULUAN
   section_background String? // II. LATAR BELAKANG
