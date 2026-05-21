@@ -33,7 +33,7 @@ export const register = async (input: RegisterInput) => {
   
   const hashedPassword = await bcrypt.hash(input.password, 12)
 
-  // 6. Buat user + company role dalam satu transaction
+  
   const user = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
       data: {
