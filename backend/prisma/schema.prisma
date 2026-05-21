@@ -11,30 +11,29 @@ datasource db {
   provider = "postgresql"
 }
 
-
-model Company{
+model Company {
   id         Int      @id @default(autoincrement())
-  name       String                        
-  code       String   @unique              
+  name       String
+  code       String   @unique
   address    String?
   phone      String?
   email      String?
-  logo_url   String?                       
+  logo_url   String?
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
 
-  divisions         Division[]
-  user_roles        UserCompanyRole[]
-  attendances       Attendance[]
-  reports           Report[]
+  divisions   Division[]
+  user_roles  UserCompanyRole[]
+  attendances Attendance[]
+  reports     Report[]
 }
 
 model Division {
   id         Int     @id @default(autoincrement())
   company_id Int
-  name       String                        // divison name anything from admin input!
-  is_system   Boolean  @default(false) //user who has internal access to the system like, admin internal, supervisor, etc   
-  
+  name       String // divison name anything from admin input!
+  is_system  Boolean @default(false) //user who has internal access to the system like, admin internal, supervisor, etc   
+
   has_checklist        Boolean @default(true)
   has_evidence_photo   Boolean @default(true)
   has_work_log         Boolean @default(false)
@@ -45,32 +44,33 @@ model Division {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  company            Company             @relation(fields: [company_id], references: [id])
-  users              User[]
+  company             Company             @relation(fields: [company_id], references: [id])
+  users               User[]
   checklist_templates ChecklistTemplate[]
-  report_template    ReportTemplate?
-  reports            Report[]
-  shifts             Shift[]
+  report_template     ReportTemplate?
+  reports             Report[]
+  shifts              Shift[]
+
   @@index([company_id])
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  division_id Int                      
+  id          Int       @id @default(autoincrement())
+  division_id Int
   name        String
-  email       String   @unique
+  email       String    @unique
   password    String
   phone       String?
-  photo_url   String?                       // profile photos
-  is_active   Boolean  @default(true)
-  is_deleted  Boolean  @default(false)
+  photo_url   String? // profile photos
+  is_active   Boolean   @default(true)
+  is_deleted  Boolean   @default(false)
   deleted_at  DateTime?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 
-  division          Division         @relation(fields: [division_id], references: [id])
+  division          Division          @relation(fields: [division_id], references: [id])
   company_roles     UserCompanyRole[]
-  attendances       Attendance[]
+  attendancesn      Attendance[]
   work_logs         WorkLog[]
   notifications     Notification[]
   generated_reports Report[]          @relation("ReportGeneratedBy")
@@ -88,7 +88,7 @@ model UserCompanyRole {
   user    User    @relation(fields: [user_id], references: [id])
   company Company @relation(fields: [company_id], references: [id])
 
-  @@unique([user_id, company_id])           // a user can only have one role per company
+  @@unique([user_id, company_id]) // a user can only have one role per company
   @@index([company_id, role])
 }
 
@@ -109,25 +109,25 @@ model Session {
 }
 
 model Attendance {
-  id           Int       @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   user_id      Int
   company_id   Int
   shift_id     Int?
-  check_in_at  DateTime  @default(now())
+  check_in_at  DateTime         @default(now())
   check_out_at DateTime?
-  photo_url    String                        // selfie photos
+  photo_url    String // selfie photos
   latitude     Float?
   longitude    Float?
-  is_late      Boolean   @default(false)
-  late_minutes Int?        
-  status       AttendanceStatus  @default(EXPECTED)     
-  created_at   DateTime  @default(now())
+  is_late      Boolean          @default(false)
+  late_minutes Int?
+  status       AttendanceStatus @default(EXPECTED)
+  created_at   DateTime         @default(now())
 
-  user         User      @relation(fields: [user_id], references: [id])
-  company      Company   @relation(fields: [company_id], references: [id])
-  shift        Shift?    @relation(fields: [shift_id], references: [id])
-  submissions  ChecklistSubmission[]
-  work_logs    WorkLog[]
+  user        User                  @relation(fields: [user_id], references: [id])
+  company     Company               @relation(fields: [company_id], references: [id])
+  shift       Shift?                @relation(fields: [shift_id], references: [id])
+  submissions ChecklistSubmission[]
+  work_logs   WorkLog[]
 
   @@index([user_id, check_in_at])
   @@index([company_id, check_in_at])
@@ -141,14 +141,14 @@ enum AttendanceStatus {
 }
 
 model Shift {
-  id          Int      @id @default(autoincrement())
-  division_id Int
-  name        String   // shift name anything from admin input!
-  start_time  String   // "07:00" — format HH:mm
-  end_time    String   // "15:00"
-  notify_before_minutes Int @default(60) //minute before shift start to notify user to check in
+  id                    Int    @id @default(autoincrement())
+  division_id           Int
+  name                  String // shift name anything from admin input!
+  start_time            String // "07:00" — format HH:mm
+  end_time              String // "15:00"
+  notify_before_minutes Int    @default(60) //minute before shift start to notify user to check in
 
-  division    Division @relation(fields: [division_id], references: [id])
+  division    Division     @relation(fields: [division_id], references: [id])
   attendances Attendance[]
 
   @@index([division_id])
@@ -157,25 +157,25 @@ model Shift {
 model ChecklistTemplate {
   id          Int      @id @default(autoincrement())
   division_id Int
-  title       String                        
+  title       String
   is_active   Boolean  @default(true)
-  created_by  Int                           
+  created_by  Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  division Division       @relation(fields: [division_id], references: [id])
+  division Division        @relation(fields: [division_id], references: [id])
   items    ChecklistItem[]
 
   @@index([division_id])
 }
 
 model ChecklistItem {
-  id            Int      @id @default(autoincrement())
-  template_id   Int
-  order_no      Int                         
-  description   String                      
-  requires_photo Boolean @default(true)
-  created_at    DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  template_id    Int
+  order_no       Int
+  description    String
+  requires_photo Boolean  @default(true)
+  created_at     DateTime @default(now())
 
   template    ChecklistTemplate     @relation(fields: [template_id], references: [id])
   submissions ChecklistSubmission[]
@@ -184,12 +184,12 @@ model ChecklistItem {
 }
 
 model ChecklistSubmission {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   attendance_id Int
   item_id       Int
-  is_done       Boolean   @default(false)
+  is_done       Boolean  @default(false)
   notes         String?
-  submitted_at  DateTime  @default(now())
+  submitted_at  DateTime @default(now())
 
   attendance Attendance      @relation(fields: [attendance_id], references: [id])
   item       ChecklistItem   @relation(fields: [item_id], references: [id])
@@ -199,16 +199,16 @@ model ChecklistSubmission {
 }
 
 model EvidencePhoto {
-  id            Int         @id @default(autoincrement())
-  submission_id Int
-  photo_url     String
-  status        PhotoStatus @default(PENDING)
-  reviewed_by   Int?                        // user_id supervisor
-  reviewed_at   DateTime?
-  reject_reason String?                     
-  is_highlighted Boolean    @default(false) // higlighted photo only can be chosen by admin
+  id             Int         @id @default(autoincrement())
+  submission_id  Int
+  photo_url      String
+  status         PhotoStatus @default(PENDING)
+  reviewed_by    Int? // user_id supervisor
+  reviewed_at    DateTime?
+  reject_reason  String?
+  is_highlighted Boolean     @default(false) // higlighted photo only can be chosen by admin
   highlighted_at DateTime?
-  created_at    DateTime    @default(now())
+  created_at     DateTime    @default(now())
 
   submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
 
@@ -227,12 +227,12 @@ model WorkLog {
   user_id       Int
   attendance_id Int
   date          DateTime
-  description   String                      
+  description   String
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  user       User          @relation(fields: [user_id], references: [id])
-  attendance Attendance    @relation(fields: [attendance_id], references: [id])
+  user       User           @relation(fields: [user_id], references: [id])
+  attendance Attendance     @relation(fields: [attendance_id], references: [id])
   photos     WorkLogPhoto[]
 
   @@index([user_id, date])
@@ -243,21 +243,21 @@ model WorkLogPhoto {
   id          Int      @id @default(autoincrement())
   work_log_id Int
   photo_url   String
-  caption     String?                       // photos caption from user input
+  caption     String? // photos caption from user input
   created_at  DateTime @default(now())
 
   work_log WorkLog @relation(fields: [work_log_id], references: [id])
 }
 
 model Notification {
-  id         Int              @id @default(autoincrement())
-  user_id    Int  
-  recipient_role Role                          
-  type       NotificationType
-  message    String
-  meta       Json?                           // { staff_id, staff_name, company_id, date }
-  is_read    Boolean          @default(false)
-  created_at DateTime         @default(now())
+  id             Int              @id @default(autoincrement())
+  user_id        Int
+  recipient_role Role
+  type           NotificationType
+  message        String
+  meta           Json? // { staff_id, staff_name, company_id, date }
+  is_read        Boolean          @default(false)
+  created_at     DateTime         @default(now())
 
   user User @relation(fields: [user_id], references: [id])
 
@@ -266,39 +266,39 @@ model Notification {
 }
 
 enum NotificationType {
-  STAFF_NOT_CHECKIN         // staff who haven't checked in by the end of shift notification to supervisor
-  CHECKLIST_INCOMPLETE      // staff who haven't submitted their checklist
-  PHOTO_PENDING_REVIEW      // there are photos waiting for supervisor review
-  SHIFT_REMINDER             // reminder to check in for staff who have shifts coming up
-  PHOTO_APPROVED                // notification for staff when their photo has been approved
-  PHOTO_REJECTED                // notification for staff when their photo has been rejected
+  STAFF_NOT_CHECKIN // staff who haven't checked in by the end of shift notification to supervisor
+  CHECKLIST_INCOMPLETE // staff who haven't submitted their checklist
+  PHOTO_PENDING_REVIEW // there are photos waiting for supervisor review
+  SHIFT_REMINDER // reminder to check in for staff who have shifts coming up
+  PHOTO_APPROVED // notification for staff when their photo has been approved
+  PHOTO_REJECTED // notification for staff when their photo has been rejected
 }
 
 model ReportTemplate {
-  id          Int        @id @default(autoincrement())
-  division_id Int        @unique               // 1 template per division
+  id          Int @id @default(autoincrement())
+  division_id Int @unique // 1 template per division
 
   template_style TemplateStyle @default(FORMAL_STRUCTURED) // template style for report generation, admin can choose from several predefined styles
-  report_mode ReportMode @default(COMBINED)    // admin choose whether the report will be generated combined or separated per user
+  report_mode    ReportMode    @default(COMBINED) // admin choose whether the report will be generated combined or separated per user
 
   // Header laporan
-  report_title String?                         
-  client_name  String?
-  show_logo     Boolean  @default(true)                   
-  section_intro      String?                   // I. PENDAHULUAN
-  section_background String?                   // II. LATAR BELAKANG
-  section_purpose    String?                   // III. TUJUAN
-  section_duties     String?                   // IV. TUGAS UMUM
-  section_scope      String?                   // V. SASARAN
-  section_schedule   String?                   // VI. WAKTU PELAKSANAAN
-  section_evaluation String?                   // VII. EVALUASI — bisa diedit tiap generate
-  section_suggestion String?                   // VIII. SARAN
-  section_closing    String?                   // IX. PENUTUP
-  section_config Json?                        // JSON config for which sections to include and their order
+  report_title       String?
+  client_name        String?
+  show_logo          Boolean @default(true)
+  section_intro      String? // I. PENDAHULUAN
+  section_background String? // II. LATAR BELAKANG
+  section_purpose    String? // III. TUJUAN
+  section_duties     String? // IV. TUGAS UMUM
+  section_scope      String? // V. SASARAN
+  section_schedule   String? // VI. WAKTU PELAKSANAAN
+  section_evaluation String? // VII. EVALUASI — bisa diedit tiap generate
+  section_suggestion String? // VIII. SARAN
+  section_closing    String? // IX. PENUTUP
+  section_config     Json? // JSON config for which sections to include and their order
 
-  photos_per_row         Int     @default(2)
+  photos_per_row Int @default(2)
 
-  show_photo_caption     Boolean @default(true)
+  show_photo_caption Boolean @default(true)
 
   photo_caption_template String? // e.g. "{name} sedang {activity}"
 
@@ -320,37 +320,37 @@ enum TemplateStyle {
 }
 
 enum ReportMode {
-  NARRATIVE_ONLY  
-  PHOTO_ONLY      
-  COMBINED       
+  NARRATIVE_ONLY
+  PHOTO_ONLY
+  COMBINED
 }
 
 model Report {
-  id           Int          @id @default(autoincrement())
-  company_id   Int
-  division_id  Int
-  period_month Int                             // 1–12
-  period_year  Int
-  report_mode  ReportMode                      
-  snapshot_narrative Json?                     
+  id                 Int        @id @default(autoincrement())
+  company_id         Int
+  division_id        Int
+  period_month       Int // 1–12
+  period_year        Int
+  report_mode        ReportMode
+  snapshot_narrative Json?
 
-  file_url     String?                         
+  file_url     String?
   file_type    FileType     @default(DOCX)
   status       ReportStatus @default(DRAFT)
   generated_by Int
   generated_at DateTime?
   created_at   DateTime     @default(now())
 
-  company      Company @relation(fields: [company_id], references: [id])
-  division     Division @relation(fields: [division_id], references: [id])
-  generated_by_user User @relation("ReportGeneratedBy", fields: [generated_by], references: [id])
+  company           Company  @relation(fields: [company_id], references: [id])
+  division          Division @relation(fields: [division_id], references: [id])
+  generated_by_user User     @relation("ReportGeneratedBy", fields: [generated_by], references: [id])
 
   @@unique([company_id, division_id, period_month, period_year]) // 1 laporan per divisi per bulan
   @@index([company_id, period_year, period_month])
 }
 
 enum ReportStatus {
-  DRAFT       
+  DRAFT
   GENERATED
   PRINTED
 }
