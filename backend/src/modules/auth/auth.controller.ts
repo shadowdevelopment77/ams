@@ -7,7 +7,7 @@ export const register = async (req: Request, res: Response) => {
   try {
     const parsed = registerSchema.safeParse(req.body)
     if (!parsed.success) {
-      return sendError(res, "Validation failed", 400, parsed.error.flatten())
+      return sendError(res, "Validation failed", 400, parsed.error.issues)
     }
 
     const user = await AuthService.register(parsed.data)
@@ -22,7 +22,7 @@ export const login = async (req: Request, res: Response) => {
   try {
     const parsed = loginSchema.safeParse(req.body)
     if (!parsed.success) {
-      return sendError(res, "Validation failed", 400, parsed.error.flatten())
+      return sendError(res, "Validation failed", 400, parsed.error.issues)
     }
 
     const result = await AuthService.login(parsed.data)
