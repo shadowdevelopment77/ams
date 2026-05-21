@@ -11,23 +11,26 @@ export const register = async (input: RegisterInput) => {
   if (existing) throw new Error("Email already registered")
 
   
-  const division = await prisma.division.findUnique({
-    where: { id: input.division_id },
-  })
-  if (!division) throw new Error("Division not found")
-
-  
   const company = await prisma.company.findUnique({
     where: { id: input.company_id },
   })
   if (!company) throw new Error("Company not found")
 
 
-  if (division.is_system && input.role === "STAFF") {
-    throw new Error("Staff cannot be assigned to system division")
+  if (input.role === "STAFF") {
+    if (!input.division_id) throw new Error("Staff must have a division")
+
+    const division = await prisma.division.findUnique({
+      where: { id: input.division_id },
+    })
+    if (!division) throw new Error("Division not found")
+    if (division.company_id !== input.company_id)
+      throw new Error("Division does not belong to the specified company")
   }
-  if (!division.is_system && input.role !== "STAFF") {
-    throw new Error("Non-staff role must use system division")
+
+  // ADMIN/SUPERVISOR/CLIENT — no division needed
+  if (input.role !== "STAFF" && input.division_id) {
+    throw new Error("Admin, Supervisor, and Client do not belong to a division")
   }
 
   
@@ -36,12 +39,11 @@ export const register = async (input: RegisterInput) => {
   
   const user = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
-      data: {
+      data:{
         name: input.name,
         email: input.email,
         password: hashedPassword,
         phone: input.phone,
-        division_id: input.division_id,
       },
     })
 
@@ -50,6 +52,7 @@ export const register = async (input: RegisterInput) => {
         user_id: newUser.id,
         company_id: input.company_id,
         role: input.role,
+        division_id: input.role === "STAFF" ? input.division_id : null,
       },
     })
 
@@ -67,9 +70,10 @@ export const login = async (input: LoginInput) => {
     where: { email: input.email },
     include: {
       company_roles: {
-        include: { company: true },
+        include: { company: true, 
+          division: true,
+        },
       },
-      division: true,
     },
   })
 
@@ -132,7 +136,7 @@ export const getMe = async (sessionId: string) => {
       is_active: true,
       division: true,
       company_roles: {
-        include: { company: true },
+        include: { company: true, division: true },
       },
     },
   })
