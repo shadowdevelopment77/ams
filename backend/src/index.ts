@@ -17,9 +17,6 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-app.get("/health", (req, res) => {
-  res.json({ success: true, message: "Server is running" })
-})
 
 app.use("/api/auth", authRouter)
 

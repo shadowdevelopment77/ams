@@ -10,15 +10,15 @@ export const register = async (input: RegisterInput) => {
   })
   if (existing) throw new Error("Email already registered")
 
-  
-  const company = await prisma.company.findUnique({
+
+  if (input.role === "STAFF" ) {
+    if (!input.company_id) throw new Error("Staff must belong to a company")
+    if (!input.division_id) throw new Error("Staff must have a division")
+
+      const company = await prisma.company.findUnique({
     where: { id: input.company_id },
   })
   if (!company) throw new Error("Company not found")
-
-
-  if (input.role === "STAFF") {
-    if (!input.division_id) throw new Error("Staff must have a division")
 
     const division = await prisma.division.findUnique({
       where: { id: input.division_id },
@@ -28,18 +28,26 @@ export const register = async (input: RegisterInput) => {
       throw new Error("Division does not belong to the specified company")
   }
 
-  // ADMIN/SUPERVISOR/CLIENT — no division needed
-  if (input.role !== "STAFF" && input.division_id) {
-    throw new Error("Admin, Supervisor, and Client do not belong to a division")
+  if (input.role === "CLIENT"){
+    if (!input.company_id) throw new Error("Client must belong to a company")
+
+    const company = await prisma.company.findUnique({
+      where: { id: input.company_id },
+    })
+    if (!company) throw new Error("Company not found")
   }
 
-  
+  // ADMIN/SUPERVISOR/CLIENT — no division needed
+  if ((input.role === "ADMIN" || input.role === "SUPERVISOR") && (input.division_id || input.company_id)) {
+    throw new Error("Admin and Supervisor do not belong to a division or company")
+  }
+
   const hashedPassword = await bcrypt.hash(input.password, 12)
 
   
   const user = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
-      data:{
+      data: {
         name: input.name,
         email: input.email,
         password: hashedPassword,
@@ -47,14 +55,28 @@ export const register = async (input: RegisterInput) => {
       },
     })
 
-    await tx.userCompanyRole.create({
-      data: {
-        user_id: newUser.id,
-        company_id: input.company_id,
-        role: input.role,
-        division_id: input.role === "STAFF" ? input.division_id : null,
-      },
-    })
+    // Only create UserCompanyRole for STAFF at register time
+    if (input.role === "STAFF") {
+      await tx.userCompanyRole.create({
+        data: {
+          user_id: newUser.id,
+          company_id: input.company_id!,
+          role: input.role,
+          division_id: input.division_id!,
+        },
+      })
+    }
+
+    if (input.role === "CLIENT") {
+      await tx.userCompanyRole.create({
+        data: {
+          user_id: newUser.id,
+          company_id: input.company_id!,
+          role: input.role,
+          division_id: null,
+        },
+      })
+    }
 
     return newUser
   })
@@ -134,7 +156,6 @@ export const getMe = async (sessionId: string) => {
       phone: true,
       photo_url: true,
       is_active: true,
-      division: true,
       company_roles: {
         include: { company: true, division: true },
       },
