@@ -4,6 +4,7 @@ import helmet from "helmet"
 import dotenv from "dotenv"
 import authRouter from "./modules/auth/auth.router"
 import cookieParser from "cookie-parser"
+import adminRouter from "./modules/user/admin/admin.router"
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ app.use(cookieParser())
 
 
 app.use("/api/auth", authRouter)
+app.use("/api/admin", adminRouter)
 
 
 app.listen(PORT, () => {
