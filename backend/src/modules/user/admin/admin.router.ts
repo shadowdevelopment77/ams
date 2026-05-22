@@ -1,0 +1,18 @@
+import { Router } from "express"
+import * as AdminController from "./admin.controller"
+import { authenticate, requireRole } from "../../../middlewares/auth.middleware"
+
+const router = Router()
+
+// all admin routes require login + ADMIN role
+router.use(authenticate)
+router.use(requireRole("ADMIN"))
+
+router.post("/assign-company", AdminController.assignUserToCompany)
+router.delete("/remove-company", AdminController.removeUserFromCompany)
+router.get("/internal-users", AdminController.getInternalUsers)
+router.post("/move-company", AdminController.moveUserToCompany)
+router.get("/company/:company_id/users", AdminController.getUsersByCompanies)
+
+
+export default router
