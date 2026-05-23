@@ -13,6 +13,6 @@ router.delete("/remove-company", AdminController.removeUserFromCompany)
 router.get("/internal-users", AdminController.getInternalUsers)
 router.post("/move-company", AdminController.moveUserToCompany)
 router.get("/company/:company_id/users", AdminController.getUsersByCompanies)
-
+router.delete("/users/:user_id", AdminController.removeUser)
 
 export default router

@@ -17,7 +17,11 @@ export const moveCompanySchema = z.object({
   division_id: z.number(),
 })
 
+export const removeUserSchema = z.object({
+  user_id: z.number(),
+})
 
 export type AssignCompanyInput = z.infer<typeof assignCompanySchema>
 export type RemoveCompanyInput = z.infer<typeof removeCompanySchema>
 export type MoveCompanyInput = z.infer<typeof moveCompanySchema>
+export type RemoveUserInput = z.infer<typeof removeUserSchema>

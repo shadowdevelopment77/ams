@@ -1,6 +1,6 @@
 
 import prisma from "../../../lib/prisma"
-import { AssignCompanyInput, RemoveCompanyInput, MoveCompanyInput } from "./admin.validation"
+import { AssignCompanyInput, RemoveCompanyInput, MoveCompanyInput, RemoveUserInput } from "./admin.validation"
 
 // Assign ADMIN AND SUPERVISOR to a company
 export const assignUserToCompany = async (input: AssignCompanyInput) => {
@@ -68,6 +68,26 @@ export const moveUserToCompany = async (input: MoveCompanyInput) => {
     },
     include: { company: true, division: true },
   })
+}
+
+export const removeUser = async (input: RemoveUserInput) => {
+  const user = await prisma.user.findUnique({ where: { id: input.user_id } })
+  if (!user) throw new Error("User not found")
+  if (user.is_deleted) throw new Error("User already deleted")
+  
+  const isAdmin = await prisma.userCompanyRole.findFirst({where: {user_id: input.user_id, role : "ADMIN"}})
+  if (isAdmin) throw new Error("Admin accounts cannot be deleted")
+
+  await prisma.user.update({
+    where: { id: input.user_id },
+    data: { is_deleted: true,
+            deleted_at: new Date(),
+            is_active: false,
+            company_roles: { deleteMany: {} } },
+  })
+
+
+  return { message: "User deleted successfully" }
 }
 
 // Remove from a company

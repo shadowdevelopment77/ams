@@ -64,3 +64,16 @@ export const getUsersByCompanies = async (req: Request, res: Response) => {
     return sendError(res, message, 400)
   }
 }
+
+export const removeUser = async (req: Request, res: Response) => {
+  try {
+    const user_id = parseInt(req.params.user_id as string)
+    if (isNaN(user_id)) return sendError(res, "Invalid user ID", 400)
+
+    const result = await AdminService.removeUser({ user_id })
+    return sendSuccess(res, result, "User deleted successfully")
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to delete user"
+    return sendError(res, message, 400)
+  }
+}
