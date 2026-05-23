@@ -39,6 +39,7 @@ model Division {
   has_work_log         Boolean @default(false)
   min_photo_per_day    Int     @default(1) //minimum photo per day
   photo_highlight_only Boolean @default(false) //only admin can choose about highlighted photo
+  late_tolerance_minutes Int     @default(15) //tolerance for late check in in minutes, if staff check in within tolerance, they will not be marked as late
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -122,6 +123,7 @@ model Attendance {
   longitude    Float?
   is_late      Boolean          @default(false)
   late_minutes Int?
+  reason       String?          // reason for late check in or absence, can be filled by user or supervisor
   status       AttendanceStatus @default(EXPECTED)
   created_at   DateTime         @default(now())
 
