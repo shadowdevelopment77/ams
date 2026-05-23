@@ -3,10 +3,10 @@ import * as AdminController from "./admin.controller"
 import { authenticate, requireRole } from "../../../middlewares/auth.middleware"
 
 const router = Router()
+const adminOnly = [authenticate, requireRole("ADMIN")]
 
 // all admin routes require login + ADMIN role
-router.use(authenticate)
-router.use(requireRole("ADMIN"))
+router.use(adminOnly)
 
 router.post("/assign-company", AdminController.assignUserToCompany)
 router.delete("/remove-company", AdminController.removeUserFromCompany)
