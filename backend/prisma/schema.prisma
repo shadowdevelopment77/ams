@@ -28,18 +28,21 @@ model Company {
   user_roles  UserCompanyRole[]
   attendances Attendance[]
   reports     Report[]
+  shifts      Shift[]
+  absent_requests   AbsentRequest[]
 }
 
 model Division {
   id         Int     @id @default(autoincrement())
   company_id Int
-  name       String // divison name anything from admin input!   
+  name       String // divison name anything from admin input!
+  working_days String []
   has_checklist        Boolean @default(true)
   has_evidence_photo   Boolean @default(true)
   has_work_log         Boolean @default(false)
   min_photo_per_day    Int     @default(1) //minimum photo per day
   photo_highlight_only Boolean @default(false) //only admin can choose about highlighted photo
-  late_tolerance_minutes Int     @default(15) //tolerance for late check in in minutes, if staff check in within tolerance, they will not be marked as late
+  late_tolerance_minutes Int     @default(0) //tolerance for late check in in minutes, if staff check in within tolerance, they will not be marked as late
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -68,12 +71,14 @@ model User {
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 
+
   
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   work_logs         WorkLog[]
   notifications     Notification[]
   generated_reports Report[]@relation("ReportGeneratedBy")
+  absent_requests   AbsentRequest[] @relation("AbsentRequests")
 
 }
 
@@ -83,11 +88,13 @@ model UserCompanyRole {
   company_id Int
   role       Role
   division_id Int?
+  shift_id    Int?
   created_at DateTime @default(now())
 
   user    User    @relation(fields: [user_id], references: [id])
   company Company @relation(fields: [company_id], references: [id])
   division Division? @relation(fields: [division_id], references: [id])
+  shift Shift? @relation(fields: [shift_id], references: [id])
 
 
   @@unique([user_id, company_id]) // a user can only have one role per company
@@ -122,9 +129,11 @@ model Attendance {
   latitude     Float?
   longitude    Float?
   is_late      Boolean          @default(false)
-  late_minutes Int?
+  late_minutes Int            @default(0) // how many minutes late, calculated based on shift start time and check in time
+  early_leave  Boolean          @default(false)
+  early_leave_reason String?          // reason for early leave, can be filled by user or supervisor
   reason       String?          // reason for late check in or absence, can be filled by user or supervisor
-  status       AttendanceStatus @default(EXPECTED)
+  status       AttendanceStatus @default(OFF)
   created_at   DateTime         @default(now())
 
   user        User @relation(fields: [user_id], references: [id])
@@ -138,25 +147,64 @@ model Attendance {
 }
 
 enum AttendanceStatus {
-  EXPECTED
   PRESENT
   LATE
-  ABSENT
+  OFF
+}
+
+
+model AbsentRequest {
+  id          Int                 @id @default(autoincrement())
+  user_id     Int
+  company_id  Int
+  shift_id    Int?
+  date        DateTime
+  reason      String
+  proof_url   String?
+  status      AbsentRequestStatus @default(PENDING)
+  reviewed_by Int?
+  reviewed_at DateTime?
+  notes       String?
+  created_at  DateTime            @default(now())
+
+  user     User    @relation("AbsentRequests", fields: [user_id], references: [id])
+  company  Company @relation(fields: [company_id], references: [id])
+  shift    Shift?  @relation(fields: [shift_id], references: [id])
+
+  @@index([user_id, date])
+  @@index([company_id, status])
+}
+
+enum AbsentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Shift {
   id                    Int    @id @default(autoincrement())
   division_id           Int
+  company_id            Int
   name                  String // shift name anything from admin input!
   start_time            String // "07:00" — format HH:mm
   end_time              String // "15:00"
-  notify_before_minutes Int    @default(60) //minute before shift start to notify user to check in
+  is_active             Boolean @default(true)
+  created_at            DateTime @default(now())
+  update_at              DateTime @updatedAt
+  notify_before_minutes Int    @default(30) //minute before shift start to notify user to check in
 
   division    Division     @relation(fields: [division_id], references: [id])
+  company     Company      @relation(fields: [company_id], references: [id])
   attendances Attendance[]
+  absent_requests   AbsentRequest[]
+  user_roles UserCompanyRole[]
 
   @@index([division_id])
+  @@index([company_id])
+  
 }
+
+
 
 model ChecklistTemplate {
   id          Int      @id @default(autoincrement())
