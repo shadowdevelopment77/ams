@@ -6,6 +6,7 @@ import authRouter from "./modules/auth/auth.router"
 import cookieParser from "cookie-parser"
 import adminRouter from "./modules/user/admin/admin.router"
 import divisionRouter from "./modules/division/division.router"
+import shiftRouter from "./modules/shift/shift.router"
 
 dotenv.config()
 
@@ -23,6 +24,7 @@ app.use(cookieParser())
 app.use("/api/auth", authRouter)
 app.use("/api/admin", adminRouter)
 app.use("/api/divisions", divisionRouter)
+app.use("/api/shifts", shiftRouter)
 
 
 app.listen(PORT, () => {
