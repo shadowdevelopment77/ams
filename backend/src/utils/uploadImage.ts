@@ -11,7 +11,7 @@ export const uploadImage = (
       {
         folder,
         resource_type: "image",
-        transformation: [{ width: 800, height: 800, crop: "limit" }],
+        transformation: [{ width: 500, height: 500, crop: "limit" }],
       },
       (error, result) => {
         if (error || !result) return reject(error ?? new Error("Upload failed"))
