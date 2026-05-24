@@ -30,6 +30,7 @@ model Company {
   reports     Report[]
   shifts      Shift[]
   absent_requests   AbsentRequest[]
+  visit_logs    VisitLog[]
 }
 
 model Division {
@@ -53,6 +54,8 @@ model Division {
   report_template     ReportTemplate?
   reports             Report[]
   shifts              Shift[]
+  attendances         Attendance[]
+  absent_requests     AbsentRequest[]
 
   @@unique([company_id, name])
   @@index([company_id])
@@ -79,25 +82,25 @@ model User {
   notifications     Notification[]
   generated_reports Report[]@relation("ReportGeneratedBy")
   absent_requests   AbsentRequest[] @relation("AbsentRequests")
+  visit_logs        VisitLog[]
 
 }
 
 model UserCompanyRole {
   id         Int @id @default(autoincrement())
   user_id    Int
-  company_id Int
+  company_id Int?
   role       Role
   division_id Int?
-  shift_id    Int?
   created_at DateTime @default(now())
 
   user    User    @relation(fields: [user_id], references: [id])
-  company Company @relation(fields: [company_id], references: [id])
+  company Company? @relation(fields: [company_id], references: [id])
   division Division? @relation(fields: [division_id], references: [id])
-  shift Shift? @relation(fields: [shift_id], references: [id])
+  
 
 
-  @@unique([user_id, company_id]) // a user can only have one role per company
+  @@index([user_id]) 
   @@index([company_id, role])
   @@index([division_id])
 }
@@ -121,7 +124,8 @@ model Session {
 model Attendance {
   id           Int              @id @default(autoincrement())
   user_id      Int
-  company_id   Int
+  company_id   Int?
+  division_id  Int?
   shift_id     Int?
   check_in_at  DateTime         @default(now())
   check_out_at DateTime?
@@ -129,27 +133,44 @@ model Attendance {
   latitude     Float?
   longitude    Float?
   is_late      Boolean          @default(false)
-  late_minutes Int            @default(0) // how many minutes late, calculated based on shift start time and check in time
+  late_minutes Int              @default(0) // how many minutes late, calculated based on shift start time and check in time
   early_leave  Boolean          @default(false)
   early_leave_reason String?          // reason for early leave, can be filled by user or supervisor
-  reason       String?          // reason for late check in or absence, can be filled by user or supervisor
-  status       AttendanceStatus @default(OFF)
+  status       AttendanceStatus 
   created_at   DateTime         @default(now())
 
   user        User @relation(fields: [user_id], references: [id])
-  company     Company @relation(fields: [company_id], references: [id])
+  division    Division? @relation(fields: [division_id], references: [id])
+  company     Company? @relation(fields: [company_id], references: [id])
   shift       Shift? @relation(fields: [shift_id], references: [id])
   submissions ChecklistSubmission[]
   work_logs   WorkLog[]
 
   @@index([user_id, check_in_at])
   @@index([company_id, check_in_at])
+  @@index([division_id, check_in_at])
 }
 
 enum AttendanceStatus {
   PRESENT
   LATE
-  OFF
+}
+
+model VisitLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  company_id Int
+  photo_url  String
+  latitude   Float?
+  longitude  Float?
+  notes      String?
+  visited_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id])
+  company Company @relation(fields: [company_id], references: [id])
+
+  @@index([user_id, visited_at])
+  @@index([company_id, visited_at])
 }
 
 
@@ -157,6 +178,7 @@ model AbsentRequest {
   id          Int                 @id @default(autoincrement())
   user_id     Int
   company_id  Int
+  division_id Int
   shift_id    Int?
   date        DateTime
   reason      String
@@ -170,6 +192,7 @@ model AbsentRequest {
   user     User    @relation("AbsentRequests", fields: [user_id], references: [id])
   company  Company @relation(fields: [company_id], references: [id])
   shift    Shift?  @relation(fields: [shift_id], references: [id])
+  division Division @relation(fields: [division_id], references: [id])
 
   @@index([user_id, date])
   @@index([company_id, status])
@@ -197,7 +220,6 @@ model Shift {
   company     Company      @relation(fields: [company_id], references: [id])
   attendances Attendance[]
   absent_requests   AbsentRequest[]
-  user_roles UserCompanyRole[]
 
   @@index([division_id])
   @@index([company_id])

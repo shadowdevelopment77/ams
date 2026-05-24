@@ -10,13 +10,11 @@ export const assignUserToCompany = async (input: AssignCompanyInput) => {
   const company = await prisma.company.findUnique({ where: { id: input.company_id } })
   if (!company) throw new Error("Company not found")
 
-  const existing = await prisma.userCompanyRole.findUnique({
+  const existing = await prisma.userCompanyRole.findFirst({
     where: {
-      user_id_company_id: {
         user_id: input.user_id,
         company_id: input.company_id,
       },
-    },
   })
   if (existing) throw new Error("User already assigned to this company")
 
@@ -57,10 +55,7 @@ export const moveUserToCompany = async (input: MoveCompanyInput) => {
   // just update in place — same row, new values
   return await prisma.userCompanyRole.update({
     where: {
-      user_id_company_id: {
-        user_id: input.user_id,
-        company_id: existing.company_id, // their current company
-      },
+      id: existing.id,
     },
     data: {
       company_id: input.company_id,   // new company
@@ -92,22 +87,17 @@ export const removeUser = async (input: RemoveUserInput) => {
 
 // Remove from a company
 export const removeUserFromCompany = async (input: RemoveCompanyInput) => {
-  const existing = await prisma.userCompanyRole.findUnique({
+  const existing = await prisma.userCompanyRole.findFirst({
     where: {
-      user_id_company_id: {
         user_id: input.user_id,
         company_id: input.company_id,
-      },
     },
   })
   if (!existing) throw new Error("Assignment not found")
 
   await prisma.userCompanyRole.delete({
     where: {
-      user_id_company_id: {
-        user_id: input.user_id,
-        company_id: input.company_id,
-      },
+      id: existing.id,
     },
   })
 
