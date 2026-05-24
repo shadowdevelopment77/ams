@@ -10,7 +10,7 @@ declare global {
         id: number
         name: string
         email: string
-        roles: { company_id: number; role: string; division_id: number | null }[]
+        roles: { company_id: number | null; role: string; division_id: number | null }[]
       }
     }
   }
