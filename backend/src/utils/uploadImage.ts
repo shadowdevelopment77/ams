@@ -1,6 +1,6 @@
 import cloudinary from "../lib/cloudinary"
 
-type UploadFolder = "ams/attendance" | "ams/absent" | "ams/visits"
+type UploadFolder = "ams/attendance" | "ams/absent" | "ams/visits" | "ams/evidence"
 
 export const uploadImage = (
   buffer: Buffer,

@@ -73,9 +73,10 @@ model User {
   deleted_at  DateTime?
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
-
-
   
+
+
+  photo_reviews EvidencePhoto[] @relation("PhotoReviews")
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   work_logs         WorkLog[]
@@ -237,7 +238,6 @@ model ChecklistTemplate {
   company_id  Int
   title       String
   is_active   Boolean  @default(true)
-  created_by  Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -246,6 +246,7 @@ model ChecklistTemplate {
   items ChecklistItem[]
 
   @@index([division_id])
+  @@index([company_id])
 }
 
 model ChecklistItem {
@@ -267,8 +268,10 @@ model ChecklistSubmission {
   attendance_id Int
   item_id       Int
   is_done       Boolean  @default(false)
+  is_submitted  Boolean   @default(false)
   notes         String?
-  submitted_at  DateTime @default(now())
+  submitted_at  DateTime?
+  created_at    DateTime @default(now())
 
   attendance Attendance      @relation(fields: [attendance_id], references: [id])
   item ChecklistItem   @relation(fields: [item_id], references: [id])
@@ -290,6 +293,7 @@ model EvidencePhoto {
   created_at     DateTime    @default(now())
 
   submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
+  reviewer   User?               @relation("PhotoReviews", fields: [reviewed_by], references: [id])
 
   @@index([submission_id, status])
   @@index([is_highlighted])
