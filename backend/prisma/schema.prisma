@@ -132,6 +132,9 @@ model Attendance {
   photo_url    String // selfie photos
   latitude     Float?
   longitude    Float?
+  checkout_photo_url String?
+  checkout_latitude Float?
+  checkout_longitude Float?
   is_late      Boolean          @default(false)
   late_minutes Int              @default(0) // how many minutes late, calculated based on shift start time and check in time
   early_leave  Boolean          @default(false)
