@@ -37,7 +37,7 @@ export const getDivisionsByCompany = async (req: Request, res: Response) => {
     const company_id = parseInt(req.params.company_id as string)
     if (isNaN(company_id)) return sendError(res, "Invalid company ID", 400)
 
-    const result = await DivisionService.getDivisionsByCompany(company_id)
+    const result = await DivisionService.getDivisionsByCompany(company_id, req.user!.id )
     return sendSuccess(res, result, "Divisions fetched successfully")
   } catch (error: unknown) {
     return sendError(res, "Failed to fetch divisions", 500)

@@ -20,7 +20,15 @@ export const updateDivision = async (id: number, input: UpdateDivisionInput) => 
   return await prisma.division.update({ where: { id }, data: input })
 }
 
-export const getDivisionsByCompany = async (company_id: number) => {
+export const getDivisionsByCompany = async (company_id: number, user_id: number) => {
+  const company = await prisma.company.findUnique({ where: { id: company_id } })
+  if (!company) throw new Error("Company not found")
+
+    const userRole = await prisma.userCompanyRole.findFirst({
+      where: { user_id, company_id }
+    })
+  if (!userRole) throw new Error("User does not belong to this company")
+    
   return await prisma.division.findMany({
     where: { company_id, is_active: true },
     include: {
