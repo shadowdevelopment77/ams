@@ -9,7 +9,6 @@ import divisionRouter from "./modules/division/division.router"
 import shiftRouter from "./modules/shift/shift.router"
 import attendanceRouter from "./modules/attendance/attendance.router"
 import checklistRouter from "./modules/checklist/checklist.router"
-import reportRouter from "./modules/report/report.router"
 
 dotenv.config()
 
@@ -30,8 +29,6 @@ app.use("/api/divisions", divisionRouter)
 app.use("/api/shifts", shiftRouter)
 app.use("/api/attendance", attendanceRouter)
 app.use("api/checklist", checklistRouter)
-app.use("/api/reports", reportRouter)
-
 
 
 app.listen(PORT, () => {
