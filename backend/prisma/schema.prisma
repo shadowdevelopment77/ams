@@ -31,6 +31,8 @@ model Company {
   shifts      Shift[]
   absent_requests   AbsentRequest[]
   visit_logs    VisitLog[]
+
+@@unique([name, code])
 }
 
 model Division {

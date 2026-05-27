@@ -1,6 +1,7 @@
 
+import { ro } from "zod/v4/locales/index.js";
 import prisma from "../../../lib/prisma"
-import { AssignCompanyInput, RemoveCompanyInput, MoveCompanyInput, RemoveUserInput } from "./admin.validation"
+import { AssignCompanyInput, RemoveCompanyInput, MoveCompanyInput, RemoveUserInput, CreateCompanyInput } from "./admin.validation"
 
 // Assign ADMIN AND SUPERVISOR to a company
 export const assignUserToCompany = async (input: AssignCompanyInput) => {
@@ -32,6 +33,13 @@ export const assignUserToCompany = async (input: AssignCompanyInput) => {
     },
     include: { company: true },
   })
+}
+
+export const createCompany = async(input: CreateCompanyInput) => {
+  const existing = await prisma.company.findUnique({ 
+    where: {name_code: {name: input.name, code: input.code}}, })
+  if (existing) throw new Error("company has been registered")
+    return await prisma.company.create({data: input})
 }
 
 //STAFF ONLY

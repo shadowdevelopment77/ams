@@ -14,5 +14,6 @@ router.get("/internal-users", AdminController.getInternalUsers)
 router.post("/move-company", AdminController.moveUserToCompany)
 router.get("/company/:company_id/users", AdminController.getUsersByCompanies)
 router.delete("/users/:user_id", AdminController.removeUser)
+router.post("/create-company", AdminController.createCompany)
 
 export default router

@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import * as AdminService from "./admin.service"
-import { assignCompanySchema, removeCompanySchema, moveCompanySchema} from "./admin.validation"
+import { assignCompanySchema, removeCompanySchema, moveCompanySchema, createCompanySchema} from "./admin.validation"
 import { sendSuccess, sendError } from "../../../utils/response"
 
 export const assignUserToCompany = async (req: Request, res: Response) => {
@@ -74,6 +74,18 @@ export const removeUser = async (req: Request, res: Response) => {
     return sendSuccess(res, result, "User deleted successfully")
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to delete user"
+    return sendError(res, message, 400)
+  }
+}
+
+export const createCompany = async (req: Request, res: Response) => {
+  try{
+    const parsed = createCompanySchema.safeParse(req.body)
+    if (!parsed.success) return sendError (res, "Validation failed", 400, parsed.error.issues)
+      const result = await AdminService.createCompany(parsed.data)
+    return sendSuccess(res, result, "Company created successfully", 201)
+  } catch (error: unknown){
+    const message = error instanceof Error ? error.message : "Failed to create company"
     return sendError(res, message, 400)
   }
 }
