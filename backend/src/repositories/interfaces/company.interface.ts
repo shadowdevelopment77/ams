@@ -1,0 +1,27 @@
+import { Company } from "../../../generated/prisma";
+import { IBaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
+
+export interface CreateCompanyDTO {
+  name: string;
+  code: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+}
+
+export interface UpdateCompanyDTO {
+  name?: string;
+  code?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+  is_active?: boolean;
+}
+
+export interface ICompanyRepository extends IBaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO> {
+  findByNameAndCode(name: string, code: string): Promise<Company | null>;
+  findAllActive(params?: PaginationParams): Promise<PaginatedResult<Company>>;
+  softDeleteCompany(id: number): Promise<Company>;
+}

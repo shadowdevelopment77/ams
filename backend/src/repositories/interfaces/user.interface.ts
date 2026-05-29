@@ -36,12 +36,11 @@ export interface UpdateRoleDTO {
 
 export interface IUserRepository extends IBaseRepository<User, CreateUserDTO, UpdateUserDTO> {
   findByEmail(email: string): Promise<User | null>
-  softDelete(id: number): Promise<User>
   findRoleByUserId(user_id: number,  params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole | null>>
   findByCompanyRole(user_id: number, company_id: number): Promise<UserCompanyRole | null>
   createCompanyRole(data: CreateRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateRoleDTO): Promise<UserCompanyRole>
   softDeleteCompanyRole(id: number): Promise<UserCompanyRole>
-  softDeleteAllCompanyRoles(user_id: number): Promise<void>
+  softDeleteAllCompanyRoles(user_id: number): Promise<{count: number}>
   findUsersByCompany(company_id: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
 }

@@ -27,4 +27,5 @@ export interface IDivisionRepository extends IBaseRepository<Division, CreateDiv
   findByCompany(companyId: number, params?: PaginationParams): Promise<PaginatedResult<Division>>;
   findByCompanyAndName(companyId: number, name: string): Promise<Division | null>;
   findActiveByCompany(companyId: number): Promise<Division[]>;
+  softDeleteDivision(id: number): Promise<Division>;
 }
