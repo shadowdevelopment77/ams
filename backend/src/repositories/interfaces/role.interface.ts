@@ -14,7 +14,7 @@ export interface UpdateRoleDTO {
 export interface IRoleRepository {
   findAll(): Promise<UserRole[]>
   findById(id: number): Promise<UserRole | null>
-  softDelete(id:number): Promise<UserRole>
+
   create(data: CreateRoleDTO): Promise<UserRole>
   update(id:number, data: UpdateRoleDTO): Promise<UserRole>
 }

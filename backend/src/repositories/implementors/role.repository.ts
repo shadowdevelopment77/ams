@@ -31,11 +31,4 @@ export class RoleRepository implements IRoleRepository {
         data: {name: data.name, is_active: data.is_active}
     })
   }
-
-  async softDelete(id:number): Promise<UserRole>{
-    return this.prisma.userRole.update({
-    where:{id, is_deleted: false},
-    data:{is_deleted: true, deleted_at: new Date(), is_active:false}
-})
-  }
 }

@@ -114,18 +114,4 @@ extends BaseRepository<User, CreateUserDTO, UpdateUserDTO>
       },
     })
   }
-
-  async softDeleteCompanyRole(id: number): Promise<UserCompanyRole> {
-    return  this.prisma.userCompanyRole.update({
-      where: { id },
-      data: { is_deleted: true, deleted_at: new Date(), is_active: false },
-    })
-  }
-
-  async softDeleteAllCompanyRoles(user_id: number): Promise<{count: number}> {
-    return this.prisma.userCompanyRole.updateMany({
-      where: { user_id, is_deleted: false },
-      data: { is_deleted: true, deleted_at: new Date(), is_active: false },
-    })
-  }
 }

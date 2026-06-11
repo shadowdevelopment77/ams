@@ -40,7 +40,5 @@ export interface IUserRepository extends IBaseRepository<User, CreateUserDTO, Up
   findByCompanyRole(user_id: number, company_id: number): Promise<UserCompanyRole | null>
   createCompanyRole(data: CreateRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateRoleDTO): Promise<UserCompanyRole>
-  softDeleteCompanyRole(id: number): Promise<UserCompanyRole>
-  softDeleteAllCompanyRoles(user_id: number): Promise<{count: number}>
   findUsersByCompany(company_id: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
 }
