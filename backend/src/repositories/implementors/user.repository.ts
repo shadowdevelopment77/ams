@@ -1,8 +1,8 @@
 
 import { User, UserCompanyRole, PrismaClient } from "../../../generated/prisma"
-import { BaseRepository } from "./base.repository"
+import { PrismaBaseRepository } from "./base.repository"
 import {
-  IUserRepository,
+  UserRepository,
   CreateUserDTO,
   UpdateUserDTO,
   CreateRoleDTO,
@@ -10,9 +10,9 @@ import {
 } from "../interfaces/user.interface"
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
-export class UserRepository
-extends BaseRepository<User, CreateUserDTO, UpdateUserDTO>
-  implements IUserRepository
+export class PrismaUserRepository
+extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
+  implements UserRepository
 {
   // tells BaseRepository to use prisma.user for all generic CRUD
   protected modelName = "user" as const

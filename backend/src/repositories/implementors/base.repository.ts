@@ -1,12 +1,12 @@
 
 import { PrismaClient } from "../../../generated/prisma"
-import { IBaseRepository, PaginatedResult, PaginationParams } from "../interfaces/base.interface"
+import { BaseRepository, PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
 // T      = Prisma model type (e.g. User, Company)
 // CreateDTO = shape of data to create
 // UpdateDTO = shape of data to update
-export abstract class BaseRepository<T, CreateDTO, UpdateDTO>
-  implements IBaseRepository<T, CreateDTO, UpdateDTO>
+export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO>
+  implements BaseRepository<T, CreateDTO, UpdateDTO>
 {
   // Each child class must declare which prisma model it uses
   // e.g.  protected modelName = "user" as const

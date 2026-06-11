@@ -1,11 +1,11 @@
 import { Division, PrismaClient } from "../../../generated/prisma";
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
-import { CreateDivisionDTO, IDivisionRepository, UpdateDivisionDTO } from "../interfaces/division.interface";
-import { BaseRepository } from "./base.repository";
+import { CreateDivisionDTO, DivisionRepository, UpdateDivisionDTO } from "../interfaces/division.interface";
+import { PrismaBaseRepository } from "./base.repository";
 
-export class DivisionRepository
-  extends BaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO>
-  implements IDivisionRepository
+export class PrismaDivisionRepository
+  extends PrismaBaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO>
+  implements DivisionRepository
 {
   protected modelName = "division" as const;
 

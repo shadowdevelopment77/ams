@@ -1,5 +1,5 @@
 import { Attendance } from "../../../generated/prisma";
-import { IBaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
+import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
 
 export interface CreateAttendanceDTO {
   user_id: number;
@@ -34,8 +34,8 @@ export interface AttendanceFilterParams extends PaginationParams {
   isLate?: boolean;
 }
 
-export interface IAttendanceRepository
-  extends IBaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO> {
+export interface AttendanceRepository
+  extends BaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO> {
   findByUser(userId: number, params?: AttendanceFilterParams): Promise<PaginatedResult<Attendance>>;
   findByCompany(companyId: number, params?: AttendanceFilterParams): Promise<PaginatedResult<Attendance>>;
   findByDivision(divisionId: number, params?: AttendanceFilterParams): Promise<PaginatedResult<Attendance>>;

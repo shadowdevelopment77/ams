@@ -1,11 +1,11 @@
 import { Company, PrismaClient } from "../../../generated/prisma";
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
-import { CreateCompanyDTO, ICompanyRepository, UpdateCompanyDTO } from "../interfaces/company.interface";
-import { BaseRepository } from "./base.repository";
+import { CreateCompanyDTO, CompanyRepository, UpdateCompanyDTO } from "../interfaces/company.interface";
+import { PrismaBaseRepository } from "./base.repository";
 
-export class CompanyRepository
-  extends BaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO>
-  implements ICompanyRepository
+export class PrismaCompanyRepository
+  extends PrismaBaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO>
+  implements CompanyRepository
 {
   protected modelName = "company" as const;
 

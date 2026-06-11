@@ -1,7 +1,7 @@
 import {UserRole, PrismaClient, User} from "../../../generated/prisma"
-import {IRoleRepository, UpdateRoleDTO, CreateRoleDTO} from "../interfaces/role.interface"
+import {RoleRepository, UpdateRoleDTO, CreateRoleDTO} from "../interfaces/role.interface"
 
-export class RoleRepository implements IRoleRepository {
+export class PrismaRoleRepository implements RoleRepository {
   constructor(private prisma: PrismaClient) {}
 
   

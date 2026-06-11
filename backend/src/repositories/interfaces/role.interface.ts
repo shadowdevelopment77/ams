@@ -11,10 +11,9 @@ export interface UpdateRoleDTO {
   is_active?: boolean
 }
 
-export interface IRoleRepository {
+export interface RoleRepository {
   findAll(): Promise<UserRole[]>
   findById(id: number): Promise<UserRole | null>
-
   create(data: CreateRoleDTO): Promise<UserRole>
   update(id:number, data: UpdateRoleDTO): Promise<UserRole>
 }

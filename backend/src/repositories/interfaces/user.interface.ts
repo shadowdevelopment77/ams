@@ -1,5 +1,5 @@
 import { User, UserCompanyRole } from "../../../generated/prisma"
-import { IBaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
+import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
 
 export interface CreateUserDTO {
   name: string
@@ -34,7 +34,7 @@ export interface UpdateRoleDTO {
 
 
 
-export interface IUserRepository extends IBaseRepository<User, CreateUserDTO, UpdateUserDTO> {
+export interface UserRepository extends BaseRepository<User, CreateUserDTO, UpdateUserDTO> {
   findByEmail(email: string): Promise<User | null>
   findRoleByUserId(user_id: number,  params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole | null>>
   findByCompanyRole(user_id: number, company_id: number): Promise<UserCompanyRole | null>

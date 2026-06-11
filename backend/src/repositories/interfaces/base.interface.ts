@@ -16,7 +16,7 @@ export interface SoftDeleteParams {
   deleted_at: Date | null;
 }
  
-export interface IBaseRepository<T, CreateDTO, UpdateDTO> {
+export interface BaseRepository<T, CreateDTO, UpdateDTO> {
   findById(id: number): Promise<T | null>;
   findAll(params?: PaginationParams): Promise<PaginatedResult<T>>;
   create(data: CreateDTO): Promise<T>;

@@ -1,5 +1,5 @@
 import { Division } from "../../../generated/prisma";
-import { IBaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
+import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
  
 export interface CreateDivisionDTO {
   company_id: number;
@@ -23,7 +23,7 @@ export interface UpdateDivisionDTO {
   is_active?: boolean;
 }
  
-export interface IDivisionRepository extends IBaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO> {
+export interface DivisionRepository extends BaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO> {
   findByCompany(companyId: number, params?: PaginationParams): Promise<PaginatedResult<Division>>;
   findByCompanyAndName(companyId: number, name: string): Promise<Division | null>;
   findActiveByCompany(companyId: number): Promise<Division[]>;

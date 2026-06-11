@@ -3,10 +3,10 @@ import { PaginatedResult } from "../interfaces/base.interface";
 import {
   AttendanceFilterParams,
   CreateAttendanceDTO,
-  IAttendanceRepository,
+  AttendanceRepository,
   UpdateAttendanceDTO,
 } from "../interfaces/attendance.interface";
-import { BaseRepository } from "./base.repository";
+import { PrismaBaseRepository } from "./base.repository";
 
 const ATTENDANCE_WITH_DETAILS = {
   user: true,
@@ -19,9 +19,9 @@ const ATTENDANCE_WITH_DETAILS = {
   work_logs: { where: { is_deleted: false } },
 };
 
-export class AttendanceRepository
-  extends BaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO>
-  implements IAttendanceRepository
+export class PrismaAttendanceRepository
+  extends PrismaBaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO>
+  implements AttendanceRepository
 {
   protected modelName = "attendance" as const;
 
