@@ -31,12 +31,6 @@ export class PrismaDivisionRepository
     });
   }
 
-  async findActiveByCompany(companyId: number): Promise<Division[]> {
-    return this.prisma.division.findMany({
-      where: { company_id: companyId, is_active: true, is_deleted: false },
-      orderBy: { name: "asc" },
-    });
-  }
 
   async softDeleteDivision(id: number): Promise<Division>{
     return this.prisma.division.update({
