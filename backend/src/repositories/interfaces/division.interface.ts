@@ -26,5 +26,4 @@ export interface UpdateDivisionDTO {
 export interface DivisionRepository extends BaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO> {
   findByCompany(companyId: number, params?: PaginationParams): Promise<PaginatedResult<Division>>;
   findByCompanyAndName(companyId: number, name: string): Promise<Division | null>;
-  softDeleteDivision(id: number): Promise<Division>;
 }

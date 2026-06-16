@@ -31,12 +31,4 @@ export class PrismaDivisionRepository
     });
   }
 
-
-  async softDeleteDivision(id: number): Promise<Division>{
-    return this.prisma.division.update({
-        where: { id, is_deleted: false },
-        data : { is_deleted: true, deleted_at: new Date(), is_active: false
-        }
-    })
-  }
 }

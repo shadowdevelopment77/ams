@@ -22,6 +22,4 @@ export interface UpdateCompanyDTO {
 
 export interface CompanyRepository extends BaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO> {
   findByNameAndCode(name: string, code: string): Promise<Company | null>;
-  findAllActive(params?: PaginationParams): Promise<PaginatedResult<Company>>;
-  softDeleteCompany(id: number): Promise<Company>;
 }
