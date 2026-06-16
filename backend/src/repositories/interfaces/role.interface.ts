@@ -1,4 +1,5 @@
 import {UserRole} from "../../../generated/prisma"
+import { BaseRepository } from "./base.interface";
 
 
 export interface CreateRoleDTO{
@@ -11,9 +12,6 @@ export interface UpdateRoleDTO {
   is_active?: boolean
 }
 
-export interface RoleRepository {
-  findAll(): Promise<UserRole[]>
-  findById(id: number): Promise<UserRole | null>
-  create(data: CreateRoleDTO): Promise<UserRole>
-  update(id:number, data: UpdateRoleDTO): Promise<UserRole>
+export interface RoleRepository extends BaseRepository <UserRole, CreateRoleDTO, UpdateRoleDTO>{
+  
 }
