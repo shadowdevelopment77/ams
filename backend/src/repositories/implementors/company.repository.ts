@@ -1,5 +1,4 @@
 import { Company, PrismaClient } from "../../../generated/prisma";
-import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
 import { CreateCompanyDTO, CompanyRepository, UpdateCompanyDTO } from "../interfaces/company.interface";
 import { PrismaBaseRepository } from "./base.repository";
 
@@ -14,9 +13,9 @@ export class PrismaCompanyRepository
   }
 
 
-  async findByNameAndCode(name: string, code: string): Promise<Company | null> {
+  async findByName(name: string): Promise<Company | null> {
     return this.prisma.company.findFirst({
-      where: { name, code, is_deleted: false },
+      where: { name, is_deleted: false },
     });
   }
 

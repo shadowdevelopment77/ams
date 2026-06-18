@@ -25,10 +25,4 @@ export class PrismaDivisionRepository
     return this.buildPaginatedResult(data, total, page, limit);
   }
 
-  async findByCompanyAndName(companyId: number, name: string): Promise<Division | null> {
-    return this.prisma.division.findFirst({
-      where: { company_id: companyId, name, is_deleted: false },
-    });
-  }
-
 }

@@ -21,5 +21,5 @@ export interface UpdateCompanyDTO {
 }
 
 export interface CompanyRepository extends BaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO> {
-  findByNameAndCode(name: string, code: string): Promise<Company | null>;
+  findByName(name: string): Promise<Company | null>;
 }
