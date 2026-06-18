@@ -9,4 +9,10 @@ export class PrismaRoleRepository extends PrismaBaseRepository<UserRole, CreateR
   constructor(prisma: PrismaClient) {
     super(prisma)
   }
+
+  async findByName(name: string): Promise<UserRole | null> {
+    return this.prisma.userRole.findFirst({
+      where: { name, is_deleted: false },
+    })
+  }
 }

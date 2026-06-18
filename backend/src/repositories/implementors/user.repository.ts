@@ -5,8 +5,8 @@ import {
   UserRepository,
   CreateUserDTO,
   UpdateUserDTO,
-  CreateRoleDTO,
-  UpdateRoleDTO,
+  CreateUserCompanyRoleDTO,
+  UpdateUserCompanyRoleDTO,
 } from "../interfaces/user.interface"
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
@@ -50,15 +50,6 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
     return this.buildPaginatedResult(data, total, page, limit)
   }
 
-  async findByCompanyRole(
-    user_id: number,
-    company_id: number
-  ): Promise<UserCompanyRole | null> {
-    return this.prisma.userCompanyRole.findFirst({
-      where: { user_id, company_id, is_deleted: false },
-    })
-  }
-
   async findUsersByCompany(
     company_id: number,
     params?: PaginationParams
@@ -71,7 +62,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
         where,
         skip,
         take,
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "asc" },
         include: {
           user: {
             select: {
@@ -93,7 +84,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
     return this.buildPaginatedResult(data, total, page, limit)
   }
 
-  async createCompanyRole(data: CreateRoleDTO): Promise<UserCompanyRole> {
+  async createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole> {
     return  this.prisma.userCompanyRole.create({
       data: {
         user_id: data.user_id,
@@ -104,7 +95,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
     })
   }
 
-  async updateCompanyRole(id: number, data: UpdateRoleDTO): Promise<UserCompanyRole> {
+  async updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole> {
     return  this.prisma.userCompanyRole.update({
       where: { id },
       data: {
