@@ -35,7 +35,7 @@ export interface UpdateChecklistItemDTO {
 
 export interface ChecklistItemRepository
   extends BaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO> {
-  findItem(templateId: number, companyId: number, divisionId: number, params?: PaginationParams): Promise<PaginatedResult<ChecklistItem>>;
+  findByTemplate(templateId: number, params?: PaginationParams): Promise<PaginatedResult<ChecklistItem>>;
 }
 
 // --- ChecklistSubmission ---
@@ -53,7 +53,7 @@ export interface UpdateChecklistSubmissionDTO {
 
 export interface ChecklistSubmissionRepository
   extends BaseRepository<ChecklistSubmission, CreateChecklistSubmissionDTO, UpdateChecklistSubmissionDTO> {
-  findByAttendance(attendanceId: number): Promise<ChecklistSubmission[]>;
+  findByAttendanceAndItem(attendanceId: number, itemId: number): Promise<ChecklistSubmission | null>;
   bulkCreate(attendanceId: number, itemIds: number[]): Promise<ChecklistSubmission[]>;
   submitAll(attendanceId: number): Promise<void>;
 }
