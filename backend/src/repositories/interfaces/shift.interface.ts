@@ -14,7 +14,7 @@ export interface UpdateShiftDTO{
     name?: string;
     start_time?: string;
     end_time?: string;
-    is_active: boolean;
+    is_active?: boolean;
 }
 
 export interface ShiftRepository extends BaseRepository<Shift, CreateShiftDTO, UpdateShiftDTO> {

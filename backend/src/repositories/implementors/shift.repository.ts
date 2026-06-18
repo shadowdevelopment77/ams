@@ -10,11 +10,11 @@ export class PrismaShiftRepository extends PrismaBaseRepository<Shift, CreateShi
         super(prisma);
     }
 
+    async findShift(companyId: number, divisionId: number): Promise<Shift[]> {
+        return this.prisma.shift.findMany({
+            where: { company_id: companyId, division_id: divisionId, is_deleted: false },
+            orderBy: { id: "asc" },
+        });
+    }
 
-    async findShift(companyId:number, divisionId:number): Promise<Shift[]>
-{
-    return this.prisma.shift.findMany({
-        where :{company_id: companyId, division_id: divisionId, is_deleted: false}
-    });
-}
 }
