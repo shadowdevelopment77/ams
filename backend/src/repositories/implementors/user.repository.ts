@@ -30,7 +30,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
   // ─── UserCompanyRole methods ──────────────────────────────────────────────
 
   async findRoleByUserId(
-    user_id: number,
+    user_id: string,
     params?: PaginationParams
   ): Promise<PaginatedResult<UserCompanyRole>> {
     const { skip, take, page, limit } = this.resolvePagination(params)

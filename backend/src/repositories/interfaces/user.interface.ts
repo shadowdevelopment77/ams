@@ -20,7 +20,7 @@ export interface UpdateUserDTO {
 
 
 export interface CreateUserCompanyRoleDTO {
-  user_id: number
+  user_id: string
   company_id?: number | null
   role_id: number
   division_id?: number | null
@@ -36,7 +36,7 @@ export interface UpdateUserCompanyRoleDTO {
 
 export interface UserRepository extends BaseRepository<User, CreateUserDTO, UpdateUserDTO> {
   findByEmail(email: string): Promise<User | null>
-  findRoleByUserId(user_id: number,  params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole | null>>
+  findRoleByUserId(user_id: string,  params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole | null>>
   createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole>
   findUsersByCompany(company_id: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>

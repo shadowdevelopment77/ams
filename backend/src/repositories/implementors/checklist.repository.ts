@@ -83,7 +83,7 @@ export class PrismaChecklistSubmissionRepository
   }
 
   async findByAttendanceAndItem(
-    attendanceId: number,
+    attendanceId: string,
     itemId: number,
   ): Promise<ChecklistSubmission | null> {
     return this.prisma.checklistSubmission.findFirst({
@@ -92,7 +92,7 @@ export class PrismaChecklistSubmissionRepository
     });
   }
 
-  async bulkCreate(attendanceId: number, itemIds: number[]): Promise<ChecklistSubmission[]> {
+  async bulkCreate(attendanceId: string, itemIds: number[]): Promise<ChecklistSubmission[]> {
     await this.prisma.checklistSubmission.createMany({
       data: itemIds.map((item_id) => ({
         attendance_id: attendanceId,
@@ -111,7 +111,7 @@ export class PrismaChecklistSubmissionRepository
     });
   }
 
-  async submitAll(attendanceId: number): Promise<void> {
+  async submitAll(attendanceId: string): Promise<void> {
     await this.prisma.checklistSubmission.updateMany({
       where: {
         attendance_id: attendanceId,

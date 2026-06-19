@@ -40,7 +40,7 @@ export interface ChecklistItemRepository
 
 // --- ChecklistSubmission ---
 export interface CreateChecklistSubmissionDTO {
-  attendance_id: number;
+  attendance_id: string;
   item_id: number;
 }
 
@@ -53,7 +53,7 @@ export interface UpdateChecklistSubmissionDTO {
 
 export interface ChecklistSubmissionRepository
   extends BaseRepository<ChecklistSubmission, CreateChecklistSubmissionDTO, UpdateChecklistSubmissionDTO> {
-  findByAttendanceAndItem(attendanceId: number, itemId: number): Promise<ChecklistSubmission | null>;
-  bulkCreate(attendanceId: number, itemIds: number[]): Promise<ChecklistSubmission[]>;
-  submitAll(attendanceId: number): Promise<void>;
+  findByAttendanceAndItem(attendanceId: string, itemId: number): Promise<ChecklistSubmission | null>;
+  bulkCreate(attendanceId: string, itemIds: number[]): Promise<ChecklistSubmission[]>;
+  submitAll(attendanceId: string): Promise<void>;
 }
