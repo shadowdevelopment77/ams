@@ -33,7 +33,7 @@ model Company {
   user_roles  UserCompanyRole[]
   attendances Attendance[]
 
-  shifts      Shift[]
+  shifts        Shift[]
   visit_logs    VisitLog[]
 
 }
@@ -64,7 +64,7 @@ model Division {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
+  id          String       @id @default(uuid())
   name        String
   email       String    @unique
   password    String
@@ -86,7 +86,7 @@ model User {
 
 model UserCompanyRole {
   id         Int @id @default(autoincrement())
-  user_id    Int
+  user_id    String
   company_id Int?
   role_id    Int
   division_id Int?
@@ -132,8 +132,8 @@ model Session {
 }
 
 model Attendance {
-  id           Int              @id @default(autoincrement())
-  user_id      Int
+  id           String              @id @default(uuid())
+  user_id      String
   company_id   Int
   division_id  Int
   shift_id     Int
@@ -187,7 +187,7 @@ model AttendanceStatus {
 
 model VisitLog {
   id         Int      @id @default(autoincrement())
-  user_id    Int
+  user_id    String
   company_id Int
   date       DateTime  @db.Date
   photo_url  String
@@ -273,7 +273,7 @@ model ChecklistItem {
 
 model ChecklistSubmission {
   id            Int      @id @default(autoincrement())
-  attendance_id Int
+  attendance_id String
   item_id       Int
   is_done       Boolean  @default(false)
   is_submitted  Boolean   @default(false)
@@ -297,7 +297,7 @@ model EvidencePhoto {
   submission_id  Int
   photo_url      String
   status_id      Int
-  reviewed_by    Int? // user_id supervisor
+  reviewed_by    String? // user_id supervisor
   reviewed_at    DateTime?
   reject_reason  String?
   is_active  Boolean  @default(true)
@@ -307,7 +307,7 @@ model EvidencePhoto {
   updated_at DateTime @updatedAt
 
   submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
-  reviewer   User?               @relation("PhotoReviews", fields: [reviewed_by], references: [id])
+  reviewer    User?               @relation("PhotoReviews", fields: [reviewed_by], references: [id])
   photo_status     PhotoStatus   @relation(fields: [status_id], references: [id])
 
   @@index([submission_id, status_id])
