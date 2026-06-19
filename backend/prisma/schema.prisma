@@ -14,7 +14,7 @@ datasource db {
 
 model Company {
   id         Int      @id @default(autoincrement())
-  name       String
+  name       String   @unique
   code       String 
   address    String?
   phone      String?
@@ -32,12 +32,10 @@ model Company {
   checklist_templates ChecklistTemplate[]
   user_roles  UserCompanyRole[]
   attendances Attendance[]
-  reports     Report[]
+
   shifts      Shift[]
-  absent_requests   AbsentRequest[]
   visit_logs    VisitLog[]
 
-@@unique([name, code])
 }
 
 model Division {
@@ -59,13 +57,9 @@ model Division {
   company             Company @relation(fields: [company_id], references: [id])
   user_roles          UserCompanyRole[]
   checklist_templates ChecklistTemplate[]
-  report_template     ReportTemplate?
-  reports             Report[]
   shifts              Shift[]
   attendances         Attendance[]
-  absent_requests     AbsentRequest[]
 
-  @@unique([company_id, name])
   @@index([company_id])
 }
 
@@ -86,9 +80,6 @@ model User {
   photo_reviews EvidencePhoto[] @relation("PhotoReviews")
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
-  work_logs         WorkLog[]
-  generated_reports Report[]@relation("ReportGeneratedBy")
-  absent_requests   AbsentRequest[] @relation("AbsentRequests")
   visit_logs        VisitLog[]
 
 }
@@ -114,8 +105,7 @@ model UserCompanyRole {
 
 
   @@index([user_id]) 
-  @@index([company_id, role_id])
-  @@index([division_id])
+  @@index([company_id, division_id])
 }
 
 model UserRole{
@@ -144,17 +134,20 @@ model Session {
 model Attendance {
   id           Int              @id @default(autoincrement())
   user_id      Int
-  company_id   Int?
-  division_id  Int?
-  shift_id     Int?
+  company_id   Int
+  division_id  Int
+  shift_id     Int
+  date         DateTime         @db.Date
   check_in_at  DateTime         @default(now())
   check_out_at DateTime?
   photo_url    String // selfie photos
   latitude     Float?
   longitude    Float?
+  location_address String?
   checkout_photo_url String?
   checkout_latitude Float?
   checkout_longitude Float?
+  checkout_address  String?
   is_late      Boolean          @default(false)
   late_minutes Int              @default(0) // how many minutes late, calculated based on shift start time and check in time
   early_leave  Boolean          @default(false)
@@ -171,12 +164,10 @@ model Attendance {
   company     Company? @relation(fields: [company_id], references: [id])
   shift       Shift? @relation(fields: [shift_id], references: [id])
   submissions ChecklistSubmission[]
-  work_logs   WorkLog[]
   status      AttendanceStatus @relation(fields: [status_id], references: [id])
 
-  @@index([user_id, check_in_at])
-  @@index([company_id, check_in_at])
-  @@index([division_id, check_in_at])
+  @@unique([user_id, date])
+  @@index([company_id, division_id, date, is_late])
 }
 
 model AttendanceStatus {
@@ -198,9 +189,11 @@ model VisitLog {
   id         Int      @id @default(autoincrement())
   user_id    Int
   company_id Int
+  date       DateTime  @db.Date
   photo_url  String
   latitude   Float?
   longitude  Float?
+  location_address String?
   notes      String?
   visited_at DateTime @default(now())
   is_active  Boolean  @default(true)
@@ -212,57 +205,15 @@ model VisitLog {
   user    User    @relation(fields: [user_id], references: [id])
   company Company @relation(fields: [company_id], references: [id])
 
-  @@index([user_id, visited_at])
-  @@index([company_id, visited_at])
+  @@index([user_id, company_id, date])
 }
 
 
-model AbsentRequest {
-  id          Int                 @id @default(autoincrement())
-  user_id     Int
-  company_id  Int
-  division_id Int
-  shift_id    Int?
-  date        DateTime
-  reason      String
-  proof_url   String?
-  status_id   Int
-  reviewed_by Int?
-  reviewed_at DateTime?
-  notes       String?
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  user     User    @relation("AbsentRequests", fields: [user_id], references: [id])
-  company  Company @relation(fields: [company_id], references: [id])
-  shift    Shift?  @relation(fields: [shift_id], references: [id])
-  division Division @relation(fields: [division_id], references: [id])
-  absent_request_status   AbsentRequestStatus @relation(fields: [status_id], references: [id])
-
-  @@index([user_id, date])
-  @@index([company_id, status_id])
-}
-
-model AbsentRequestStatus {
-  id         Int  @id @default(autoincrement())
-  name       String
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  absent_request AbsentRequest[]
-
-}
 
 model Shift {
   id                    Int    @id @default(autoincrement())
-  division_id           Int
   company_id            Int
+  division_id           Int
   name                  String // shift name anything from admin input!
   start_time            String // "07:00" — format HH:mm
   end_time              String // "15:00"
@@ -275,10 +226,9 @@ model Shift {
   division    Division     @relation(fields: [division_id], references: [id])
   company     Company      @relation(fields: [company_id], references: [id])
   attendances Attendance[]
-  absent_requests   AbsentRequest[]
 
-  @@index([division_id])
-  @@index([company_id])
+
+  @@index([company_id, division_id])
   
 }
 
@@ -286,8 +236,8 @@ model Shift {
 
 model ChecklistTemplate {
   id          Int      @id @default(autoincrement())
-  division_id Int
   company_id  Int
+  division_id Int
   title       String
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
@@ -295,12 +245,12 @@ model ChecklistTemplate {
   deleted_at DateTime?
   updated_at DateTime @updatedAt
 
-  division Division @relation(fields: [division_id], references: [id])
-  company Company @relation(fields: [company_id], references: [id])
+  division Division   @relation(fields: [division_id], references: [id])
+  company Company     @relation(fields: [company_id], references: [id])
   items ChecklistItem[]
 
-  @@index([division_id])
-  @@index([company_id])
+  @@index([company_id, division_id])
+
 }
 
 model ChecklistItem {
@@ -335,8 +285,8 @@ model ChecklistSubmission {
   deleted_at DateTime?
   updated_at DateTime @updatedAt
 
-  attendance Attendance      @relation(fields: [attendance_id], references: [id])
-  item ChecklistItem   @relation(fields: [item_id], references: [id])
+  attendance    Attendance      @relation(fields: [attendance_id], references: [id])
+  item          ChecklistItem   @relation(fields: [item_id], references: [id])
   evidence_photo EvidencePhoto[]
 
   @@index([attendance_id])
@@ -350,8 +300,6 @@ model EvidencePhoto {
   reviewed_by    Int? // user_id supervisor
   reviewed_at    DateTime?
   reject_reason  String?
-  is_highlighted Boolean     @default(false) // higlighted photo only can be chosen by admin
-  highlighted_at DateTime?
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
@@ -360,10 +308,10 @@ model EvidencePhoto {
 
   submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
   reviewer   User?               @relation("PhotoReviews", fields: [reviewed_by], references: [id])
-  photo_status     PhotoStatus         @relation(fields: [status_id], references: [id])
+  photo_status     PhotoStatus   @relation(fields: [status_id], references: [id])
 
   @@index([submission_id, status_id])
-  @@index([is_highlighted])
+
 }
 
 model PhotoStatus {
@@ -377,173 +325,4 @@ model PhotoStatus {
 
   evidence_photo EvidencePhoto[]
 
-}
-model WorkLog {
-  id            Int      @id @default(autoincrement())
-  user_id       Int
-  attendance_id Int
-  date          DateTime
-  description   String
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  user       User           @relation(fields: [user_id], references: [id])
-  attendance Attendance     @relation(fields: [attendance_id], references: [id])
-  wrok_log_photos     WorkLogPhoto[]
-
-  @@index([user_id, date])
-  @@index([attendance_id])
-}
-
-model WorkLogPhoto {
-  id          Int      @id @default(autoincrement())
-  work_log_id Int
-  photo_url   String
-  caption     String? // photos caption from user input
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  work_log WorkLog @relation(fields: [work_log_id], references: [id])
-}
-
-
-model ReportTemplate {
-  id          Int @id @default(autoincrement())
-  division_id Int @unique // 1 template per division
-
-  template_style_id  Int
-  report_mode_id    Int
-
-  // Header laporan
-  report_title       String?
-  show_logo          Boolean @default(true)
-  section_intro      String? // I. PENDAHULUAN
-  section_background String? // II. LATAR BELAKANG
-  section_purpose    String? // III. TUJUAN
-  section_duties     String? // IV. TUGAS UMUM
-  section_scope      String? // V. SASARAN
-  section_schedule   String? // VI. WAKTU PELAKSANAAN
-  section_evaluation String? // VII. EVALUASI — bisa diedit tiap generate
-  section_suggestion String? // VIII. SARAN
-  section_closing    String? // IX. PENUTUP
-  section_config     Json? // JSON config for which sections to include and their order
-
-  photos_per_row Int @default(2)
-
-  show_photo_caption Boolean @default(true)
-
-  photo_caption_template String? // e.g. "{name} sedang {activity}"
-
-  // SIGN
-  signers Json? // JSON array of signers with name and title
-
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  division Division @relation(fields: [division_id], references: [id])
-  template_style TemplateStyle @relation(fields: [template_style_id], references: [id])
-  report_mode ReportMode @relation(fields: [report_mode_id], references: [id])
-}
-
-
-
-
-
-model TemplateStyle {
-id   Int @id @default(autoincrement()) 
-name String
-is_active  Boolean  @default(true)
-is_deleted Boolean  @default(false)
-created_at DateTime @default(now())
-deleted_at DateTime?
-updated_at DateTime @updatedAt
-
-report_template ReportTemplate[]
-
-
-
-//   FORMAL_STRUCTURED
-//   PHOTO_GRID
-//   DAILY_LOG
-//   COMBINED_FULL
-//   MINIMAL
-
-}
-
-model ReportMode {
-id   Int @id @default(autoincrement())
-name String
-is_active  Boolean  @default(true)
-is_deleted Boolean  @default(false)
-created_at DateTime @default(now())
-deleted_at DateTime?
-updated_at DateTime @updatedAt
-
-
-report_template ReportTemplate[]
-report Report[]
-
-
-
-//   NARRATIVE_ONLY
-//   PHOTO_ONLY
-//   COMBINED
-}
-
-model Report {
-  id                 Int        @id @default(autoincrement())
-  company_id         Int
-  division_id        Int
-  period_month       Int // 1–12
-  period_year        Int
-  report_mode_id     Int
-  snapshot_narrative Json?
-
-  file_url     String?
-  file_type_id    Int
-  generated_by Int
-  generated_at DateTime?
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-
-  company           Company  @relation(fields: [company_id], references: [id])
-  division          Division @relation(fields: [division_id], references: [id])
-  generated_by_user User     @relation("ReportGeneratedBy", fields: [generated_by], references: [id])
-  report_mode ReportMode @relation(fields: [report_mode_id], references: [id])
-  file_type    FileType @relation(fields: [file_type_id], references: [id])
-
-  @@unique([company_id, division_id, period_month, period_year]) // 1 laporan per divisi per bulan
-  @@index([company_id, period_year, period_month])
-}
-
-
-
-
-
-model FileType {
-id   Int @id @default(autoincrement())
-name String
-is_active  Boolean  @default(true)
-is_deleted Boolean  @default(false)
-created_at DateTime @default(now())
-deleted_at DateTime?
-updated_at DateTime @updatedAt
-
-report Report[]
-
-//   PDF
-//   DOCX
 }
