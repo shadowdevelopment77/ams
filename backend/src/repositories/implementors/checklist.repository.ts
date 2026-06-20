@@ -12,9 +12,11 @@ import {
   CreateChecklistTemplateDTO,
   UpdateChecklistTemplateDTO,
   ChecklistItemRepository,
-  CreateChecklistSubmissionDTO,
-  UpdateChecklistSubmissionDTO,
   ChecklistSubmissionRepository,
+  ChecklistSubmissionFilterParams,
+  CreateChecklistSubmissionDTO,
+  ReviewSubmissionDTO,
+  UpdateChecklistSubmissionDTO,
 } from "../interfaces/checklist.interface";
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
 
@@ -28,7 +30,7 @@ export class PrismaChecklistTemplateRepository
     super(prisma);
   }
 
-  async findTemplate(companyId: number, divisionId: number): Promise<ChecklistTemplate[]> {
+  async findByDivision(companyId: number, divisionId: number): Promise<ChecklistTemplate[]> {
     return this.prisma.checklistTemplate.findMany({
       where: { company_id: companyId, division_id: divisionId, is_deleted: false },
       orderBy: { created_at: "desc" },
@@ -111,17 +113,110 @@ export class PrismaChecklistSubmissionRepository
     });
   }
 
-  async submitAll(attendanceId: string): Promise<void> {
-    await this.prisma.checklistSubmission.updateMany({
-      where: {
-        attendance_id: attendanceId,
+async submitAll(attendanceId: string, statusId: number): Promise<void> {
+  await this.prisma.checklistSubmission.updateMany({
+    where: {
+      attendance_id: attendanceId,
+      is_submitted:  false,
+      is_deleted:    false,
+    },
+    data: {
+      is_submitted: true,
+      submitted_at: new Date(),
+      status_id:    statusId,
+    },
+  })
+}
+
+async findByDivision(
+    companyId: number,
+    divisionId: number,
+    date: Date,
+    params: ChecklistSubmissionFilterParams,
+  ): Promise<PaginatedResult<ChecklistSubmission>> {
+    const { skip, take, page, limit } = this.resolvePagination(params);
+
+    const where = {
+      is_deleted: false,
+      ...(params.statusId && { status_id: params.statusId }),
+      attendance: {
+        company_id: companyId,
+        division_id: divisionId,
+        date: date,
         is_deleted: false,
-        is_submitted: false,
       },
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.checklistSubmission.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          item: true,
+          evidence_photo: { where: { is_deleted: false } },
+          attendance: { include: { user: true } },
+          status: true,
+        },
+        orderBy: { created_at: "asc" },
+      }),
+      this.prisma.checklistSubmission.count({ where }),
+    ]);
+
+    return this.buildPaginatedResult(data, total, page, limit);
+  }
+
+   async review(submissionId: number, data: ReviewSubmissionDTO): Promise<ChecklistSubmission> {
+    return this.prisma.checklistSubmission.update({
+      where: { id: submissionId },
       data: {
-        is_submitted: true,
-        submitted_at: new Date(),
+        status_id: data.status_id,
+        reviewed_by: data.reviewed_by,
+        reviewed_at: new Date(),
+        reject_reason: data.reject_reason ?? null,
       },
     });
   }
+
+
+  async findByItemAndDate(
+    itemId: number,
+    companyId: number,
+    date: Date,
+    params: PaginationParams,
+  ): Promise<PaginatedResult<ChecklistSubmission>> {
+    const { skip, take, page, limit } = this.resolvePagination(params);
+
+    const where = {
+      item_id: itemId,
+      is_deleted: false,
+      attendance: {
+        company_id: companyId,
+        date: date,
+        is_deleted: false,
+      },
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.checklistSubmission.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          evidence_photo: {
+            where: { is_deleted: false },
+            orderBy: { order: "asc" },
+          },
+          attendance: {
+            include: { user: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { created_at: "asc" },
+      }),
+      this.prisma.checklistSubmission.count({ where }),
+    ]);
+
+    return this.buildPaginatedResult(data, total, page, limit);
+  }
+
 }
