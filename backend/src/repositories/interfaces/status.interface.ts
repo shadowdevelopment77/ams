@@ -24,7 +24,7 @@ export interface UpdatePhotoStatusDTO {
   is_active?: boolean;
 }
 
-export interface PhotoStatusRepository
+export interface SubmissionStatusRepository
   extends BaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO> {
   findByName(name: string): Promise<SubmissionStatus | null>;
 }

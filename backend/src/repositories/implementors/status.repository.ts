@@ -6,7 +6,7 @@ import {
   UpdateAttendanceStatusDTO,
   CreatePhotoStatusDTO,
   UpdatePhotoStatusDTO,
-  PhotoStatusRepository,
+  SubmissionStatusRepository,
 } from "../interfaces/status.interface";
 
 export class PrismaAttendanceStatusRepository
@@ -26,9 +26,9 @@ export class PrismaAttendanceStatusRepository
   }
 }
 
-export class PrismaPhotoStatusRepository
+export class PrismaSubmissionStatusRepository
   extends PrismaBaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO>
-  implements PhotoStatusRepository
+  implements SubmissionStatusRepository
 {
   protected modelName = "submissionStatus" as const;
 
