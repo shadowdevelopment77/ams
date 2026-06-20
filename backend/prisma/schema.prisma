@@ -77,7 +77,7 @@ model User {
   updated_at DateTime @updatedAt
 
 
-  photo_reviews EvidencePhoto[] @relation("PhotoReviews")
+  submission_reviews ChecklistSubmission[] @relation("SubmissionReviews")
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   visit_logs        VisitLog[]
@@ -275,9 +275,12 @@ model ChecklistSubmission {
   id            Int      @id @default(autoincrement())
   attendance_id String
   item_id       Int
-  is_done       Boolean  @default(false)
-  is_submitted  Boolean   @default(false)
+  status_id     Int?
+  reviewed_by   String?
+  reviewed_at   DateTime?
+  reject_reason String?
   notes         String?
+  is_submitted  Boolean  @default(false)
   submitted_at  DateTime?
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
@@ -287,6 +290,8 @@ model ChecklistSubmission {
 
   attendance    Attendance      @relation(fields: [attendance_id], references: [id])
   item          ChecklistItem   @relation(fields: [item_id], references: [id])
+  reviewer   User?             @relation("SubmissionReviews", fields: [reviewed_by], references: [id])
+  status     SubmissionStatus?  @relation(fields: [status_id], references: [id])
   evidence_photo EvidencePhoto[]
 
   @@index([attendance_id])
@@ -296,10 +301,7 @@ model EvidencePhoto {
   id             Int @id @default(autoincrement())
   submission_id  Int
   photo_url      String
-  status_id      Int
-  reviewed_by    String? // user_id supervisor
-  reviewed_at    DateTime?
-  reject_reason  String?
+  order           Int
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
@@ -307,14 +309,13 @@ model EvidencePhoto {
   updated_at DateTime @updatedAt
 
   submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
-  reviewer    User?               @relation("PhotoReviews", fields: [reviewed_by], references: [id])
-  photo_status     PhotoStatus   @relation(fields: [status_id], references: [id])
+  
 
-  @@index([submission_id, status_id])
+  @@index([submission_id])
 
 }
 
-model PhotoStatus {
+model SubmissionStatus {
   id         Int  @id @default(autoincrement())
   name       String
   is_active  Boolean  @default(true)
@@ -323,6 +324,6 @@ model PhotoStatus {
   deleted_at DateTime?
   updated_at DateTime @updatedAt
 
-  evidence_photo EvidencePhoto[]
+  checklist_submission ChecklistSubmission[]
 
 }
