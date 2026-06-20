@@ -1,4 +1,4 @@
-import { AttendanceStatus, PhotoStatus, PrismaClient } from "../../../generated/prisma";
+import { AttendanceStatus, SubmissionStatus, PrismaClient } from "../../../generated/prisma";
 import { PrismaBaseRepository } from "./base.repository";
 import {
   AttendanceStatusRepository,
@@ -27,17 +27,17 @@ export class PrismaAttendanceStatusRepository
 }
 
 export class PrismaPhotoStatusRepository
-  extends PrismaBaseRepository<PhotoStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO>
+  extends PrismaBaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO>
   implements PhotoStatusRepository
 {
-  protected modelName = "photoStatus" as const;
+  protected modelName = "submissionStatus" as const;
 
   constructor(prisma: PrismaClient) {
     super(prisma);
   }
 
-  async findByName(name: string): Promise<PhotoStatus | null> {
-    return this.prisma.photoStatus.findFirst({
+  async findByName(name: string): Promise<SubmissionStatus | null> {
+    return this.prisma.submissionStatus.findFirst({
       where: { name, is_deleted: false },
     });
   }
