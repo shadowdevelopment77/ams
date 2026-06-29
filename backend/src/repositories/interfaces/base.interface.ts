@@ -17,9 +17,9 @@ export interface SoftDeleteParams {
 }
  
 export interface BaseRepository<T, CreateDTO, UpdateDTO> {
-  findById(id: number): Promise<T | null>;
+  findById(id: string): Promise<T | null>;
   findAll(params?: PaginationParams): Promise<PaginatedResult<T>>;
   create(data: CreateDTO): Promise<T>;
-  update(id: number, data: UpdateDTO): Promise<T>;
-  softDelete(id: number): Promise<T>;
+  update(id: string, data: UpdateDTO): Promise<T>;
+  softDelete(id: string): Promise<T>;
 }

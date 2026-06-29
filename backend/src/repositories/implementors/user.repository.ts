@@ -7,6 +7,7 @@ import {
   UpdateUserDTO,
   CreateUserCompanyRoleDTO,
   UpdateUserCompanyRoleDTO,
+  UserCompanyRoleWithRole
 } from "../interfaces/user.interface"
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
@@ -32,7 +33,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
   async findRoleByUserId(
     user_id: string,
     params?: PaginationParams
-  ): Promise<PaginatedResult<UserCompanyRole>> {
+  ): Promise<PaginatedResult<UserCompanyRoleWithRole>> {
     const { skip, take, page, limit } = this.resolvePagination(params)
     const where = { user_id, is_deleted: false }
 

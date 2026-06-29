@@ -1,4 +1,4 @@
-import { User, UserCompanyRole } from "../../../generated/prisma"
+import { Prisma, User, UserCompanyRole } from "../../../generated/prisma"
 import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
 
 export interface CreateUserDTO {
@@ -33,10 +33,19 @@ export interface UpdateUserCompanyRoleDTO {
 }
 
 
+export type UserCompanyRoleWithRole = Prisma.UserCompanyRoleGetPayload<{
+  include: {
+    userRole: true
+    company:  true
+    division: true
+  }
+}>
+
+
 
 export interface UserRepository extends BaseRepository<User, CreateUserDTO, UpdateUserDTO> {
   findByEmail(email: string): Promise<User | null>
-  findRoleByUserId(user_id: string,  params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole | null>>
+  findRoleByUserId(user_id: string, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRoleWithRole>>
   createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole>
   findUsersByCompany(company_id: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>

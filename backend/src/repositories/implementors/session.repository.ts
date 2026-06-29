@@ -16,7 +16,7 @@ export class PrismaSessionRepository implements SessionRepository {
     await this.prisma.session.delete({ where: { id } }).catch(() => {});
   }
 
-  async deleteByUser(userId: number): Promise<void> {
+  async deleteByUser(userId: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { user_id: userId } });
   }
 
