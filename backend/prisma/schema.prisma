@@ -81,6 +81,7 @@ model User {
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   visit_logs        VisitLog[]
+  sesssions         Session[]
 
 }
 
@@ -124,9 +125,11 @@ model UserRole{
 
 model Session {
   id         String   @id @default(uuid())
-  user_id    Int
+  user_id    String
   expires_at DateTime
   created_at DateTime @default(now())
+
+  user       User @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
 }
