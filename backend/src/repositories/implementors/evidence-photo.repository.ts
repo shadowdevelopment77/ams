@@ -9,7 +9,7 @@ import { PaginatedResult } from "../interfaces/base.interface";
 
 
 export class PrismaEvidencePhotoRepository
-  extends PrismaBaseRepository<EvidencePhoto, CreateEvidencePhotoDTO, {}>
+  extends PrismaBaseRepository<EvidencePhoto, CreateEvidencePhotoDTO, {}, number>
   implements EvidencePhotoRepository
 {
   protected modelName = "evidencePhoto" as const;

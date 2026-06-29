@@ -17,6 +17,6 @@ export interface UpdateShiftDTO{
     is_active?: boolean;
 }
 
-export interface ShiftRepository extends BaseRepository<Shift, CreateShiftDTO, UpdateShiftDTO> {
+export interface ShiftRepository extends BaseRepository<Shift, CreateShiftDTO, UpdateShiftDTO, number> {
     findShift(companyId: number, divisionId: number): Promise<Shift[]>;
 }

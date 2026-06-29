@@ -1,5 +1,5 @@
 import { Company } from "../../../generated/prisma";
-import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
+import { BaseRepository} from "./base.interface";
 
 export interface CreateCompanyDTO {
   name: string;
@@ -20,6 +20,6 @@ export interface UpdateCompanyDTO {
   is_active?: boolean;
 }
 
-export interface CompanyRepository extends BaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO> {
+export interface CompanyRepository extends BaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO, number> {
   findByName(name: string): Promise<Company | null>;
 }

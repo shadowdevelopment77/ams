@@ -5,8 +5,8 @@ import { BaseRepository, PaginatedResult, PaginationParams } from "../interfaces
 // T      = Prisma model type (e.g. User, Company)
 // CreateDTO = shape of data to create
 // UpdateDTO = shape of data to update
-export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO>
-  implements BaseRepository<T, CreateDTO, UpdateDTO>
+export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO, IDType>
+  implements BaseRepository<T, CreateDTO, UpdateDTO, IDType>
 {
   // Each child class must declare which prisma model it uses
   // e.g.  protected modelName = "user" as const
@@ -49,7 +49,7 @@ export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO>
 
   // ─── Shared CRUD (used by all repositories unless overridden) ────────────
 
-  async findById(id: string): Promise<T | null> {
+  async findById(id: IDType): Promise<T | null> {
     return this.delegate.findFirst({
       where: { id, is_deleted: false },
     })
@@ -71,11 +71,11 @@ export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO>
     return this.delegate.create({ data })
   }
 
-  async update(id: string, data: UpdateDTO): Promise<T> {
+  async update(id: IDType, data: UpdateDTO): Promise<T> {
     return this.delegate.update({ where: { id }, data })
   }
 
-  async softDelete(id: string): Promise<T> {
+  async softDelete(id: IDType): Promise<T> {
     return this.delegate.update({
       where: { id },
       data: { is_deleted: true, deleted_at: new Date(), is_active: false },

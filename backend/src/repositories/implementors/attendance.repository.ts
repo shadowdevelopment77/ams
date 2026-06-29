@@ -9,7 +9,7 @@ import {
 import { PaginatedResult } from "../interfaces/base.interface";
 
 export class PrismaAttendanceRepository
-  extends PrismaBaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO>
+  extends PrismaBaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO, string>
   implements AttendanceRepository
 {
   protected modelName = "attendance" as const;

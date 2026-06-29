@@ -9,7 +9,7 @@ import { PaginationParams, PaginatedResult } from "../interfaces/base.interface"
 
 
 export class PrismaVisitLogRepository
-  extends PrismaBaseRepository<VisitLog, CreateVisitLogDTO, UpdateVisitLogDTO>
+  extends PrismaBaseRepository<VisitLog, CreateVisitLogDTO, UpdateVisitLogDTO, number>
   implements VisitLogRepository
 {
   protected modelName = "visitLog" as const;

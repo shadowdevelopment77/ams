@@ -25,7 +25,7 @@ export type EvidencePhotoWithSubmission = Prisma.EvidencePhotoGetPayload<{
 }>
 
 export interface EvidencePhotoRepository
-  extends BaseRepository<EvidencePhoto, CreateEvidencePhotoDTO, {}> {
+  extends BaseRepository<EvidencePhoto, CreateEvidencePhotoDTO, {}, number> {
   findBySubmission(submissionId: number): Promise<EvidencePhoto[]>;
   countBySubmission(submissionId: number): Promise<number>;
 }

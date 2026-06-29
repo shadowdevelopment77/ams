@@ -11,7 +11,7 @@ export interface UpdateAttendanceStatusDTO {
 }
 
 export interface AttendanceStatusRepository
-  extends BaseRepository<AttendanceStatus, CreateAttendanceStatusDTO, UpdateAttendanceStatusDTO> {
+  extends BaseRepository<AttendanceStatus, CreateAttendanceStatusDTO, UpdateAttendanceStatusDTO, number> {
   findByName(name: string): Promise<AttendanceStatus | null>;
 }
 
@@ -25,6 +25,6 @@ export interface UpdatePhotoStatusDTO {
 }
 
 export interface SubmissionStatusRepository
-  extends BaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO> {
+  extends BaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO, number> {
   findByName(name: string): Promise<SubmissionStatus | null>;
 }

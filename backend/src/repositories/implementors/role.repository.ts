@@ -2,7 +2,7 @@ import {UserRole, PrismaClient} from "../../../generated/prisma"
 import {RoleRepository, UpdateRoleDTO, CreateRoleDTO} from "../interfaces/role.interface"
 import { PrismaBaseRepository } from "./base.repository";
 
-export class PrismaRoleRepository extends PrismaBaseRepository<UserRole, CreateRoleDTO, UpdateRoleDTO> implements RoleRepository {
+export class PrismaRoleRepository extends PrismaBaseRepository<UserRole, CreateRoleDTO, UpdateRoleDTO, number> implements RoleRepository {
 
   protected modelName = "userRole" as const
 

@@ -3,7 +3,7 @@ import { CreateCompanyDTO, CompanyRepository, UpdateCompanyDTO } from "../interf
 import { PrismaBaseRepository } from "./base.repository";
 
 export class PrismaCompanyRepository
-  extends PrismaBaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO>
+  extends PrismaBaseRepository<Company, CreateCompanyDTO, UpdateCompanyDTO, number>
   implements CompanyRepository
 {
   protected modelName = "company" as const;

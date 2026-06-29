@@ -19,6 +19,6 @@ export interface UpdateVisitLogDTO {
 
 
 export interface VisitLogRepository
-  extends BaseRepository<VisitLog, CreateVisitLogDTO, UpdateVisitLogDTO> {
+  extends BaseRepository<VisitLog, CreateVisitLogDTO, UpdateVisitLogDTO, number> {
   findByUser(userId: string, date: Date, params?: PaginationParams): Promise<PaginatedResult<VisitLog>>;
 }

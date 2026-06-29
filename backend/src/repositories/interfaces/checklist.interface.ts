@@ -14,7 +14,7 @@ export interface UpdateChecklistTemplateDTO {
 }
 
 export interface ChecklistTemplateRepository
-  extends BaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO> {
+  extends BaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO,number> {
   findByDivision(companyId: number, divisionId: number): Promise<ChecklistTemplate[]>;
 }
 
@@ -35,7 +35,7 @@ export interface UpdateChecklistItemDTO {
 
 
 export interface ChecklistItemRepository
-  extends BaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO> {
+  extends BaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO, number> {
   findByTemplate(templateId: number, params?: PaginationParams): Promise<PaginatedResult<ChecklistItem>>;
 }
 
@@ -62,7 +62,7 @@ export interface ChecklistSubmissionFilterParams extends PaginationParams {
 }
 
 export interface ChecklistSubmissionRepository
-  extends BaseRepository<ChecklistSubmission, CreateChecklistSubmissionDTO, UpdateChecklistSubmissionDTO> {
+  extends BaseRepository<ChecklistSubmission, CreateChecklistSubmissionDTO, UpdateChecklistSubmissionDTO, number> {
   findByAttendanceAndItem(attendanceId: string, itemId: number): Promise<ChecklistSubmission | null>;
   bulkCreate(attendanceId: string, itemIds: number[]): Promise<ChecklistSubmission[]>;
   submitAll(attendanceId: string, statusId: number): Promise<void>;

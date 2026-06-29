@@ -23,6 +23,6 @@ export interface UpdateDivisionDTO {
   is_active?: boolean;
 }
  
-export interface DivisionRepository extends BaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO> {
+export interface DivisionRepository extends BaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO, number> {
   findByCompany(companyId: number, params?: PaginationParams): Promise<PaginatedResult<Division>>;
 }

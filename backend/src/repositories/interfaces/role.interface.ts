@@ -12,6 +12,6 @@ export interface UpdateRoleDTO {
   is_active?: boolean
 }
 
-export interface RoleRepository extends BaseRepository<UserRole, CreateRoleDTO, UpdateRoleDTO> {
+export interface RoleRepository extends BaseRepository<UserRole, CreateRoleDTO, UpdateRoleDTO, number> {
   findByName(name: string): Promise<UserRole | null>;
 }

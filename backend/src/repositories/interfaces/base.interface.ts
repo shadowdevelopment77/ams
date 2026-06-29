@@ -16,10 +16,10 @@ export interface SoftDeleteParams {
   deleted_at: Date | null;
 }
  
-export interface BaseRepository<T, CreateDTO, UpdateDTO> {
-  findById(id: string): Promise<T | null>;
+export interface BaseRepository<T, CreateDTO, UpdateDTO, IDType> {
+  findById(id: IDType): Promise<T | null>;
   findAll(params?: PaginationParams): Promise<PaginatedResult<T>>;
   create(data: CreateDTO): Promise<T>;
-  update(id: string, data: UpdateDTO): Promise<T>;
-  softDelete(id: string): Promise<T>;
+  update(id: IDType, data: UpdateDTO): Promise<T>;
+  softDelete(id: IDType): Promise<T>;
 }

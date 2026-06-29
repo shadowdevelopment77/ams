@@ -3,7 +3,7 @@ import {ShiftRepository, CreateShiftDTO, UpdateShiftDTO} from "../interfaces/shi
 import {PrismaBaseRepository} from "./base.repository"
 
 
-export class PrismaShiftRepository extends PrismaBaseRepository<Shift, CreateShiftDTO, UpdateShiftDTO> implements ShiftRepository {
+export class PrismaShiftRepository extends PrismaBaseRepository<Shift, CreateShiftDTO, UpdateShiftDTO, number> implements ShiftRepository {
     protected modelName = "shift" as const;
 
     constructor(prisma: PrismaClient) {

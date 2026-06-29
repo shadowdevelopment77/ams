@@ -21,7 +21,7 @@ import {
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
 
 export class PrismaChecklistTemplateRepository
-  extends PrismaBaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO>
+  extends PrismaBaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO, number>
   implements ChecklistTemplateRepository
 {
   protected modelName = "checklistTemplate" as const;
@@ -40,7 +40,7 @@ export class PrismaChecklistTemplateRepository
 }
 
 export class PrismaChecklistItemRepository
-  extends PrismaBaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO>
+  extends PrismaBaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO, number>
   implements ChecklistItemRepository
 {
   protected modelName = "checklistItem" as const;
@@ -74,7 +74,8 @@ export class PrismaChecklistSubmissionRepository
   extends PrismaBaseRepository<
     ChecklistSubmission,
     CreateChecklistSubmissionDTO,
-    UpdateChecklistSubmissionDTO
+    UpdateChecklistSubmissionDTO,
+    number
   >
   implements ChecklistSubmissionRepository
 {

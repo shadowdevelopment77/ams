@@ -12,7 +12,7 @@ import {
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
 export class PrismaUserRepository
-extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO>
+extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
   implements UserRepository
 {
   // tells BaseRepository to use prisma.user for all generic CRUD

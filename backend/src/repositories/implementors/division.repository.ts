@@ -4,7 +4,7 @@ import { CreateDivisionDTO, DivisionRepository, UpdateDivisionDTO } from "../int
 import { PrismaBaseRepository } from "./base.repository";
 
 export class PrismaDivisionRepository
-  extends PrismaBaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO>
+  extends PrismaBaseRepository<Division, CreateDivisionDTO, UpdateDivisionDTO, number>
   implements DivisionRepository
 {
   protected modelName = "division" as const;
