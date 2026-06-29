@@ -1,12 +1,17 @@
-import { Request, Response, NextFunction } from "express"
-import { sendError } from "../utils/response"
+// src/middlewares/error.middleware.ts
+import { Request, Response, NextFunction } from 'express'
+import { sendError,  } from '../utils/error.response/response'
+import {AppError} from '../utils/error.response/appError'
 
-export const errorHandler = (
+export const errorMiddleware = (
   err: Error,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  console.error("Unhandled error:", err.message)
-  return sendError(res, "Internal server error", 500)
+  if (err instanceof AppError) {
+    return sendError(res, err.message, err.statusCode)
+  }
+  console.error(err)  // log unexpected errors
+  return sendError(res, 'Internal server error', 500)
 }
