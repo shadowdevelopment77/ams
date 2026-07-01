@@ -10,7 +10,7 @@ import {
 } from "../interfaces/status.interface";
 
 export class PrismaAttendanceStatusRepository
-  extends PrismaBaseRepository<AttendanceStatus, CreateAttendanceStatusDTO, UpdateAttendanceStatusDTO>
+  extends PrismaBaseRepository<AttendanceStatus, CreateAttendanceStatusDTO, UpdateAttendanceStatusDTO, number>
   implements AttendanceStatusRepository
 {
   protected modelName = "attendanceStatus" as const;
@@ -27,7 +27,7 @@ export class PrismaAttendanceStatusRepository
 }
 
 export class PrismaSubmissionStatusRepository
-  extends PrismaBaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO>
+  extends PrismaBaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO, number>
   implements SubmissionStatusRepository
 {
   protected modelName = "submissionStatus" as const;

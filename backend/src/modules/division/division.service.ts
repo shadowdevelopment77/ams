@@ -1,55 +1,52 @@
-import prisma from "../../lib/prisma"
+import {companyRepository, divisionRepository} from "../../repositories/index.repositories"
 import { CreateDivisionInput, UpdateDivisionInput } from "./division.validation"
+import { AppError } from "../../utils/error.response/appError"
+import { PaginationParams } from "../../repositories/interfaces/base.interface"
 
-export const createDivision = async (input: CreateDivisionInput) => {
-  const company = await prisma.company.findUnique({ where: { id: input.company_id } })
-  if (!company) throw new Error("Company not found")
+export class DivisionService {
+  
+   async getAll(params: PaginationParams) {
+    return divisionRepository.findAll(params)
+  }
 
-  const existing = await prisma.division.findUnique({
-    where: { company_id_name: { company_id: input.company_id, name: input.name } },
-  })
-  if (existing) throw new Error("Division with this name already exists in this company")
+  async getById(id: number) {
+    const division = await divisionRepository.findById(id)
+    if (!division) throw new AppError('Division not found', 404)
+    return division
+  }
 
-  return await prisma.division.create({ data: input })
+
+  async getByCompany(companyId: number, params: PaginationParams) {
+    const company = await companyRepository.findById(companyId)
+    if (!company) throw new AppError('Company not found', 404)
+    return divisionRepository.findByCompany(companyId, params)
+  }
+
+  async create(data: CreateDivisionInput) {
+    const existing = await companyRepository.findById(data.company_id)
+    if (existing) throw new AppError('Division already exists on that Company', 409)
+    return divisionRepository.create(data)
+  }
+
+  async update(id: number, data: UpdateDivisionInput) {
+    const division = await divisionRepository.findById(id)
+    if (!division) throw new AppError('Division not found', 404)
+
+    if (data.name && data.name !== division.name) {
+      const existing = await divisionRepository.findByName(division.company_id, data.name)
+      if (existing) throw new AppError('Division name already exists', 409)
+    }
+ 
+    return divisionRepository.update(id, data)
+  }
+
+  async delete(id: number) {
+    const division = await divisionRepository.findById(id)
+    if (!division) throw new AppError('Division not found', 404)
+    return divisionRepository.softDelete(id)
+  }
+
+
 }
 
-export const updateDivision = async (id: number, input: UpdateDivisionInput) => {
-  const division = await prisma.division.findUnique({ where: { id } })
-  if (!division) throw new Error("Division not found")
-
-  return await prisma.division.update({ where: { id }, data: input })
-}
-
-export const getDivisionsByCompany = async (company_id: number, user_id: number) => {
-  const company = await prisma.company.findUnique({ where: { id: company_id } })
-  if (!company) throw new Error("Company not found")
-
-    const userRole = await prisma.userCompanyRole.findFirst({
-      where: { user_id, company_id }
-    })
-  if (!userRole) throw new Error("User does not belong to this company")
-    
-  return await prisma.division.findMany({
-    where: { company_id, is_active: true },
-    include: {
-      shifts: {
-        where: { is_active: true },
-        select: { id: true, name: true, start_time: true, end_time: true },
-      },
-      _count: { select: { user_roles: true } },
-    },
-  })
-}
-
-export const deleteDivision = async (id: number) => {
-  const division = await prisma.division.findUnique({ where: { id } })
-  if (!division) throw new Error("Division not found")
-
-  const hasStaff = await prisma.userCompanyRole.findFirst({ where: { division_id: id } })
-  if (hasStaff) throw new Error("Cannot delete division that still has staff assigned")
-
-  return await prisma.division.update({
-    where: { id },
-    data: { is_active: false },
-  })
-}
+export const divisionService = new DivisionService()

@@ -1,15 +1,20 @@
 import { Router } from "express"
-import * as DivisionController from "./division.controller"
-import { authenticate, requireRole } from "../../middlewares/auth.middleware"
+import {authMiddleware} from '../../middlewares/auth.middleware'
+import {roleMiddleware} from '../../middlewares/role.middleware'
+import { divisionController } from "./division.controller"
+import { validateCreateDivision, validateUpdateDivision } from "./division.validation"
 
 const router = Router()
-const adminOnly = [authenticate, requireRole("ADMIN")]
+const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 router.use(adminOnly)
 
-router.post("/", DivisionController.createDivision)
-router.put("/:id", DivisionController.updateDivision)
-router.delete("/:id", DivisionController.deleteDivision)
-router.get("/company/:company_id", DivisionController.getDivisionsByCompany)
+router.get("/", divisionController.getAll.bind(divisionController))
+router.get("/:id", divisionController.getById.bind(divisionController))
+router.post("/", validateCreateDivision, divisionController.create.bind(divisionController))
+router.put("/:id", validateUpdateDivision, divisionController.update.bind(divisionController))
+router.delete("/:id", divisionController.delete.bind(divisionController))
+router.get("/company/:companyId", divisionController.getByCompany.bind(divisionController))
+
 
 export default router
