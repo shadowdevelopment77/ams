@@ -51,12 +51,15 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
     return this.buildPaginatedResult(data, total, page, limit)
   }
 
-  async findUsersByCompany(
-    company_id: number,
+  
+  
+  async findUsersByCompanyAndDivision(
+    companyId: number,
+    divisionId: number,
     params?: PaginationParams
   ): Promise<PaginatedResult<UserCompanyRole>> {
     const { skip, take, page, limit } = this.resolvePagination(params)
-    const where = { company_id, is_deleted: false }
+    const where = { company_id: companyId, division_id: divisionId, is_deleted: false }
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.userCompanyRole.findMany({
@@ -75,7 +78,6 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
               is_active: true,
             },
           },
-          division: { select: { id: true, name: true } },
           userRole: true,
         },
       }),
@@ -84,6 +86,7 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
 
     return this.buildPaginatedResult(data, total, page, limit)
   }
+  
 
   async createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole> {
     return  this.prisma.userCompanyRole.create({
@@ -102,7 +105,6 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
       data: {
         company_id: data.company_id,
         division_id: data.division_id,
-        role_id: data.role_id,
       },
     })
   }

@@ -27,7 +27,6 @@ export interface CreateUserCompanyRoleDTO {
 export interface UpdateUserCompanyRoleDTO {
   company_id?: number | null
   division_id?: number | null
-  role_id?: number
 }
 
 
@@ -43,8 +42,9 @@ export type UserCompanyRoleWithRole = Prisma.UserCompanyRoleGetPayload<{
 
 export interface UserRepository extends BaseRepository<User, CreateUserDTO, UpdateUserDTO, string> {
   findByEmail(email: string): Promise<User | null>
-  findRoleByUserId(user_id: string, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRoleWithRole>>
+  findRoleByUserId(userId: string, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRoleWithRole>>
   createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole>
-  findUsersByCompany(company_id: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
+  findUsersByCompanyAndDivision(companyId: number, divisionId: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
+  
 }
