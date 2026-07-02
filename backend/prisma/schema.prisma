@@ -64,7 +64,6 @@ model User {
   email       String    @unique
   password    String
   phone       String?
-  photo_url   String? // profile photos
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
