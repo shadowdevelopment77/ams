@@ -1,68 +1,37 @@
-import { Request, Response } from "express"
-import * as AuthService from "./auth.service"
-import { registerSchema, loginSchema } from "./auth.validation"
-import { sendSuccess, sendError } from "../../utils/response"
+import {catchAsync} from "../../utils/error.response/catch-async"
+import { sendError, sendSuccess } from "../../utils/error.response/response";
+import { authService } from "./auth.service";
 
-export const register = async (req: Request, res: Response) => {
-  try {
-    const parsed = registerSchema.safeParse(req.body)
-    if (!parsed.success) {
-      return sendError(res, "Validation failed", 400, parsed.error.issues)
-    }
 
-    const user = await AuthService.register(parsed.data)
-    return sendSuccess(res, user, "Registration successful", 201)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Registration failed"
-    return sendError(res, message, 400)
-  }
-}
+export class AuthController {
 
-export const login = async (req: Request, res: Response) => {
-  try {
-    const parsed = loginSchema.safeParse(req.body)
-    if (!parsed.success) {
-      return sendError(res, "Validation failed", 400, parsed.error.issues)
-    }
 
-    const result = await AuthService.login(parsed.data)
+    register = catchAsync(async (req,res) => {
 
-   
-    res.cookie("session_id", result.session_id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      expires: result.expires_at,
+      const result = await authService.register(req.body)
+      return sendSuccess(res, result, 'User registered successfully', 201)
     })
 
-    return sendSuccess(res, { user: result.user }, "Login successful")
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Login failed"
-    return sendError(res, message, 401)
-  }
+    login = catchAsync(async (req,res) => {
+      const result = await authService.login(req.body)
+
+  res.cookie('sessionId', result.sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 2, // 2 hours, matches session expiry
+  })
+      return sendSuccess(res, { user: result.user }, 'Login successful')
+    })
+    
+    logout = catchAsync(async (req,res) => {
+      const sessionId = req.cookies.sessionId
+      if (!sessionId) return sendError(res, 'No session found', 400)
+      await authService.logout(sessionId)
+      res.clearCookie('sessionId')
+      return sendSuccess(res, null, 'User logged out successfully')
+
+    })
 }
 
-export const logout = async (req: Request, res: Response) => {
-  try {
-    const sessionId = req.cookies?.session_id
-    if (sessionId) await AuthService.logout(sessionId)
-
-    res.clearCookie("session_id")
-    return sendSuccess(res, null, "Logout successful")
-  } catch (error: unknown) {
-    return sendError(res, "Logout failed", 500)
-  }
-}
-
-export const getMe = async (req: Request, res: Response) => {
-  try {
-    const sessionId = req.cookies?.session_id
-    if (!sessionId) return sendError(res, "Unauthorized", 401)
-
-    const user = await AuthService.getMe(sessionId)
-    return sendSuccess(res, user, "User fetched successfully")
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unauthorized"
-    return sendError(res, message, 401)
-  }
-}
+export const authController = new AuthController()

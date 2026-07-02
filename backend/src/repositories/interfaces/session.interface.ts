@@ -1,7 +1,6 @@
 import { Session } from "../../../generated/prisma";
 
 export interface CreateSessionDTO {
-  id: string;
   user_id: string;
   expires_at: Date;
 }

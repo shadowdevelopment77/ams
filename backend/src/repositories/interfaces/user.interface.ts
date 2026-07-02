@@ -6,7 +6,6 @@ export interface CreateUserDTO {
   email: string
   password: string
   phone?: string
-  photo_url?: string
 }
 
 
@@ -15,7 +14,6 @@ export interface UpdateUserDTO {
   email?: string
   password?: string
   phone?: string
-  photo_url?: string
 }
 
 

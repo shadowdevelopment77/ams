@@ -75,7 +75,7 @@ model User {
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   visit_logs        VisitLog[]
-  sesssions         Session[]
+  sessions         Session[]
 
 }
 

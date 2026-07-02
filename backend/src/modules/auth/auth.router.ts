@@ -1,14 +1,17 @@
 import { Router } from "express"
-import * as AuthController from "./auth.controller"
-import {authenticate, requireRole} from "../../middlewares/auth.middleware"
+import {authController} from "./auth.controller"
+import {authMiddleware} from '../../middlewares/auth.middleware'
+import {roleMiddleware} from '../../middlewares/role.middleware'
+import {validateRegister, validateLogin} from './auth.validation'
+
 
 const router = Router()
-const adminOnly = [authenticate, requireRole("ADMIN")]
+const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 
-router.post("/register", adminOnly, AuthController.register)
-router.post("/login", AuthController.login)
-router.post("/logout", AuthController.logout)
-router.get("/me", authenticate, AuthController.getMe)
+router.post("/register", validateRegister, adminOnly, authController.register)
+router.post("/login", validateLogin, authController.login)
+router.post("/logout", authController.logout)
+
 
 export default router
