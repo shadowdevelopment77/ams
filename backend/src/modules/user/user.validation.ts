@@ -6,8 +6,8 @@ import { sendError } from "../../utils/error.response/response"
 
 
 const moveCompanySchema = z.object({
-  company_id: z.number(),
-  division_id: z.number(),
+  company_id: z.number({ error: 'Company is required' }),
+  division_id: z.number({ error: 'Division is required' }),
 })
 
 
