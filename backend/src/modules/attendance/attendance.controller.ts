@@ -1,113 +1,82 @@
-import { Request, Response } from "express"
-import * as AttendanceService from "./attendance.service"
-import { checkInSchema, checkOutSchema, absentRequestSchema, visitLogSchema } from "./attendance.validation"
-import { sendSuccess, sendError } from "../../utils/response"
-import { uploadImage } from "../../utils/uploadImage"
+import { attendanceService } from './attendance.service'
+import { sendSuccess } from '../../utils/error.response/response'
+import { catchAsync } from '../../utils/error.response/catch-async'
+import { uploadImage } from '../../utils/uploadImage'
+import { AppError } from '../../utils/error.response/appError'
+export class AttendanceController {
 
-export const checkIn = async (req: Request, res: Response) => {
-  try {
-    if (!req.file) return sendError(res, "Selfie photo is required", 400)
 
-    const parsed = checkInSchema.safeParse(req.body)
-    if (!parsed.success) return sendError(res, "Validation failed", 400, parsed.error.issues)
 
-    const photo_url = await uploadImage(req.file.buffer, "ams/attendance")
+  checkIn = catchAsync(async (req, res) => {
 
-    const result = await AttendanceService.checkIn(req.user!.id, {
-      ...parsed.data,
-      photo_url,
-    })
-    return sendSuccess(res, result, "Checked in successfully", 201)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Check in failed"
-    return sendError(res, message, 400)
-  }
+  if (!req.file) throw new AppError('Photo is required', 400)
+
+  const photo_url = await uploadImage(req.file.buffer, 'ams/attendance')
+
+    const result = await attendanceService.checkIn(
+      req.user!.id,
+      req.user!.companyId!,
+      req.user!.divisionId!,
+      {... req.body, photo_url}
+    )
+    return sendSuccess(res, result, 'Check in successful', 201)
+  })
+
+   checkOut = catchAsync(async (req, res) => {
+
+      if (!req.file) throw new AppError('Photo is required', 400)
+
+  const photo_url = await uploadImage(req.file.buffer, 'ams/attendance') 
+
+    const result = await attendanceService.checkOut(
+      req.params.id as string,
+      req.user!.id,
+      {... req.body, checkout_photo_url: photo_url}
+    )
+    return sendSuccess(res, result, 'Check out successful')
+  })
+
+  getByDate = catchAsync(async (req, res) => {
+    const companyId  = Number(req.query.companyId)
+    const divisionId = Number(req.query.divisionId)
+    const date       = req.query.date
+      ? new Date(req.query.date as string)
+      : new Date()
+
+    const params = {
+      page:     Number(req.query.page)  || 1,
+      limit:    Number(req.query.limit) || 10,
+      statusId: req.query.statusId ? Number(req.query.statusId) : undefined,
+    }
+
+    const result = await attendanceService.getByDate(companyId, divisionId, date, params)
+    return sendSuccess(res, result, 'Attendance fetched')
+  })
+
+  getLate = catchAsync(async (req, res) => {
+    const companyId  = Number(req.query.companyId)
+    const divisionId = Number(req.query.divisionId)
+    const date       = req.query.date
+      ? new Date(req.query.date as string)
+      : new Date()
+
+    const params = {
+      page:  Number(req.query.page)  || 1,
+      limit: Number(req.query.limit) || 10,
+    }
+
+    const result = await attendanceService.getLate(companyId, divisionId, date, params)
+    return sendSuccess(res, result, 'Late attendance fetched')
+  })
+
+  submitEarlyLeaveReason = catchAsync(async (req, res) => {
+  const result = await attendanceService.submitEarlyLeaveReason(
+    req.params.id as string,
+    req.user!.id,
+    req.body.early_leave_reason
+  )
+  return sendSuccess(res, result, 'Early leave reason submitted')
+})
 }
 
-export const checkOut = async (req: Request, res: Response) => {
-  try {
-    if (!req.file) return sendError(res, "Selfie photo is required", 400)
-
-    const parsed = checkOutSchema.safeParse(req.body)
-    if (!parsed.success) return sendError(res, "Validation failed", 400, parsed.error.issues)
-
-    const checkout_photo_url = await uploadImage(req.file.buffer, "ams/attendance")
-
-    const result = await AttendanceService.checkOut(req.user!.id, {
-      ...parsed.data,
-      checkout_photo_url,
-    })
-    return sendSuccess(res, result, "Checked out successfully")
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Check out failed"
-    return sendError(res, message, 400)
-  }
-}
-
-export const submitAbsentRequest = async (req: Request, res: Response) => {
-  try {
-    const parsed = absentRequestSchema.safeParse(req.body)
-    if (!parsed.success) return sendError(res, "Validation failed", 400, parsed.error.issues)
-
-    // proof photo optional
-    const proof_url = req.file
-      ? await uploadImage(req.file.buffer, "ams/absent")
-      : undefined
-
-    const result = await AttendanceService.submitAbsentRequest(req.user!.id, {
-      ...parsed.data,
-      proof_url,
-    })
-    return sendSuccess(res, result, "Absent request submitted successfully", 201)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to submit absent request"
-    return sendError(res, message, 400)
-  }
-}
-
-export const getMyAttendance = async (req: Request, res: Response) => {
-  try {
-    const result = await AttendanceService.getMyAttendance(req.user!.id)
-    return sendSuccess(res, result, "Attendance fetched successfully")
-  } catch (error: unknown) {
-    return sendError(res, "Failed to fetch attendance", 500)
-  }
-}
-
-export const getTodayAttendance = async (req: Request, res: Response) => {
-  try {
-    const result = await AttendanceService.getTodayAttendance(req.user!.id)
-    return sendSuccess(res, result, "Today attendance fetched successfully")
-  } catch (error: unknown) {
-    return sendError(res, "Failed to fetch attendance", 500)
-  }
-}
-
-export const createVisitLog = async (req: Request, res: Response) => {
-  try {
-    if (!req.file) return sendError(res, "Photo is required", 400)
-
-    const parsed = visitLogSchema.safeParse(req.body)
-    if (!parsed.success) return sendError(res, "Validation failed", 400, parsed.error.issues)
-
-    const photo_url = await uploadImage(req.file.buffer, "ams/visits")
-
-    const result = await AttendanceService.createVisitLog(req.user!.id, {
-      ...parsed.data,
-      photo_url,
-    })
-    return sendSuccess(res, result, "Visit logged successfully", 201)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to log visit"
-    return sendError(res, message, 400)
-  }
-}
-
-export const getMyVisitLogs = async (req: Request, res: Response) => {
-  try {
-    const result = await AttendanceService.getMyVisitLogs(req.user!.id)
-    return sendSuccess(res, result, "Visit logs fetched successfully")
-  } catch (error: unknown) {
-    return sendError(res, "Failed to fetch visit logs", 500)
-  }
-}
+export const attendanceController = new AttendanceController()

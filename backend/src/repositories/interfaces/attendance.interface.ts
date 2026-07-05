@@ -5,7 +5,7 @@ export interface CreateAttendanceDTO {
   user_id: string;
   company_id: number;
   division_id: number;
-  shift_id?: number;
+  shift_id: number;
   photo_url: string;
   date: Date; 
   latitude?: number;

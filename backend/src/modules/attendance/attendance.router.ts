@@ -1,22 +1,20 @@
 import { Router } from "express"
-import * as AttendanceController from "./attendance.controller"
-import { authenticate, requireRole } from "../../middlewares/auth.middleware"
-import { uploadAttendance, uploadAbsent, uploadVisit } from "../../lib/multer"
+import { attendanceController }from "./attendance.controller"
+import {authMiddleware} from '../../middlewares/auth.middleware'
+import {roleMiddleware} from '../../middlewares/role.middleware'
+import {validateCheckIn, validateCheckOut, validateEarlyLeaveReason} from './attendance.validation'
+import { uploadAttendance } from '../../lib/multer'
 
 const router = Router()
-const staffOnly = [authenticate, requireRole("STAFF")]
-const supervisorOnly = [authenticate, requireRole("SUPERVISOR")]
+const staffOnly = [authMiddleware, roleMiddleware("STAFF")]
+const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 
-// STAFF only
-router.post("/checkin", staffOnly, uploadAttendance.single("photo"), AttendanceController.checkIn)
-router.post("/checkout", staffOnly,uploadAttendance.single("photo"), AttendanceController.checkOut)
-router.post("/absent", staffOnly, uploadAbsent.single("proof"), AttendanceController.submitAbsentRequest)
-router.get("/my", staffOnly, AttendanceController.getMyAttendance)
-router.get("/today", staffOnly, AttendanceController.getTodayAttendance)
+router.post("/checkin", uploadAttendance.single("photo"), validateCheckIn, staffOnly, attendanceController.checkIn.bind(attendanceController))
+router.patch("/checkout", uploadAttendance.single("checkout_photo"), validateCheckOut, staffOnly, attendanceController.checkOut.bind(attendanceController))
+router.get("/", adminOnly, attendanceController.getByDate.bind(attendanceController))
+router.get("/late", adminOnly, attendanceController.getLate.bind(attendanceController))
+router.patch("/early-leave/:id", validateEarlyLeaveReason, staffOnly, attendanceController.submitEarlyLeaveReason.bind(attendanceController))
 
-// SUPERVISOR only
-router.post("/visit", supervisorOnly, uploadVisit.single("photo"), AttendanceController.createVisitLog)
-router.get("/visits/my", supervisorOnly, AttendanceController.getMyVisitLogs)
 
 export default router
