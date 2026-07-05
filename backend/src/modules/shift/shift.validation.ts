@@ -1,15 +1,35 @@
-import { z } from "zod"
+import { z } from 'zod'
+import { Request, Response, NextFunction } from 'express'
+import { sendError } from '../../utils/error.response/response'
 
-export const createShiftSchema = z.object({
-  division_id: z.number(),
-  company_id: z.number(),
-  name: z.string().min(2),
-  start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format must be HH:MM"),
-  end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format must be HH:MM"),
-  notify_before_minutes: z.number().default(30),
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
+
+const createShiftSchema = z.object({
+  company_id:  z.number({ error: 'Company is required' }),
+  division_id: z.number({ error: 'Division is required' }),
+  name:        z.string().min(1, 'Shift name is required'),
+  start_time:  z.string().regex(timeRegex, 'Start time must be HH:mm format'),
+  end_time:    z.string().regex(timeRegex, 'End time must be HH:mm format'),
 })
 
-export const updateShiftSchema = createShiftSchema.partial().omit({ division_id: true, company_id: true })
+
+const updateShiftSchema = createShiftSchema.partial().extend({
+  is_active: z.boolean().optional(),
+}).omit({ company_id: true, division_id: true })
 
 export type CreateShiftInput = z.infer<typeof createShiftSchema>
 export type UpdateShiftInput = z.infer<typeof updateShiftSchema>
+
+export const validateCreateShift = (req: Request, res: Response, next: NextFunction) => {
+  const result = createShiftSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}
+
+export const validateUpdateShift = (req: Request, res: Response, next: NextFunction) => {
+  const result = updateShiftSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}

@@ -1,58 +1,71 @@
-import prisma from "../../lib/prisma"
+import {shiftRepository, companyRepository, divisionRepository} from "../../repositories/index.repositories"
 import { CreateShiftInput, UpdateShiftInput } from "./shift.validation"
+import { AppError } from "../../utils/error.response/appError"
 
 
-export const createShift = async (input: CreateShiftInput) => {
-  const division = await prisma.division.findUnique({ where: { id: input.division_id } })
-  if (!division) throw new Error("Division not found")
-  if (division.company_id !== input.company_id) throw new Error("Division does not belong to this company")
 
-  return await prisma.shift.create({
-    data: {
-     division_id: input.division_id,
-      company_id: input.company_id,
-      name: input.name,
-      start_time: input.start_time,   
-      end_time: input.end_time,       
-      notify_before_minutes: input.notify_before_minutes,
-    },
-  })
+export class ShiftService {
+   private async getShiftOrThrow(id: number) {
+    const shift = await shiftRepository.findById(id)
+    if (!shift) throw new AppError('Shift not found', 404)
+    return shift
+  }
+
+  private async validateCompanyAndDivision(companyId: number, divisionId: number) {
+    const company = await companyRepository.findById(companyId)
+    if (!company) throw new AppError('Company not found', 404)
+
+    const division = await divisionRepository.findById(divisionId)
+    if (!division) throw new AppError('Division not found', 404)
+
+    // make sure division belongs to company
+    if (division.company_id !== companyId) {
+      throw new AppError('Division does not belong to this company', 400)
+    }
+  }
+
+  private async checkDuplicateName(name: string, companyId: number, divisionId: number) {
+    const shifts = await shiftRepository.findShift(companyId, divisionId)
+    const duplicate = shifts.find(
+      s => s.name.toLowerCase() === name.toLowerCase() && !s.is_deleted
+    )
+    if (duplicate) throw new AppError('Shift name already exists in this division', 409)
+  }
+
+
+
+
+  async getAll(companyId: number, divisionId: number){
+    if (isNaN(companyId) || !companyId) throw new AppError('Company is required', 400)
+  if (isNaN(divisionId) || !divisionId) throw new AppError('Division is required', 400)
+
+    return shiftRepository.findShift(companyId, divisionId)
+  }
+
+
+  async getById(id: number) {
+    return this.getShiftOrThrow(id)
+  }
+
+
+  async create(data: CreateShiftInput) {
+    await this.validateCompanyAndDivision(data.company_id, data.division_id)
+    await this.checkDuplicateName(data.name, data.company_id, data.division_id)
+    return shiftRepository.create(data)
+  }
+
+  async update (id: number, data: UpdateShiftInput) {
+    const shift = await this.getShiftOrThrow(id)
+    if (data.name && data.name !== shift.name) {
+      await this.checkDuplicateName(data.name, shift.company_id, shift.division_id)
+    }
+    return shiftRepository.update(id, data)
+  }
+
+  async delete (id: number) {
+    await this.getShiftOrThrow(id)
+    return shiftRepository.softDelete(id)
+  }
+
 }
-
-export const updateShift = async (id: number, input: UpdateShiftInput) => {
-  const shift = await prisma.shift.findUnique({ where: { id } })
-  if (!shift) throw new Error("Shift not found")
-
-  return await prisma.shift.update({
-    where: { id },
-    data: {
-      ...(input.name && { name: input.name }),
-      ...(input.start_time && { start_time: input.start_time }), // plain string, no conversion
-      ...(input.end_time && { end_time: input.end_time }),
-      ...(input.notify_before_minutes && { notify_before_minutes: input.notify_before_minutes }),
-    },
-  })
-}
-
-export const getShiftsByDivision = async (division_id: number, user_id: number) => {
-    const division = await prisma.division.findUnique({ where: { id: division_id }, select: { company_id: true } })
-  if (!division) throw new Error("Division not found")
-    
- const userRole = await prisma.userCompanyRole.findFirst({
-    where: { user_id, company_id: division.company_id }
-  })
-  if (!userRole) throw new Error("division not found") 
-  return await prisma.shift.findMany({
-    where: { division_id, is_active: true },
-    include: {
-      _count: { select: { attendances: true } },
-    },
-  })
-}
-
-export const deleteShift = async (id: number) => {
-  const shift = await prisma.shift.findUnique({ where: { id } })
-  if (!shift) throw new Error("Shift not found")
-
-  return await prisma.shift.update({ where: { id }, data: { is_active: false } })
-}
+export const shiftService = new ShiftService()
