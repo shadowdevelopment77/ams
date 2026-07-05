@@ -1,6 +1,6 @@
 import {companyService} from "./company.service"
 import {catchAsync} from "../../utils/error.response/catch-async"
-import { sendError, sendSuccess } from "../../utils/error.response/response";
+import { sendSuccess } from "../../utils/error.response/response";
 
 export class CompanyController {
 
@@ -12,9 +12,7 @@ export class CompanyController {
 
 
     getById = catchAsync(async (req, res) => {
-        const id = Number(req.params.id)
-    if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-    const result = await companyService.getById(id)
+    const result = await companyService.getById(Number(req.params.id))
     return sendSuccess(res, result, 'Company fetched')
     })
 
@@ -25,16 +23,12 @@ export class CompanyController {
     })
 
     update = catchAsync(async (req,res) => {
-        const id = Number(req.params.id)
-    if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-    const result = await companyService.update(id, req.body)
+    const result = await companyService.update(Number(req.params.id), req.body)
     return sendSuccess(res, result, 'Company updated')
     })
 
     delete = catchAsync(async (req,res) => {
-        const id = Number(req.params.id)
-        if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-    const result = await companyService.delete(id)
+    const result = await companyService.delete(Number(req.params.id))
     return sendSuccess(res, result, 'Company deleted')
     })
 }

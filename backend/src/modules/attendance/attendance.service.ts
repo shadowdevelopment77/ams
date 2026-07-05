@@ -62,7 +62,18 @@ export class AttendanceService {
     await checklistSubmissionRepository.bulkCreate(attendanceId, itemIds)
   }
 
+  private async getAttendanceOrThrow(attendanceId: string) {
+    const attendance = await attendanceRepository.findById(attendanceId)
+    if (!attendance) throw new AppError('Attendance not found', 404)
+    return attendance
+  }
 
+  private async checkUserDayAttendance(userId: string, date: Date) {
+    const existing = await attendanceRepository.findByUser(userId, date)
+    if (existing) throw new AppError('Already checked in today', 409)
+  }
+
+  
 async checkIn(
     userId:     string,
     companyId:  number,
@@ -71,8 +82,7 @@ async checkIn(
   ) {
     const { today, date } = this.getToday()
 
-    const existing = await attendanceRepository.findByUser(userId, date)
-    if (existing) throw new AppError('Already checked in today', 409)
+    await this.checkUserDayAttendance(userId, date)
 
     const shift                  = await this.getShift(dto.shift_id)
     const { isLate, lateMinutes } = this.calculateLate(today, shift.start_time)
@@ -104,8 +114,7 @@ async checkIn(
     userId:       string,
     dto:          CheckOutInput
   ) {
-    const attendance = await attendanceRepository.findById(attendanceId)
-    if (!attendance)              throw new AppError('Attendance not found', 404)
+    const attendance = await this.getAttendanceOrThrow(attendanceId)
     if (attendance.user_id !== userId) throw new AppError('Access denied', 403)
     if (attendance.check_out_at)  throw new AppError('Already checked out', 409)
 
@@ -134,8 +143,7 @@ async checkIn(
   userId:       string,
   dto: EarlyLeaveReasonInput
 ) {
-  const attendance = await attendanceRepository.findById(attendanceId)
-  if (!attendance) throw new AppError('Attendance not found', 404)
+  const attendance = await this.getAttendanceOrThrow(attendanceId)
 
   // ownership check
   if (attendance.user_id !== userId) throw new AppError('Access denied', 403)

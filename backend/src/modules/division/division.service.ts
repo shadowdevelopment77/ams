@@ -5,44 +5,56 @@ import { PaginationParams } from "../../repositories/interfaces/base.interface"
 
 export class DivisionService {
   
-   async getAll(params: PaginationParams) {
-    return divisionRepository.findAll(params)
-  }
-
-  async getById(id: number) {
+  private async getDivisionOrThrow(id: number) {
     const division = await divisionRepository.findById(id)
     if (!division) throw new AppError('Division not found', 404)
     return division
   }
 
-
-  async getByCompany(companyId: number, params: PaginationParams) {
+  private async getCompanyOrThrow(companyId: number) {
     const company = await companyRepository.findById(companyId)
     if (!company) throw new AppError('Company not found', 404)
+    return company
+  }
+
+  private async checkDuplicateName(companyId: number, name: string) {
+    const existing = await divisionRepository.findByName(companyId, name)
+    if (existing) throw new AppError('Division name already exists in this company', 409)
+  }
+
+
+   async getAll(params: PaginationParams) {
+    return divisionRepository.findAll(params)
+  }
+
+  async getById(id: number) {
+    return this.getDivisionOrThrow(id)
+  }
+
+
+  async getByCompany(companyId: number, params: PaginationParams) {
+    await this.getCompanyOrThrow(companyId)
     return divisionRepository.findByCompany(companyId, params)
   }
 
   async create(data: CreateDivisionInput) {
-    const existing = await companyRepository.findById(data.company_id)
-    if (existing) throw new AppError('Division already exists on that Company', 409)
+    await this.getCompanyOrThrow(data.company_id)
+    await this.checkDuplicateName(data.company_id, data.name)
     return divisionRepository.create(data)
   }
 
   async update(id: number, data: UpdateDivisionInput) {
-    const division = await divisionRepository.findById(id)
-    if (!division) throw new AppError('Division not found', 404)
+    const division = await this.getDivisionOrThrow(id)
 
     if (data.name && data.name !== division.name) {
-      const existing = await divisionRepository.findByName(division.company_id, data.name)
-      if (existing) throw new AppError('Division name already exists', 409)
+      await this.checkDuplicateName(division.company_id, data.name)
     }
  
     return divisionRepository.update(id, data)
   }
 
   async delete(id: number) {
-    const division = await divisionRepository.findById(id)
-    if (!division) throw new AppError('Division not found', 404)
+    await this.getDivisionOrThrow(id)
     return divisionRepository.softDelete(id)
   }
 

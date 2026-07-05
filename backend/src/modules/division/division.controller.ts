@@ -1,6 +1,6 @@
 import {divisionService} from "./division.service"
 import {catchAsync} from "../../utils/error.response/catch-async"
-import { sendError, sendSuccess } from "../../utils/error.response/response";
+import {  sendSuccess } from "../../utils/error.response/response";
 
 export class DivisionController {
 
@@ -10,20 +10,15 @@ export class DivisionController {
       const result = await divisionService.getAll(params)
       return sendSuccess(res, result, 'Divisions fetched')  
     })
-
-
+    
     getByCompany = catchAsync(async (req, res) => {
-      const companyId = Number(req.params.companyId)
-      if (isNaN(companyId)) return sendError(res, 'Invalid company id', 400)
       const params = { page: Number(req.query.page) || 1, limit: Number(req.query.limit) || 10 }
-      const result = await divisionService.getByCompany(companyId, params)
+      const result = await divisionService.getByCompany(Number(req.params.companyId), params)
       return sendSuccess(res, result, 'Divisions fetched by company')  
     })
 
     getById = catchAsync(async (req, res) => {
-        const id = Number(req.params.id)
-        if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-        const result = await divisionService.getById(id)
+        const result = await divisionService.getById(Number(req.params.id))
         return sendSuccess(res, result, 'Division fetched')
     })
     
@@ -33,16 +28,12 @@ export class DivisionController {
     })
 
     update = catchAsync (async (req,res) => {
-      const id = Number(req.params.id)
-      if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-      const result = await divisionService.update(id, req.body)
+      const result = await divisionService.update(Number(req.params.id), req.body)
       return sendSuccess(res, result, 'Division updated')
     })
 
     delete = catchAsync(async (req,res) => {
-      const id = Number(req.params.id)
-      if (isNaN(id)) return sendError(res, 'Invalid id', 400)
-      const result = await divisionService.delete(id)
+      const result = await divisionService.delete(Number(req.params.id))
       return sendSuccess(res, result, 'Division deleted')
     })
 }

@@ -5,37 +5,42 @@ import { PaginationParams } from '../../repositories/interfaces/base.interface'
 
 export class CompanyService {
 
-  async getAll(params: PaginationParams) {
-    return companyRepository.findAll(params)
-  }
-
-  async getById(id: number) {
+  private async getCompanyOrThrow(id: number) {
     const company = await companyRepository.findById(id)
     if (!company) throw new AppError('Company not found', 404)
     return company
   }
 
+  private async validateCompanyName(name: string) {
+    const existing = await companyRepository.findByName(name)
+    if (existing) throw new AppError('Company name already exists', 409)
+  }
+
+  async getAll(params: PaginationParams) {
+    return companyRepository.findAll(params)
+  }
+
+  async getById(id: number) {
+    return this.getCompanyOrThrow(id)
+  }
+
   async create(data: CreateCompanyInput) {
-    const existing = await companyRepository.findByName(data.name)
-    if (existing) throw new AppError('Company already exists', 409)
+    await this.validateCompanyName(data.name)
     return companyRepository.create(data)
   }
 
   async update(id: number, data: UpdateCompanyInput) {
-    const company = await companyRepository.findById(id)
-    if (!company) throw new AppError('Company not found', 404)
+    const company = await this.getCompanyOrThrow(id)
 
     if (data.name && data.name !== company.name) {
-      const existing = await companyRepository.findByName(data.name)
-      if (existing) throw new AppError('Company name already exists', 409)
+      await this.validateCompanyName(data.name)
     }
 
     return companyRepository.update(id, data)
   }
 
   async delete(id: number) {
-    const company = await companyRepository.findById(id)
-    if (!company) throw new AppError('Company not found', 404)
+    await this.getCompanyOrThrow(id)
     return companyRepository.softDelete(id)
   }
 }
