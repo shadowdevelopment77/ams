@@ -157,9 +157,9 @@ model Attendance {
   updated_at DateTime @updatedAt
 
   user        User @relation(fields: [user_id], references: [id])
-  division    Division? @relation(fields: [division_id], references: [id])
-  company     Company? @relation(fields: [company_id], references: [id])
-  shift       Shift? @relation(fields: [shift_id], references: [id])
+  division    Division @relation(fields: [division_id], references: [id])
+  company     Company @relation(fields: [company_id], references: [id])
+  shift       Shift @relation(fields: [shift_id], references: [id])
   submissions ChecklistSubmission[]
   status      AttendanceStatus @relation(fields: [status_id], references: [id])
 

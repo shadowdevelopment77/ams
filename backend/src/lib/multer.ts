@@ -20,7 +20,7 @@ export const uploadAttendance = multer({
   fileFilter: imageFilter,
 })
 
-export const uploadAbsent = multer({
+export const uploadChecklist = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_SIZE },
   fileFilter: imageFilter,
