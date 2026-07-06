@@ -157,6 +157,30 @@ async checkIn(
 } 
 
 
+async getAttendancePhotos(
+  companyId:  number,
+  divisionId: number,
+  date:       Date,
+  params:     AttendanceFilterParams
+) {
+  if (!companyId)  throw new AppError('Company is required', 400)
+  if (!divisionId) throw new AppError('Division is required', 400)
+
+  const result = await attendanceRepository.findByDate(companyId, divisionId, date, params)
+
+  return {
+    ...result,
+    data: result.data.map(a => ({
+      user_id:           a.user_id,
+      checkin_photo:     a.photo_url,
+      checkin_at:        a.check_in_at,
+      checkout_photo:    a.checkout_photo_url ?? null,
+      checkout_at:       a.check_out_at ?? null,
+    }))
+  }
+}
+
+
  async getByDate(
     companyId:  number,
     divisionId: number,

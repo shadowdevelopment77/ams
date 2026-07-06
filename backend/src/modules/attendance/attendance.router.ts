@@ -10,11 +10,11 @@ const staffOnly = [authMiddleware, roleMiddleware("STAFF")]
 const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 
-router.post("/checkin", uploadAttendance.single("photo"), validateCheckIn, staffOnly, attendanceController.checkIn.bind(attendanceController))
-router.patch("/checkout", uploadAttendance.single("checkout_photo"), validateCheckOut, staffOnly, attendanceController.checkOut.bind(attendanceController))
-router.get("/", adminOnly, attendanceController.getByDate.bind(attendanceController))
-router.get("/late", adminOnly, attendanceController.getLate.bind(attendanceController))
-router.patch("/early-leave/:id", validateEarlyLeaveReason, staffOnly, attendanceController.submitEarlyLeaveReason.bind(attendanceController))
-
+router.post("/checkin", uploadAttendance.single("photo"), validateCheckIn, staffOnly, attendanceController.checkIn)
+router.patch("/checkout", uploadAttendance.single("checkout_photo"), validateCheckOut, staffOnly, attendanceController.checkOut)
+router.get("/", adminOnly, attendanceController.getByDate)
+router.get("/late", adminOnly, attendanceController.getLate)
+router.patch("/early-leave/:id", validateEarlyLeaveReason, staffOnly, attendanceController.submitEarlyLeaveReason)
+router.get("/attendance-photos", adminOnly, attendanceController.getAttendancePhotos)
 
 export default router

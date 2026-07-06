@@ -5,6 +5,19 @@ import { uploadImage } from '../../utils/uploadImage'
 import { AppError } from '../../utils/error.response/appError'
 export class AttendanceController {
 
+  private parseAttendanceQuery(req: any) {
+  return {
+    companyId:  Number(req.query.companyId),
+    divisionId: Number(req.query.divisionId),
+    date:       req.query.date ? new Date(req.query.date as string) : new Date(),
+    params: {
+      page:     Number(req.query.page)  || 1,
+      limit:    Number(req.query.limit) || 10,
+      statusId: req.query.statusId ? Number(req.query.statusId) : undefined,
+    }
+  }
+}
+
 
 
   checkIn = catchAsync(async (req, res) => {
@@ -24,7 +37,7 @@ export class AttendanceController {
 
    checkOut = catchAsync(async (req, res) => {
 
-      if (!req.file) throw new AppError('Photo is required', 400)
+  if (!req.file) throw new AppError('Photo is required', 400)
 
   const photo_url = await uploadImage(req.file.buffer, 'ams/attendance') 
 
@@ -36,34 +49,21 @@ export class AttendanceController {
     return sendSuccess(res, result, 'Check out successful')
   })
 
+getAttendancePhotos = catchAsync(async (req, res) => {
+const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
+
+  const result = await attendanceService.getAttendancePhotos(companyId, divisionId, date, params)
+  return sendSuccess(res, result, 'Attendance photos fetched')
+})
+
   getByDate = catchAsync(async (req, res) => {
-    const companyId  = Number(req.query.companyId)
-    const divisionId = Number(req.query.divisionId)
-    const date       = req.query.date
-      ? new Date(req.query.date as string)
-      : new Date()
-
-    const params = {
-      page:     Number(req.query.page)  || 1,
-      limit:    Number(req.query.limit) || 10,
-      statusId: req.query.statusId ? Number(req.query.statusId) : undefined,
-    }
-
+const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
     const result = await attendanceService.getByDate(companyId, divisionId, date, params)
     return sendSuccess(res, result, 'Attendance fetched')
   })
 
   getLate = catchAsync(async (req, res) => {
-    const companyId  = Number(req.query.companyId)
-    const divisionId = Number(req.query.divisionId)
-    const date       = req.query.date
-      ? new Date(req.query.date as string)
-      : new Date()
-
-    const params = {
-      page:  Number(req.query.page)  || 1,
-      limit: Number(req.query.limit) || 10,
-    }
+  const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
 
     const result = await attendanceService.getLate(companyId, divisionId, date, params)
     return sendSuccess(res, result, 'Late attendance fetched')
