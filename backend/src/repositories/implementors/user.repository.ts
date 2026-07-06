@@ -28,6 +28,35 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
       where: { email, is_deleted: false },
     })
   }
+
+  async findAllSafe(params?: PaginationParams): Promise<PaginatedResult<Omit<User, 'password'>>> {
+     const { skip, take, page, limit } = this.resolvePagination(params)
+  const where = { is_deleted: false }
+
+  const [data, total] = await this.prisma.$transaction([
+    this.prisma.user.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { created_at: 'desc' },
+      select: {
+        id:         true,
+        name:       true,
+        email:      true,
+        phone:      true,
+        photo_url:  true,
+        is_active:  true,
+        is_deleted:  true,   
+        created_at:  true,   
+        deleted_at:  true,   
+        updated_at:  true,   
+      }
+    }),
+    this.prisma.user.count({ where })
+  ])
+
+  return this.buildPaginatedResult(data, total, page, limit)
+  }
   // ─── UserCompanyRole methods ──────────────────────────────────────────────
 
   async findRoleByUserId(

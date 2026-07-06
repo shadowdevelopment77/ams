@@ -46,5 +46,5 @@ export interface UserRepository extends BaseRepository<User, CreateUserDTO, Upda
   createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole>
   findUsersByCompanyAndDivision(companyId: number, divisionId: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
-  
+  findAllSafe(params?: PaginationParams): Promise<PaginatedResult<Omit<User, 'password'>>>
 }

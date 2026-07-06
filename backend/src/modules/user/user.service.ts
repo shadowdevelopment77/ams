@@ -9,7 +9,8 @@ export class UserService {
   private async getUserOrThrow(id: string) {
     const user = await userRepository.findById(id)
     if (!user) throw new AppError('User not found', 404)
-    return user
+      const { password, ...safeUser } = user
+    return safeUser
   }
 
   private async getCompanyOrThrow(companyId: number) {
@@ -69,7 +70,7 @@ async delete(id: string) {
   }
 
   async getAll(params: PaginationParams) {
-    return userRepository.findAll(params)
+    return userRepository.findAllSafe(params)
   }
 
   async getUserById(id: string) {
