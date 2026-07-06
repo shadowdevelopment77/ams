@@ -11,10 +11,10 @@ router.use(authMiddleware, roleMiddleware("ADMIN"))
 
 
 
-router.post("/",  validateCreateShift, shiftController.create.bind(shiftController))
-router.put("/:id",  validateUpdateShift, shiftController.update.bind(shiftController))
-router.delete("/:id", shiftController.delete.bind(shiftController))
-router.get("/:id", shiftController.getById.bind(shiftController))
-router.get("/company/:companyId/division/:divisionId", shiftController.getAll.bind(shiftController))
+router.post("/",  validateCreateShift, shiftController.create)
+router.put("/:id",  validateUpdateShift, shiftController.update)
+router.delete("/:id", shiftController.delete)
+router.get("/:id", shiftController.getById)
+router.get("/company/:companyId/division/:divisionId", shiftController.getAll)
 
 export default router

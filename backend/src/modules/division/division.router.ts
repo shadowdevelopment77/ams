@@ -9,12 +9,12 @@ const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 router.use(adminOnly)
 
-router.get("/", divisionController.getAll.bind(divisionController))
-router.get("/:id", divisionController.getById.bind(divisionController))
-router.post("/", validateCreateDivision, divisionController.create.bind(divisionController))
-router.put("/:id", validateUpdateDivision, divisionController.update.bind(divisionController))
-router.delete("/:id", divisionController.delete.bind(divisionController))
-router.get("/company/:companyId", divisionController.getByCompany.bind(divisionController))
+router.get("/", divisionController.getAll)
+router.get("/:id", divisionController.getById)
+router.post("/", validateCreateDivision, divisionController.create)
+router.put("/:id", validateUpdateDivision, divisionController.update)
+router.delete("/:id", divisionController.delete)
+router.get("/company/:companyId", divisionController.getByCompany)
 
 
 export default router

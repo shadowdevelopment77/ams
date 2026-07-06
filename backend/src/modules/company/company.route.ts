@@ -13,10 +13,10 @@ const router = Router()
 router.use(authMiddleware, roleMiddleware('ADMIN'))
 
 
-router.get ('/', companyController.getAll.bind(companyController))
-router.get ('/:id',  companyController.getById.bind(companyController))
-router.post('/',  validateCreateCompany, companyController.create.bind(companyController))
-router.put ('/:id',  validateUpdateCompany, companyController.update.bind(companyController))
-router.delete('/:id',  companyController.delete.bind(companyController))
+router.get ('/', companyController.getAll)
+router.get ('/:id',  companyController.getById)
+router.post('/',  validateCreateCompany, companyController.create)
+router.put ('/:id',  validateUpdateCompany, companyController.update)
+router.delete('/:id',  companyController.delete)
 
 export default router
