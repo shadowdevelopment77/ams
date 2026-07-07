@@ -12,7 +12,6 @@ export const isNightShift = (startTime: string, endTime: string): boolean => {
 // build actual DateTime from a date + "HH:mm" string
 export const toDateTime = (date: Date, time: string): Date => {
   const [hours, minutes] = time.split(':').map(Number)
-  const result = new Date(date)
-  result.setHours(hours, minutes, 0, 0)
-  return result
+ const utcDateString = date.toISOString().split('T')[0]
+ return new Date(`${utcDateString}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00.000Z`)
 }

@@ -12,6 +12,7 @@ import checklistRouter from "./modules/checklist/checklist.router"
 import companyRouter from "./modules/company/company.route"
 import { errorMiddleware } from "./middlewares/error.middleware";
 import {apiLimiter, authLimiter} from "./middlewares/rate-limit.middleware";
+import visitRouter from "./modules/visit/visit.route"
 
 dotenv.config()
 
@@ -27,13 +28,14 @@ app.use(cookieParser())
 app.use(errorMiddleware) // Error handling middleware should be registered after all routes
 app.use('/api', apiLimiter)
 
-app.use("/api/auth", authRouter, authLimiter)
+app.use("/api/auth", authLimiter, authRouter )
 app.use("/api/users", userRouter)
 app.use("/api/divisions", divisionRouter)
 app.use("/api/shifts", shiftRouter)
 app.use("/api/attendance", attendanceRouter)
 app.use("/api/checklist", checklistRouter)
 app.use("/api/company", companyRouter)
+app.use("/api/visit", visitRouter)
 
 
 export default app

@@ -7,8 +7,8 @@ export class AttendanceController {
 
   private parseAttendanceQuery(req: any) {
   return {
-    companyId:  Number(req.query.companyId),
-    divisionId: Number(req.query.divisionId),
+    companyId:  Number(req.user!.companyId),
+    divisionId: Number(req.user!.divisionId),
     date:       req.query.date ? new Date(req.query.date as string) : new Date(),
     params: {
       page:     Number(req.query.page)  || 1,

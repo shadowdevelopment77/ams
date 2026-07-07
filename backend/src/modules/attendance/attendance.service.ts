@@ -5,6 +5,9 @@ import {
   checklistItemRepository,
   checklistSubmissionRepository,
   attendanceStatusRepository,
+  companyRepository,
+  divisionRepository
+
 } from '../../repositories/index.repositories'
 import { CheckInInput, CheckOutInput, EarlyLeaveReasonInput } from './attendance.validation'
 import { AppError } from '../../utils/error.response/appError'
@@ -20,8 +23,32 @@ export class AttendanceService {
 
  private getToday() {
     const today = new Date()
-    const date  = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const utcDateString = today.toISOString().split('T')[0]
+    const date = new Date(`${utcDateString}T00:00:00.000Z`)
     return { today, date }
+  }
+
+  private async getCompanyOrThrow(id: number) {
+    const company = await companyRepository.findById(id)
+    if (!company) throw new AppError('Company not found', 404)
+    return company
+  }
+  
+    private async getDivisionOrThrow(id: number) {
+    const division = await divisionRepository.findById(id)
+    if (!division) throw new AppError('Division not found', 404)
+    return division
+  }
+
+  private async validateCompanyAndDivision (companyId: number, divisionId: number){
+    if (!companyId)  throw new AppError('Company is required', 400)
+    if (!divisionId) throw new AppError('Division is required', 400)
+
+
+      await Promise.all([
+        this.getCompanyOrThrow(companyId),
+        this.getDivisionOrThrow(divisionId)
+      ])
   }
 
   private async getShift(shiftId: number) {
@@ -53,10 +80,13 @@ export class AttendanceService {
 
   private async bulkCreateChecklist(attendanceId: string, companyId: number, divisionId: number) {
     const templates = await checklistTemplateRepository.findByDivision(companyId, divisionId)
-    if (templates.length === 0) return
+    
+    const templateId = templates[0]?.id
+    if (!templateId) return
 
-    const items   = await checklistItemRepository.findByTemplate(templates[0].id)
-    const itemIds = items.data.map(i => i.id)
+    const items   = await checklistItemRepository.findByTemplate(templateId)
+
+    const itemIds = items?.data?.map(i => i.id) || []
     if (itemIds.length === 0) return
 
     await checklistSubmissionRepository.bulkCreate(attendanceId, itemIds)
@@ -163,9 +193,8 @@ async getAttendancePhotos(
   date:       Date,
   params:     AttendanceFilterParams
 ) {
-  if (!companyId)  throw new AppError('Company is required', 400)
-  if (!divisionId) throw new AppError('Division is required', 400)
 
+  await this.validateCompanyAndDivision(companyId, divisionId)
   const result = await attendanceRepository.findByDate(companyId, divisionId, date, params)
 
   return {
@@ -187,6 +216,9 @@ async getAttendancePhotos(
     date:       Date,
     params:     AttendanceFilterParams
   ) {
+
+    await this.validateCompanyAndDivision(companyId, divisionId)
+
     return attendanceRepository.findByDate(companyId, divisionId, date, params)
   }
 
@@ -196,6 +228,7 @@ async getAttendancePhotos(
     date:       Date,
     params:     AttendanceFilterParams
   ) {
+    await this.validateCompanyAndDivision(companyId, divisionId)
     return attendanceRepository.findByLate(companyId, divisionId, true, date, params)
   }
 }
