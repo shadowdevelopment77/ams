@@ -1,33 +1,45 @@
-import { Router } from "express"
-import * as ChecklistController from "./checklist.controller"
-import { authenticate, requireRole } from "../../middlewares/auth.middleware"
-import { uploadAttendance } from "../../lib/multer"
+import { Router } from 'express'
+import { checklistController } from './checklist.controller'
+import { authMiddleware } from '../../middlewares/auth.middleware'
+import { roleMiddleware } from '../../middlewares/role.middleware'
+import { uploadChecklist } from '../../lib/multer'
+import {
+  validateCreateTemplate, validateUpdateTemplate,
+  validateCreateItem, validateUpdateItem,
+} from './checklist.validation'
+
 
 const router = Router()
-const adminOnly = [authenticate, requireRole("ADMIN")]
-const supervisorOnly = [authenticate, requireRole("SUPERVISOR")]
-const staffOnly = [authenticate, requireRole("STAFF")]
 
-// ADMIN — template + items
-router.post("/templates", adminOnly, ChecklistController.createTemplate)
-router.post("/items", adminOnly, ChecklistController.addItem)
-router.put("/items/:id", adminOnly, ChecklistController.updateItem)
-router.delete("/items/:id", adminOnly, ChecklistController.deleteItem)
-router.patch("/photos/:photo_id/highlight", adminOnly, ChecklistController.highlightPhoto)
-router.get("/photos/highlighted", adminOnly, ChecklistController.getHighlightedPhotos)
+const adminOnly = [authMiddleware, roleMiddleware('ADMIN')]
+const staffOnly = [authMiddleware, roleMiddleware('STAFF')]
 
-// ALL roles — get templates
-router.get("/templates/division/:division_id", ChecklistController.getTemplatesByDivision)
 
-// STAFF — fill checklist
-router.get("/my/:attendance_id", staffOnly, ChecklistController.getMyChecklist)
-router.post("/submit", staffOnly, ChecklistController.submitItem)
-router.post("/submissions/:submission_id/lock", staffOnly, ChecklistController.lockSubmission)
-router.post("/photos/:submission_id", staffOnly, uploadAttendance.single("photo"), ChecklistController.uploadEvidencePhoto)
-router.delete("/photos/:photo_id", staffOnly, ChecklistController.deleteEvidencePhoto)
+//ADMIN
+router.post('/templates', adminOnly, validateCreateTemplate, checklistController.createTemplate)
+router.get('/templates', adminOnly, checklistController.getTemplatesByDivision)
+router.put('/templates/:id', adminOnly, validateUpdateTemplate, checklistController.updateTemplate)
+router.delete('/templates/:id',adminOnly, checklistController.deleteTemplate)
 
-// SUPERVISOR — review photos
-router.get("/photos/pending/:company_id", supervisorOnly, ChecklistController.getPendingPhotosByCompany)
-router.patch("/photos/:photo_id/review", supervisorOnly, ChecklistController.reviewPhoto)
+//ADMIN
+router.post('/items', adminOnly, validateCreateItem, checklistController.createItem)
+router.get('/items/template/:templateId', adminOnly, checklistController.getItemsByTemplate)
+router.put('/items/:id', adminOnly, validateUpdateItem, checklistController.updateItem)
+router.delete('/items/:id', adminOnly, checklistController.deleteItem)
+
+//STAFF
+router.get('/my-checklist', staffOnly, checklistController.getMyChecklist)
+
+router.post(
+  '/:attendanceId/items/:itemId/photo',
+  staffOnly,
+  uploadChecklist.single('photo'),
+  checklistController.uploadPhoto
+)
+
+router.post('/:attendanceId/submit', staffOnly, checklistController.submitAll)
+
+//ADMIN
+router.get('/evidence/item/:itemId', adminOnly, checklistController.getByItemAndDate)
 
 export default router

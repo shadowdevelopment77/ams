@@ -2,6 +2,7 @@ import {
   ChecklistItem,
   ChecklistSubmission,
   ChecklistTemplate,
+  ChecklistPhoto,
   PrismaClient,
 } from "../../../generated/prisma";
 import { PrismaBaseRepository } from "./base.repository";
@@ -13,13 +14,14 @@ import {
   UpdateChecklistTemplateDTO,
   ChecklistItemRepository,
   ChecklistSubmissionRepository,
-  ChecklistSubmissionFilterParams,
   CreateChecklistSubmissionDTO,
-  ReviewSubmissionDTO,
   UpdateChecklistSubmissionDTO,
+  ChecklistPhotoRepository,
+  CreateChecklistPhotoDTO,
+  ChecklistSubmissionWithEvidence,
+  ChecklistSubmissionWithPhotos
 } from "../interfaces/checklist.interface";
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
-
 export class PrismaChecklistTemplateRepository
   extends PrismaBaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO, number>
   implements ChecklistTemplateRepository
@@ -91,7 +93,14 @@ export class PrismaChecklistSubmissionRepository
   ): Promise<ChecklistSubmission | null> {
     return this.prisma.checklistSubmission.findFirst({
       where: { attendance_id: attendanceId, item_id: itemId, is_deleted: false },
-      include: { evidence_photo: { where: { is_deleted: false } } },
+    });
+  }
+
+  async findByAttendance(attendanceId: string): Promise<ChecklistSubmissionWithPhotos[]> {
+    return this.prisma.checklistSubmission.findMany({
+      where: { attendance_id: attendanceId, is_deleted: false },
+      include: { photos: true, item: true },
+      orderBy: { item: { order_no: "asc" } },
     });
   }
 
@@ -114,69 +123,18 @@ export class PrismaChecklistSubmissionRepository
     });
   }
 
-async submitAll(attendanceId: string, statusId: number): Promise<void> {
-  await this.prisma.checklistSubmission.updateMany({
-    where: {
-      attendance_id: attendanceId,
-      is_submitted:  false,
-      is_deleted:    false,
-    },
-    data: {
-      is_submitted: true,
-      submitted_at: new Date(),
-      status_id:    statusId,
-    },
-  })
-}
-
-async findByDivision(
-    companyId: number,
-    divisionId: number,
-    date: Date,
-    params: ChecklistSubmissionFilterParams,
-  ): Promise<PaginatedResult<ChecklistSubmission>> {
-    const { skip, take, page, limit } = this.resolvePagination(params);
-
-    const where = {
-      is_deleted: false,
-      ...(params.statusId && { status_id: params.statusId }),
-      attendance: {
-        company_id: companyId,
-        division_id: divisionId,
-        date: date,
-        is_deleted: false,
+  async submitAll(attendanceId: string): Promise<void> {
+    await this.prisma.checklistSubmission.updateMany({
+      where: {
+        attendance_id: attendanceId,
+        is_submitted:  false,
+        is_deleted:    false,
       },
-    };
-
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.checklistSubmission.findMany({
-        where,
-        skip,
-        take,
-        include: {
-          item: true,
-          evidence_photo: { where: { is_deleted: false } },
-          attendance: { include: { user: true } },
-          status: true,
-        },
-        orderBy: { created_at: "asc" },
-      }),
-      this.prisma.checklistSubmission.count({ where }),
-    ]);
-
-    return this.buildPaginatedResult(data, total, page, limit);
-  }
-
-   async review(submissionId: number, data: ReviewSubmissionDTO): Promise<ChecklistSubmission> {
-    return this.prisma.checklistSubmission.update({
-      where: { id: submissionId },
       data: {
-        status_id: data.status_id,
-        reviewed_by: data.reviewed_by,
-        reviewed_at: new Date(),
-        reject_reason: data.reject_reason ?? null,
+        is_submitted: true,
+        submitted_at: new Date(),
       },
-    });
+    })
   }
 
 
@@ -185,7 +143,7 @@ async findByDivision(
     companyId: number,
     date: Date,
     params: PaginationParams,
-  ): Promise<PaginatedResult<ChecklistSubmission>> {
+  ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>> {
     const { skip, take, page, limit } = this.resolvePagination(params);
 
     const where = {
@@ -204,10 +162,7 @@ async findByDivision(
         skip,
         take,
         include: {
-          evidence_photo: {
-            where: { is_deleted: false },
-            orderBy: { order: "asc" },
-          },
+          photos: { orderBy: { order: "asc" } },
           attendance: {
             include: { user: { select: { id: true, name: true } } },
           },
@@ -220,4 +175,29 @@ async findByDivision(
     return this.buildPaginatedResult(data, total, page, limit);
   }
 
+}
+
+
+export class PrismaChecklistPhotoRepository
+  extends PrismaBaseRepository<ChecklistPhoto, CreateChecklistPhotoDTO, {}, number>
+  implements ChecklistPhotoRepository
+{
+  protected modelName = "checklistPhoto" as const;
+
+  constructor(prisma: PrismaClient) {
+    super(prisma);
+  }
+
+  async findBySubmission(submissionId: number): Promise<ChecklistPhoto[]> {
+    return this.prisma.checklistPhoto.findMany({
+      where: { submission_id: submissionId, is_deleted: false },
+      orderBy: { order: "asc" },
+    });
+  }
+
+  async countBySubmission(submissionId: number): Promise<number> {
+    return this.prisma.checklistPhoto.count({
+      where: { submission_id: submissionId, is_deleted: false },
+    });
+  }
 }

@@ -1,55 +1,66 @@
-import { z } from "zod"
+import { z } from 'zod'
+import { Request, Response, NextFunction } from 'express'
+import { sendError } from '../../utils/error.response/response'
 
-export const createTemplateSchema = z.object({
-  division_id: z.number(),
-  company_id: z.number(),
-  title: z.string().min(3),
+// ─── Template ───────────────────────────────────────────────────────────────
+
+const createTemplateSchema = z.object({
+  company_id:  z.number({ error: 'Company is required' }),
+  division_id: z.number({ error: 'Division is required' }),
+  title:       z.string().min(1, 'Title is required'),
 })
 
-export const createItemSchema = z.object({
-  template_id: z.number(),
-  description: z.string().min(3),
-  order_no: z.number(),
-  requires_photo: z.boolean().default(true),
+const updateTemplateSchema = z.object({
+  title:     z.string().min(1).optional(),
+  is_active: z.boolean().optional(),
 })
 
-export const updateItemSchema = createItemSchema
-  .partial()
-  .omit({ template_id: true })
+export type CreateTemplateInput = z.infer<typeof createTemplateSchema>
+export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>
 
-// staff checks item + submits
-export const submitItemSchema = z.object({
-  attendance_id: z.number(),
-  item_id: z.number(),
-  is_done: z.boolean(),
-  notes: z.string().optional(),
+export const validateCreateTemplate = (req: Request, res: Response, next: NextFunction) => {
+  const result = createTemplateSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}
+
+export const validateUpdateTemplate = (req: Request, res: Response, next: NextFunction) => {
+  const result = updateTemplateSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}
+
+// ─── Item ───────────────────────────────────────────────────────────────────
+
+const createItemSchema = z.object({
+  template_id:    z.number({ error: 'Template is required' }),
+  order_no:       z.number({ error: 'Order is required' }),
+  description:    z.string().min(1, 'Description is required'),
+  requires_photo: z.boolean()
 })
 
-// staff locks submission
-export const lockSubmissionSchema = z.object({
-  submission_id: z.number(),
+const updateItemSchema = z.object({
+  description: z.string().min(1).optional(),
+  order_no:    z.number().optional(),
+  is_active:   z.boolean().optional(),
 })
 
-// supervisor reviews photo
-export const reviewPhotoSchema = z.object({
-  photo_id: z.number(),
-  status: z.enum(["APPROVED", "REJECTED"]),
-  reject_reason: z.string().optional(),
-}).refine(
-  (data) => data.status !== "REJECTED" || !!data.reject_reason,
-  { message: "Reject reason is required when rejecting a photo" }
-)
+export type CreateItemInput = z.infer<typeof createItemSchema>
+export type UpdateItemInput = z.infer<typeof updateItemSchema>
 
-// admin highlights photo
-export const highlightPhotoSchema = z.object({
-  photo_id: z.number(),
-  is_highlighted: z.boolean(),
-})
+export const validateCreateItem = (req: Request, res: Response, next: NextFunction) => {
+  const result = createItemSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}
 
-export type CreateTemplateInput   = z.infer<typeof createTemplateSchema>
-export type CreateItemInput       = z.infer<typeof createItemSchema>
-export type UpdateItemInput       = z.infer<typeof updateItemSchema>
-export type SubmitItemInput       = z.infer<typeof submitItemSchema>
-export type LockSubmissionInput   = z.infer<typeof lockSubmissionSchema>
-export type ReviewPhotoInput      = z.infer<typeof reviewPhotoSchema>
-export type HighlightPhotoInput   = z.infer<typeof highlightPhotoSchema>
+export const validateUpdateItem = (req: Request, res: Response, next: NextFunction) => {
+  const result = updateItemSchema.safeParse(req.body)
+  if (!result.success) return sendError(res, 'Validation failed', 400, result.error.issues)
+  req.body = result.data
+  next()
+}
+

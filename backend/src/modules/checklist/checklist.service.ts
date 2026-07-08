@@ -1,305 +1,195 @@
-import prisma from "../../lib/prisma"
 import {
-  CreateTemplateInput, CreateItemInput, UpdateItemInput,
-  SubmitItemInput, ReviewPhotoInput, HighlightPhotoInput,
+  checklistTemplateRepository,
+  checklistItemRepository,
+  checklistSubmissionRepository,
+  checklistPhotoRepository,
+  attendanceRepository,
+  companyRepository,
+  divisionRepository,
+} from '../../repositories/index.repositories'
+import {getToday} from '../../utils/date'
+
+import {
+  CreateTemplateInput, UpdateTemplateInput,
+  CreateItemInput, UpdateItemInput,
 } from "./checklist.validation"
+import { AppError } from '../../utils/error.response/appError'
+import { PaginationParams } from '../../repositories/interfaces/base.interface'
 
-// ─── ADMIN: TEMPLATE ─────────────────────────────────────────────
-export const createTemplate = async (input: CreateTemplateInput, user_id : number) => {
-  const division = await prisma.division.findUnique({ where: { id: input.division_id } })
-  if (!division) throw new Error("Division not found")
-  if (division.company_id !== input.company_id)
-    throw new Error("Division does not belong to this company")
+export class ChecklistService{
+  private readonly  MAX_PHOTOS_PER_ITEM = 3
 
-  const existing = await prisma.checklistTemplate.findFirst({
-    where: { division_id: input.division_id, is_active: true },
-  })
-  if (existing) throw new Error("Division already has an active checklist template")
+  //Private Helpers
 
-  return await prisma.checklistTemplate.create({
-    data: { ...input},
-  })
-}
+  private async getTemplateOrThrow(id: number) {
+    const template = await checklistTemplateRepository.findById(id)
+    if (!template) throw new AppError('Template not found', 404)
+    return template
+  }
+
+  private async getItemOrThrow(id: number) {
+    const item = await checklistItemRepository.findById(id)
+    if (!item) throw new AppError('Checklist item not found', 404)
+    return item
+  }
 
 
-export const getTemplatesByDivision = async (division_id: number, user_id: number) => {
-  const division = await prisma.division.findUnique({
-    where: { id: division_id },
-    select: { company_id: true },
-  })
-  if (!division) throw new Error("Division not found")
+    private async getAttendanceOrThrow(attendanceId: string) {
+    const attendance = await attendanceRepository.findById(attendanceId)
+    if (!attendance) throw new AppError('Attendance not found', 404)
+    return attendance
+  }
 
-  const userRole = await prisma.userCompanyRole.findFirst({
-    where: { user_id, company_id: division.company_id },
-  })
-  if (!userRole) throw new Error("Division not found")
+    private async getCompanyOrThrow(companyId: number) {
+    const company = await companyRepository.findById(companyId)
+    if (!company) throw new AppError('Company not found', 404)
+    return company
+  }
 
-  return await prisma.checklistTemplate.findMany({
-    where: { division_id, is_active: true },
-    include: { items: { orderBy: { order_no: "asc" } } },
-  })
-}
 
-// ─── ADMIN: ITEMS ─────────────────────────────────────────────────
-export const addItem = async (input: CreateItemInput) => {
-  const template = await prisma.checklistTemplate.findUnique({
-    where: { id: input.template_id },
-  })
-  if (!template) throw new Error("Template not found")
-  if (!template.is_active) throw new Error("Template is not active")
+    private async getDivisionOrThrow(divisionId: number) {
+    const division = await divisionRepository.findById(divisionId)
+    if (!division) throw new AppError('Division not found', 404)
+    return division
+  }
 
-  return await prisma.checklistItem.create({ data: input })
-}
 
-export const updateItem = async (id: number, input: UpdateItemInput) => {
-  const item = await prisma.checklistItem.findUnique({ where: { id } })
-  if (!item) throw new Error("Item not found")
+  private async getSubmissionOrThrow(attendanceId: string, itemId: number) {
+    const submission = await checklistSubmissionRepository.findByAttendanceAndItem(attendanceId, itemId)
+    if (!submission) throw new AppError('Checklist submission not found', 404)
+    return submission
+  }
 
-  return await prisma.checklistItem.update({ where: { id }, data: input })
-}
 
-export const deleteItem = async (id: number) => {
-  const item = await prisma.checklistItem.findUnique({ where: { id } })
-  if (!item) throw new Error("Item not found")
 
-  return await prisma.checklistItem.delete({ where: { id } })
-}
+    private assertOwnership(resourceUserId: string, requestingUserId: string) {
+    if (resourceUserId !== requestingUserId) throw new AppError('Access denied', 403)
+  }
 
-// ─── STAFF: GET CHECKLIST ─────────────────────────────────────────
-export const getMyChecklist = async (user_id: number, attendance_id: number) => {
-  const attendance = await prisma.attendance.findUnique({
-    where: { id: attendance_id },
-    include: { division: true },
-  })
-  if (!attendance) throw new Error("Attendance not found")
-  if (attendance.user_id !== user_id) throw new Error("Attendance not found")
-  if (!attendance.division_id) throw new Error("Division not found")
 
-  const template = await prisma.checklistTemplate.findFirst({
-    where: { division_id: attendance.division_id, is_active: true },
-    include: { items: { orderBy: { order_no: "asc" } } },
-  })
-  if (!template) throw new Error("No active checklist template for your division")
+  //Template
 
-  const submissions = await prisma.checklistSubmission.findMany({
-    where: { attendance_id },
-    include: { photos: true },
-  })
+  async createTemplate(dto: CreateTemplateInput) {
+    await this.getCompanyOrThrow(dto.company_id)
+    await this.getDivisionOrThrow(dto.division_id)
+    return checklistTemplateRepository.create(dto)
+  }
 
-  const items = template.items.map((item) => {
-    const submission = submissions.find((s) => s.item_id === item.id) ?? null
-    return { ...item, submission }
-  })
+  async getTemplatesByDivision(companyId: number, divisionId: number) {
+    await this.getCompanyOrThrow(companyId)
+    await this.getDivisionOrThrow(divisionId)
+    return checklistTemplateRepository.findByDivision(companyId, divisionId)
+  }
 
-  return { template_id: template.id, title: template.title, attendance_id, items }
-}
+  async updateTemplate(id: number, dto: UpdateTemplateInput) {
+    await this.getTemplateOrThrow(id)
+    return checklistTemplateRepository.update(id, dto)
+  }
 
-// ─── STAFF: SUBMIT ITEM ───────────────────────────────────────────
-export const submitItem = async (user_id: number, input: SubmitItemInput) => {
-  const attendance = await prisma.attendance.findUnique({
-    where: { id: input.attendance_id },
-  })
-  if (!attendance) throw new Error("Attendance not found")
-  if (attendance.user_id !== user_id) throw new Error("Attendance not found")
-  if (attendance.check_out_at) throw new Error("Cannot submit checklist after checkout")
+  async deleteTemplate(id: number) {
+    await this.getTemplateOrThrow(id)
+    return checklistTemplateRepository.softDelete(id)
+  }
 
-  const item = await prisma.checklistItem.findUnique({ where: { id: input.item_id } })
-  if (!item) throw new Error("Checklist item not found")
 
-  const existing = await prisma.checklistSubmission.findFirst({
-    where: { attendance_id: input.attendance_id, item_id: input.item_id },
-  })
+  //checklistItem
 
-  if (existing) {
-    if (existing.is_submitted) throw new Error("Checklist item already submitted and locked")
+  async createItem(dto: CreateItemInput) {
+    await this.getTemplateOrThrow(dto.template_id)
+    return checklistItemRepository.create(dto)
+  }
 
-    return await prisma.checklistSubmission.update({
-      where: { id: existing.id },
-      data: { is_done: input.is_done, notes: input.notes },
-      include: { photos: true },
+  async getItemsByTemplate(templateId: number, params?: PaginationParams) {
+    await this.getTemplateOrThrow(templateId)
+    return checklistItemRepository.findByTemplate(templateId, params)
+  }
+
+  async updateItem(id: number, dto: UpdateItemInput) {
+    await this.getItemOrThrow(id)
+    return checklistItemRepository.update(id, dto)
+  }
+
+  async deleteItem(id: number) {
+    await this.getItemOrThrow(id)
+    return checklistItemRepository.softDelete(id)
+  }
+
+
+  //submission
+
+  async getMyChecklist(userId: string) {
+    const {date}      = getToday()
+    const attendance = await attendanceRepository.findByUser(userId, date)
+    if (!attendance) throw new AppError('Please check in first', 404)
+
+    return checklistSubmissionRepository.findByAttendance(attendance.id)
+  }
+
+
+  async uploadPhoto(
+    attendanceId: string,
+    itemId:       number,
+    userId:       string,
+    photoUrl:     string
+  ) {
+    const attendance = await this.getAttendanceOrThrow(attendanceId)
+    this.assertOwnership(attendance.user_id, userId)
+
+    const submission = await this.getSubmissionOrThrow(attendanceId, itemId)
+
+    if (submission.is_submitted) {
+      throw new AppError('Checklist already submitted, cannot modify', 400)
+    }
+
+    const photoCount = await checklistPhotoRepository.countBySubmission(submission.id)
+    if (photoCount >= this.MAX_PHOTOS_PER_ITEM) {
+      throw new AppError(`Maximum ${this.MAX_PHOTOS_PER_ITEM} photos per item`, 400)
+    }
+
+    return checklistPhotoRepository.create({
+      submission_id: submission.id,
+      photo_url:     photoUrl,
+      order:         photoCount + 1,
     })
   }
 
-  return await prisma.checklistSubmission.create({
-    data: {
-      attendance_id: input.attendance_id,
-      item_id: input.item_id,
-      is_done: input.is_done,
-      notes: input.notes,
-    },
-    include: { photos: true },
-  })
-}
+   async submitAll(attendanceId: string, userId: string) {
+    const attendance = await this.getAttendanceOrThrow(attendanceId)
+    this.assertOwnership(attendance.user_id, userId)
 
-// ─── STAFF: UPLOAD EVIDENCE PHOTO ────────────────────────────────
-export const uploadEvidencePhoto = async (
-  user_id: number,
-  submission_id: number,
-  photo_url: string
-) => {
-  const submission = await prisma.checklistSubmission.findUnique({
-    where: { id: submission_id },
-    include: { attendance: true, photos: true },
-  })
-  if (!submission) throw new Error("Submission not found")
-  if (submission.attendance.user_id !== user_id) throw new Error("Submission not found")
-  if (submission.is_submitted) throw new Error("Submission already locked")
-  if (submission.attendance.check_out_at) throw new Error("Cannot upload photo after checkout")
+    const submissions = await checklistSubmissionRepository.findByAttendance(attendanceId)
 
-  // max 3 photos per item
-  if (submission.photos.length >= 3) throw new Error("Maximum 3 photos per checklist item")
+    if (submissions.length === 0) {
+      throw new AppError('No checklist items found', 404)
+    }
 
-  return await prisma.evidencePhoto.create({
-    data: { submission_id, photo_url, status: "PENDING" },
-  })
-}
+    const alreadySubmitted = submissions.some(s => s.is_submitted)
+    if (alreadySubmitted) {
+      throw new AppError('Checklist already submitted', 409)
+    }
 
-// ─── STAFF: LOCK SUBMISSION ───────────────────────────────────────
-export const lockSubmission = async (user_id: number, submission_id: number) => {
-  const submission = await prisma.checklistSubmission.findUnique({
-    where: { id: submission_id },
-    include: { attendance: true, photos: true },
-  })
-  if (!submission) throw new Error("Submission not found")
-  if (submission.attendance.user_id !== user_id) throw new Error("Submission not found")
-  if (submission.is_submitted) throw new Error("Already submitted")
+    const missingPhoto = submissions.some(s => s.photos.length === 0)
+    if (missingPhoto) {
+      throw new AppError('All checklist items must have at least one photo', 400)
+    }
 
-  // must have at least 1 photo if item requires photo
-  const item = await prisma.checklistItem.findUnique({
-    where: { id: submission.item_id },
-  })
-  if (item?.requires_photo && submission.photos.length === 0) {
-    throw new Error("At least 1 photo is required before submitting")
+    await checklistSubmissionRepository.submitAll(attendanceId)
   }
 
-  return await prisma.checklistSubmission.update({
-    where: { id: submission_id },
-    data: { is_submitted: true, submitted_at: new Date() },
-    include: { photos: true },
-  })
+
+  //Photo 
+  
+    async getByItemAndDate(
+    itemId:    number,
+    companyId: number,
+    date:      Date,
+    params:    PaginationParams
+  ) {
+    await this.getItemOrThrow(itemId)
+    await this.getCompanyOrThrow(companyId)
+    return checklistSubmissionRepository.findByItemAndDate(itemId, companyId, date, params)
+  }
+
 }
 
-// ─── STAFF: DELETE PHOTO (before lock) ───────────────────────────
-export const deleteEvidencePhoto = async (user_id: number, photo_id: number) => {
-  const photo = await prisma.evidencePhoto.findUnique({
-    where: { id: photo_id },
-    include: { submission: { include: { attendance: true } } },
-  })
-  if (!photo) throw new Error("Photo not found")
-  if (photo.submission.attendance.user_id !== user_id) throw new Error("Photo not found")
-  if (photo.submission.is_submitted) throw new Error("Cannot delete photo after submission locked")
-  if (photo.status !== "PENDING") throw new Error("Cannot delete reviewed photo")
-
-  return await prisma.evidencePhoto.delete({ where: { id: photo_id } })
-}
-
-// ─── SUPERVISOR: REVIEW PHOTO ─────────────────────────────────────
-export const reviewPhoto = async (user_id: number, input: ReviewPhotoInput) => {
-  const photo = await prisma.evidencePhoto.findUnique({
-    where: { id: input.photo_id },
-    include: {
-      submission: {
-        include: { attendance: { include: { company: true } } },
-      },
-    },
-  })
-  if (!photo) throw new Error("Photo not found")
-  if (photo.status !== "PENDING") throw new Error("Photo already reviewed")
-
-  // verify supervisor belongs to same company
-  const company_id = photo.submission.attendance.company_id
-  const userRole = await prisma.userCompanyRole.findFirst({
-    where: { user_id, company_id, role: "SUPERVISOR" },
-  })
-  if (!userRole) throw new Error("Photo not found")
-
-  return await prisma.evidencePhoto.update({
-    where: { id: input.photo_id },
-    data: {
-      status: input.status,
-      reviewed_by: user_id,
-      reviewed_at: new Date(),
-      reject_reason: input.status === "REJECTED" ? input.reject_reason : null,
-    },
-  })
-}
-
-// ─── SUPERVISOR: GET PENDING PHOTOS BY COMPANY ───────────────────
-export const getPendingPhotosByCompany = async (user_id: number, company_id: number) => {
-  const userRole = await prisma.userCompanyRole.findFirst({
-    where: { user_id, company_id, role: "SUPERVISOR" },
-  })
-  if (!userRole) throw new Error("Company not found")
-
-  return await prisma.evidencePhoto.findMany({
-    where: {
-      status: "PENDING",
-      submission: {
-        is_submitted: true,
-        attendance: { company_id },
-      },
-    },
-    include: {
-      submission: {
-        include: {
-          item: { select: { description: true } },
-          attendance: {
-            include: {
-              user: { select: { id: true, name: true } },
-              division: { select: { name: true } },
-            },
-          },
-        },
-      },
-    },
-    orderBy: { created_at: "asc" },
-  })
-}
-
-// ─── ADMIN: HIGHLIGHT PHOTO ───────────────────────────────────────
-export const highlightPhoto = async (input: HighlightPhotoInput) => {
-  const photo = await prisma.evidencePhoto.findUnique({ where: { id: input.photo_id } })
-  if (!photo) throw new Error("Photo not found")
-  if (photo.status !== "APPROVED") throw new Error("Only approved photos can be highlighted")
-
-  return await prisma.evidencePhoto.update({
-    where: { id: input.photo_id },
-    data: {
-      is_highlighted: input.is_highlighted,
-      highlighted_at: input.is_highlighted ? new Date() : null,
-    },
-  })
-}
-
-// ─── ADMIN: GET HIGHLIGHTED PHOTOS FOR REPORT ────────────────────
-export const getHighlightedPhotos = async (company_id: number, division_id: number, month: number, year: number) => {
-  const startDate = new Date(year, month - 1, 1)
-  const endDate = new Date(year, month, 0, 23, 59, 59)
-
-  return await prisma.evidencePhoto.findMany({
-    where: {
-      is_highlighted: true,
-      status: "APPROVED",
-      submission: {
-        attendance: {
-          company_id,
-          division_id,
-          check_in_at: { gte: startDate, lte: endDate },
-        },
-      },
-    },
-    include: {
-      submission: {
-        include: {
-          item: { select: { description: true } },
-          attendance: {
-            include: {
-              user: { select: { name: true } },
-            },
-          },
-        },
-      },
-    },
-    orderBy: { highlighted_at: "asc" },
-  })
-}
+export const checklistService = new ChecklistService()

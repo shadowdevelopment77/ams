@@ -1,73 +1,95 @@
-import { ChecklistItem, ChecklistSubmission, ChecklistTemplate } from "../../../generated/prisma";
+import {
+  ChecklistItem,
+  ChecklistSubmission,
+  ChecklistTemplate,
+  ChecklistPhoto,
+  Prisma
+} from "../../../generated/prisma";
 import { BaseRepository, PaginatedResult, PaginationParams } from "./base.interface";
 
-// --- ChecklistTemplate ---
+// ─── ChecklistTemplate ──────────────────────────────────────────────────────
+
 export interface CreateChecklistTemplateDTO {
   division_id: number;
-  company_id: number;
-  title: string;
+  company_id:  number;
+  title:       string;
 }
 
 export interface UpdateChecklistTemplateDTO {
-  title?: string;
+  title?:     string;
   is_active?: boolean;
 }
 
 export interface ChecklistTemplateRepository
-  extends BaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO,number> {
+  extends BaseRepository<ChecklistTemplate, CreateChecklistTemplateDTO, UpdateChecklistTemplateDTO, number> {
   findByDivision(companyId: number, divisionId: number): Promise<ChecklistTemplate[]>;
 }
 
-// --- ChecklistItem ---
+// ─── ChecklistItem ──────────────────────────────────────────────────────────
+
 export interface CreateChecklistItemDTO {
-  template_id: number;
-  order_no: number;
-  description: string;
+  template_id:    number;
+  order_no:       number;
+  description:    string;
   requires_photo: boolean;
 }
 
 export interface UpdateChecklistItemDTO {
   description?: string;
-  requires_photo?: boolean;
-  order_no?: number;
-  is_active?: boolean;
+  order_no?:    number;
+  is_active?:   boolean;
 }
-
 
 export interface ChecklistItemRepository
   extends BaseRepository<ChecklistItem, CreateChecklistItemDTO, UpdateChecklistItemDTO, number> {
   findByTemplate(templateId: number, params?: PaginationParams): Promise<PaginatedResult<ChecklistItem>>;
 }
 
-// --- ChecklistSubmission ---
+// ─── ChecklistSubmission ────────────────────────────────────────────────────
+
 export interface CreateChecklistSubmissionDTO {
   attendance_id: string;
-  item_id: number;
-  status_id?: number;
+  item_id:       number;
 }
 
 export interface UpdateChecklistSubmissionDTO {
-  notes?: string;
+  is_submitted?: boolean;
   submitted_at?: Date;
 }
+export type ChecklistSubmissionWithPhotos = Prisma.ChecklistSubmissionGetPayload<{
+  include: { photos: true; item: true }
+}>
 
-export interface ReviewSubmissionDTO{
-  status_id: number;
-  reviewed_by: string;
-  reject_reason: string;
-}
-
-export interface ChecklistSubmissionFilterParams extends PaginationParams {
-  statusId?: number
-}
-
+export type ChecklistSubmissionWithEvidence = Prisma.ChecklistSubmissionGetPayload<{
+    include: {
+    photos: true,
+    attendance: { include: { user: { select: { id: true, name: true } } } }
+  }
+}>
 export interface ChecklistSubmissionRepository
   extends BaseRepository<ChecklistSubmission, CreateChecklistSubmissionDTO, UpdateChecklistSubmissionDTO, number> {
   findByAttendanceAndItem(attendanceId: string, itemId: number): Promise<ChecklistSubmission | null>;
+  findByAttendance(attendanceId: string): Promise<ChecklistSubmissionWithPhotos[]>;
   bulkCreate(attendanceId: string, itemIds: number[]): Promise<ChecklistSubmission[]>;
-  submitAll(attendanceId: string, statusId: number): Promise<void>;
+  submitAll(attendanceId: string): Promise<void>;
+  findByItemAndDate(
+    itemId:    number,
+    companyId: number,
+    date:      Date,
+    params:    PaginationParams
+  ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>>;
+}
 
-  findByDivision(companyId: number, divisionId: number, date: Date, params: ChecklistSubmissionFilterParams ): Promise<PaginatedResult<ChecklistSubmission>>
-  review(submissionId: number, data: ReviewSubmissionDTO): Promise<ChecklistSubmission>
-  findByItemAndDate(itemId: number, companyId: number, date: Date, params: PaginationParams ): Promise<PaginatedResult<ChecklistSubmission>>
+// ─── ChecklistPhoto ─────────────────────────────────────────────────────────
+
+export interface CreateChecklistPhotoDTO {
+  submission_id: number;
+  photo_url:     string;
+  order:         number;
+}
+
+export interface ChecklistPhotoRepository
+  extends BaseRepository<ChecklistPhoto, CreateChecklistPhotoDTO, {}, number> {
+  findBySubmission(submissionId: number): Promise<ChecklistPhoto[]>;
+  countBySubmission(submissionId: number): Promise<number>;
 }
