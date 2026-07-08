@@ -9,12 +9,12 @@ import {
   PrismaChecklistTemplateRepository,
   PrismaChecklistItemRepository,
   PrismaChecklistSubmissionRepository,
+  PrismaChecklistPhotoRepository
 } from "./implementors/checklist.repository";
 import { PrismaVisitLogRepository } from "./implementors/visit-log.repository";
 import { PrismaSessionRepository } from "./implementors/session.repository";
 import {
   PrismaAttendanceStatusRepository,
-  PrismaSubmissionStatusRepository
 } from "./implementors/status.repository";
 
 
@@ -45,12 +45,12 @@ export {
   PrismaChecklistTemplateRepository,
   PrismaChecklistItemRepository,
   PrismaChecklistSubmissionRepository,
+  PrismaChecklistPhotoRepository
 } from "./implementors/checklist.repository";
 export { PrismaVisitLogRepository } from "./implementors/visit-log.repository";
 export { PrismaSessionRepository } from "./implementors/session.repository";
 export {
   PrismaAttendanceStatusRepository,
-  PrismaSubmissionStatusRepository
 } from "./implementors/status.repository";
 
 
@@ -65,7 +65,7 @@ export const shiftRepository = new PrismaShiftRepository(prisma);
 export const checklistTemplateRepository = new PrismaChecklistTemplateRepository(prisma);
 export const checklistItemRepository = new PrismaChecklistItemRepository(prisma);
 export const checklistSubmissionRepository = new PrismaChecklistSubmissionRepository(prisma);
+export const checklistPhotoRepository = new PrismaChecklistPhotoRepository(prisma)
 export const visitLogRepository = new PrismaVisitLogRepository(prisma);
 export const sessionRepository = new PrismaSessionRepository(prisma);
 export const attendanceStatusRepository = new PrismaAttendanceStatusRepository(prisma);
-export const submissionStatusRepository = new PrismaSubmissionStatusRepository(prisma);

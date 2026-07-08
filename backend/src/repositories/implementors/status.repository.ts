@@ -1,12 +1,9 @@
-import { AttendanceStatus, SubmissionStatus, PrismaClient } from "../../../generated/prisma";
+import { AttendanceStatus, PrismaClient } from "../../../generated/prisma";
 import { PrismaBaseRepository } from "./base.repository";
 import {
   AttendanceStatusRepository,
   CreateAttendanceStatusDTO,
   UpdateAttendanceStatusDTO,
-  CreatePhotoStatusDTO,
-  UpdatePhotoStatusDTO,
-  SubmissionStatusRepository,
 } from "../interfaces/status.interface";
 
 export class PrismaAttendanceStatusRepository
@@ -21,23 +18,6 @@ export class PrismaAttendanceStatusRepository
 
   async findByName(name: string): Promise<AttendanceStatus | null> {
     return this.prisma.attendanceStatus.findFirst({
-      where: { name, is_deleted: false },
-    });
-  }
-}
-
-export class PrismaSubmissionStatusRepository
-  extends PrismaBaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO, number>
-  implements SubmissionStatusRepository
-{
-  protected modelName = "submissionStatus" as const;
-
-  constructor(prisma: PrismaClient) {
-    super(prisma);
-  }
-
-  async findByName(name: string): Promise<SubmissionStatus | null> {
-    return this.prisma.submissionStatus.findFirst({
       where: { name, is_deleted: false },
     });
   }

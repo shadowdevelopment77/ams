@@ -1,4 +1,4 @@
-import { AttendanceStatus, SubmissionStatus } from "../../../generated/prisma";
+import { AttendanceStatus } from "../../../generated/prisma";
 import { BaseRepository } from "./base.interface";
 
 export interface CreateAttendanceStatusDTO {
@@ -15,16 +15,3 @@ export interface AttendanceStatusRepository
   findByName(name: string): Promise<AttendanceStatus | null>;
 }
 
-export interface CreatePhotoStatusDTO {
-  name: string;
-}
-
-export interface UpdatePhotoStatusDTO {
-  name?: string;
-  is_active?: boolean;
-}
-
-export interface SubmissionStatusRepository
-  extends BaseRepository<SubmissionStatus, CreatePhotoStatusDTO, UpdatePhotoStatusDTO, number> {
-  findByName(name: string): Promise<SubmissionStatus | null>;
-}

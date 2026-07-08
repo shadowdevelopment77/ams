@@ -71,7 +71,6 @@ model User {
   updated_at DateTime @updatedAt
 
 
-  submission_reviews ChecklistSubmission[] @relation("SubmissionReviews")
   company_roles     UserCompanyRole[]
   attendancesn      Attendance[]
   visit_logs        VisitLog[]
@@ -272,14 +271,6 @@ model ChecklistSubmission {
   id            Int      @id @default(autoincrement())
   attendance_id String
   item_id       Int
-  status_id     Int?
-  photo_url_1  String?
-  photo_url_2  String?
-  photo_url_3  String?
-  reviewed_by   String?
-  reviewed_at   DateTime?
-  reject_reason String?
-  not0es         String?
   is_submitted  Boolean  @default(false)
   submitted_at  DateTime?
   is_active  Boolean  @default(true)
@@ -290,24 +281,21 @@ model ChecklistSubmission {
 
   attendance    Attendance      @relation(fields: [attendance_id], references: [id])
   item          ChecklistItem   @relation(fields: [item_id], references: [id])
-  reviewer   User?             @relation("SubmissionReviews", fields: [reviewed_by], references: [id])
-  status     SubmissionStatus?  @relation(fields: [status_id], references: [id])
+  photos     ChecklistPhoto[]
 
 
   @@index([attendance_id])
 }
 
+model ChecklistPhoto{
+  id    Int @id @default(autoincrement())
+  submission_id Int
+  photo_url String
+  order     Int
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
 
+  submission ChecklistSubmission @relation(fields: [submission_id], references: [id])
 
-model SubmissionStatus {
-  id         Int  @id @default(autoincrement())
-  name       String
-  is_active  Boolean  @default(true)
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  deleted_at DateTime?
-  updated_at DateTime @updatedAt
-
-  checklist_submission ChecklistSubmission[]
-
+  @@index([submission_id])
 }
