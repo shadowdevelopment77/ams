@@ -14,19 +14,11 @@ import { AppError } from '../../utils/error.response/appError'
 import { isNightShift, toDateTime } from '../../utils/shift'
 import { reverseGeocode } from '../../utils/geocode'
 import { AttendanceFilterParams } from '../../repositories/interfaces/attendance.interface'
-
+import {getToday} from '../../utils/date'
 
 
 export class AttendanceService {
 
-
-
- private getToday() {
-    const today = new Date()
-    const utcDateString = today.toISOString().split('T')[0]
-    const date = new Date(`${utcDateString}T00:00:00.000Z`)
-    return { today, date }
-  }
 
   private async getCompanyOrThrow(id: number) {
     const company = await companyRepository.findById(id)
@@ -110,7 +102,7 @@ async checkIn(
     divisionId: number,
     dto:        CheckInInput
   ) {
-    const { today, date } = this.getToday()
+    const { today, date } = getToday()
 
     await this.checkUserDayAttendance(userId, date)
 

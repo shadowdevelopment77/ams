@@ -15,9 +15,7 @@ export class UserController {
   })
 
   getUserById = catchAsync(async (req, res) => {
-    const id = String(req.params.id)
-    if (!id) return sendError(res, 'Invalid id', 400)
-    const result = await userService.getUserById(id)
+    const result = await userService.getUserById(String(req.params.id))
     return sendSuccess(res, result, 'User fetched')
   })
 
@@ -31,9 +29,7 @@ export class UserController {
   })
 
   delete = catchAsync(async (req, res) => {
-    const id = String(req.params.id)
-    if (!id) return sendError(res, 'Invalid id', 400)
-    const result = await userService.delete(id)
+    const result = await userService.delete(String(req.params.id))
     return sendSuccess(res, result, 'User deleted')
   })
 }
