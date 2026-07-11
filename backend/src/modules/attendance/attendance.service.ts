@@ -15,6 +15,7 @@ import { isNightShift, toDateTime } from '../../utils/shift'
 import { reverseGeocode } from '../../utils/geocode'
 import { AttendanceFilterParams } from '../../repositories/interfaces/attendance.interface'
 import {getToday} from '../../utils/date'
+import { Prisma } from '../../../generated/prisma'
 
 
 
@@ -116,24 +117,31 @@ async checkIn(
     const status                 = await this.getAttendanceStatus(isLate)
     const locationAddress        = await this.getLocation(dto.latitude, dto.longitude)
 
-    const attendance = await attendanceRepository.create({
-      user_id:          userId,
-      company_id:       companyId,
-      division_id:      divisionId,
-      shift_id:         dto.shift_id,
-      photo_url:        photoUrl,
+   let attendance
+  try {
+    attendance = await attendanceRepository.create({
+      user_id: userId,
+      company_id: companyId,
+      division_id: divisionId,
+      shift_id: dto.shift_id,
+      photo_url: photoUrl,
       date,
-      latitude:         dto.latitude,
-      longitude:        dto.longitude,
+      latitude: dto.latitude,
+      longitude: dto.longitude,
       location_address: locationAddress,
-      status_id:        status.id,
-      is_late:          isLate,
-      late_minutes:     lateMinutes,
+      status_id: status.id,
+      is_late: isLate,
+      late_minutes: lateMinutes,
     })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      throw new AppError('Already checked in today', 409)
+    }
+    throw err
+  }
 
-    await this.bulkCreateChecklist(attendance.id, companyId, divisionId)
-
-    return attendance
+  await this.bulkCreateChecklist(attendance.id, companyId, divisionId)
+  return attendance
   }
 
   async checkOut(

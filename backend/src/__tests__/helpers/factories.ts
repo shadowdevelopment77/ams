@@ -126,3 +126,80 @@ export async function createSession(
     },
   })
 }
+
+// AttendanceStatus rows (PRESENT/LATE) are seeded once in globalSetup and
+// never wiped by cleanDatabase — this just fetches the existing row.
+export async function getAttendanceStatus(name: 'PRESENT' | 'LATE') {
+  const status = await prisma.attendanceStatus.findFirst({ where: { name } })
+  if (!status) throw new Error(`AttendanceStatus "${name}" not seeded — check globalSetup.ts`)
+  return status
+}
+
+// Creates an Attendance row directly via Prisma — bypasses the /checkin
+// endpoint entirely. Use this when a test needs precise control over
+// check-in time, late/early-leave state, or shift linkage (e.g. testing
+// checkout behavior in isolation, without checkin's side effects also
+// being exercised in the same test).
+export async function createAttendance(
+  userId: string,
+  companyId: number,
+  divisionId: number,
+  shiftId: number,
+  overrides: Partial<{
+    date: Date
+    checkInAt: Date
+    checkOutAt: Date | null
+    isLate: boolean
+    earlyLeave: boolean
+    photoUrl: string
+  }> = {}
+) {
+  const status = await getAttendanceStatus(overrides.isLate ? 'LATE' : 'PRESENT')
+  const today = new Date()
+  const dateOnly = new Date(today.toISOString().split('T')[0] + 'T00:00:00.000Z')
+
+  return prisma.attendance.create({
+    data: {
+      user_id: userId,
+      company_id: companyId,
+      division_id: divisionId,
+      shift_id: shiftId,
+      date: overrides.date ?? dateOnly,
+      check_in_at: overrides.checkInAt ?? new Date(),
+      check_out_at: overrides.checkOutAt ?? null,
+      photo_url: overrides.photoUrl ?? 'https://fake-cdn.test/seed-photo.jpg',
+      is_late: overrides.isLate ?? false,
+      late_minutes: overrides.isLate ? 30 : 0,
+      early_leave: overrides.earlyLeave ?? false,
+      status_id: status.id,
+    },
+  })
+}
+
+export async function createChecklistTemplate(
+  companyId: number,
+  divisionId: number,
+  overrides: Partial<{ title: string }> = {}
+) {
+  return prisma.checklistTemplate.create({
+    data: {
+      company_id: companyId,
+      division_id: divisionId,
+      title: overrides.title ?? unique('Checklist'),
+    },
+  })
+}
+
+export async function createChecklistItem(
+  templateId: number,
+  overrides: Partial<{ order_no: number; description: string; requires_photo: boolean }> = {}
+) {
+  return prisma.checklistItem.create({
+    data: {
+      template_id: templateId,
+      order_no: overrides.order_no ?? 1,
+      description: overrides.description ?? unique('Item'),
+      requires_photo: overrides.requires_photo ?? true,
+    },
+  })
+}
