@@ -75,7 +75,7 @@ const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
   const result = await attendanceService.submitEarlyLeaveReason(
     req.params.id as string,
     req.user!.id,
-    req.body.early_leave_reason
+    req.body
   )
   return sendSuccess(res, result, 'Early leave reason submitted')
 })

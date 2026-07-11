@@ -3,14 +3,14 @@ import { Request, Response, NextFunction } from 'express'
 import { sendError } from '../../utils/error.response/response'
 
 const checkInSchema = z.object({
-  shift_id:   z.number({ error: 'Shift is required' }),
-  latitude:   z.number().optional(),
-  longitude:  z.number().optional(),
+  shift_id:   z.coerce.number({ error: 'Shift is required' }),
+  latitude:   z.coerce.number().optional(),
+  longitude:  z.coerce.number().optional(),
 })
 
 const checkOutSchema = z.object({
-  checkout_latitude:  z.number().optional(),
-  checkout_longitude: z.number().optional(),
+  checkout_latitude:  z.coerce.number().optional(),
+  checkout_longitude: z.coerce.number().optional(),
 })
 
 const earlyLeaveReasonSchema = z.object({
