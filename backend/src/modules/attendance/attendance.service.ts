@@ -15,7 +15,7 @@ import { isNightShift, toDateTime } from '../../utils/shift'
 import { reverseGeocode } from '../../utils/geocode'
 import { AttendanceFilterParams } from '../../repositories/interfaces/attendance.interface'
 import {getToday} from '../../utils/date'
-import { PhotoStatus } from '@prisma/client';
+
 
 
 export class AttendanceService {
@@ -46,6 +46,7 @@ export class AttendanceService {
 
   private async getShift(shiftId: number) {
     const shift = await shiftRepository.findById(shiftId)
+    
     if (!shift) throw new AppError('Shift not found', 404)
     return shift
   }
@@ -109,6 +110,8 @@ async checkIn(
     await this.checkUserDayAttendance(userId, date)
 
     const shift                  = await this.getShift(dto.shift_id)
+    if (shift.company_id !== companyId || shift.division_id !== divisionId) {
+    throw new AppError('Shift does not belong to your division', 403) }
     const { isLate, lateMinutes } = this.calculateLate(today, shift.start_time)
     const status                 = await this.getAttendanceStatus(isLate)
     const locationAddress        = await this.getLocation(dto.latitude, dto.longitude)
