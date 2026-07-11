@@ -5,8 +5,8 @@ import { sendError } from '../../utils/error.response/response'
 // ─── Template ───────────────────────────────────────────────────────────────
 
 const createTemplateSchema = z.object({
-  company_id:  z.number({ error: 'Company is required' }),
-  division_id: z.number({ error: 'Division is required' }),
+  company_id:  z.coerce.number({ error: 'Company is required' }),
+  division_id: z.coerce.number({ error: 'Division is required' }),
   title:       z.string().min(1, 'Title is required'),
 })
 
@@ -35,15 +35,15 @@ export const validateUpdateTemplate = (req: Request, res: Response, next: NextFu
 // ─── Item ───────────────────────────────────────────────────────────────────
 
 const createItemSchema = z.object({
-  template_id:    z.number({ error: 'Template is required' }),
-  order_no:       z.number({ error: 'Order is required' }),
+  template_id:    z.coerce.number({ error: 'Template is required' }),
+  order_no:       z.coerce.number({ error: 'Order is required' }),
   description:    z.string().min(1, 'Description is required'),
   requires_photo: z.boolean()
 })
 
 const updateItemSchema = z.object({
   description: z.string().min(1).optional(),
-  order_no:    z.number().optional(),
+  order_no:    z.coerce.number().optional(),
   is_active:   z.boolean().optional(),
 })
 

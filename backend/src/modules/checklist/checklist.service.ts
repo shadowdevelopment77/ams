@@ -66,6 +66,12 @@ export class ChecklistService{
     if (resourceUserId !== requestingUserId) throw new AppError('Access denied', 403)
   }
 
+  private async assertAttendanceIsToday(attendance: { date: Date }) {
+  const { date: todayDate } = getToday()
+  if (attendance.date.getTime() !== todayDate.getTime()) {
+    throw new AppError('Checklist is no longer open — it belonged to a previous check-in', 403)
+  }
+}
 
   //Template
 
@@ -133,7 +139,8 @@ export class ChecklistService{
     photoUrl:     string
   ) {
     const attendance = await this.getAttendanceOrThrow(attendanceId)
-    this.assertOwnership(attendance.user_id, userId)
+    await this.assertAttendanceIsToday(attendance)
+    await this.assertOwnership(attendance.user_id, userId)
 
     const submission = await this.getSubmissionOrThrow(attendanceId, itemId)
 
@@ -155,7 +162,8 @@ export class ChecklistService{
 
    async submitAll(attendanceId: string, userId: string) {
     const attendance = await this.getAttendanceOrThrow(attendanceId)
-    this.assertOwnership(attendance.user_id, userId)
+    await this.assertAttendanceIsToday(attendance)
+    await this.assertOwnership(attendance.user_id, userId)
 
     const submissions = await checklistSubmissionRepository.findByAttendance(attendanceId)
 
