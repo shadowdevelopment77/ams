@@ -8,7 +8,7 @@ export interface CreateVisitLogDTO {
   date: Date;
   latitude?: number;
   longitude?: number;
-  location_addres?: string;
+  location_address?: string;
   notes?: string;
   visited_at?: Date;
 }

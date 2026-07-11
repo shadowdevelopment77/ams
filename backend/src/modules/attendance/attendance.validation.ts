@@ -4,16 +4,13 @@ import { sendError } from '../../utils/error.response/response'
 
 const checkInSchema = z.object({
   shift_id:   z.number({ error: 'Shift is required' }),
-  photo_url:  z.string().min(1, 'Photo is required'),
   latitude:   z.number().optional(),
   longitude:  z.number().optional(),
 })
 
 const checkOutSchema = z.object({
-  checkout_photo_url: z.string().min(1, 'Checkout photo is required'),
   checkout_latitude:  z.number().optional(),
   checkout_longitude: z.number().optional(),
-  early_leave_reason: z.string().optional(),
 })
 
 const earlyLeaveReasonSchema = z.object({

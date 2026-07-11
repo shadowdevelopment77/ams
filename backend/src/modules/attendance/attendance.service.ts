@@ -15,6 +15,7 @@ import { isNightShift, toDateTime } from '../../utils/shift'
 import { reverseGeocode } from '../../utils/geocode'
 import { AttendanceFilterParams } from '../../repositories/interfaces/attendance.interface'
 import {getToday} from '../../utils/date'
+import { PhotoStatus } from '@prisma/client';
 
 
 export class AttendanceService {
@@ -100,6 +101,7 @@ async checkIn(
     userId:     string,
     companyId:  number,
     divisionId: number,
+    photoUrl:   string,
     dto:        CheckInInput
   ) {
     const { today, date } = getToday()
@@ -116,7 +118,7 @@ async checkIn(
       company_id:       companyId,
       division_id:      divisionId,
       shift_id:         dto.shift_id,
-      photo_url:        dto.photo_url,
+      photo_url:        photoUrl,
       date,
       latitude:         dto.latitude,
       longitude:        dto.longitude,
@@ -134,6 +136,7 @@ async checkIn(
   async checkOut(
     attendanceId: string,
     userId:       string,
+    checkoutPhotoUrl: string,
     dto:          CheckOutInput
   ) {
     const attendance = await this.getAttendanceOrThrow(attendanceId)
@@ -152,7 +155,7 @@ async checkIn(
 
     return attendanceRepository.checkOut(attendanceId, {
       check_out_at:       now,
-      checkout_photo_url: dto.checkout_photo_url,
+      checkout_photo_url: checkoutPhotoUrl,
       checkout_latitude:  dto.checkout_latitude,
       checkout_longitude: dto.checkout_longitude,
       checkout_address:   checkoutAddress,

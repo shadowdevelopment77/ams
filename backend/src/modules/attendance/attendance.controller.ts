@@ -30,7 +30,8 @@ export class AttendanceController {
       req.user!.id,
       req.user!.companyId!,
       req.user!.divisionId!,
-      {... req.body, photo_url}
+      photo_url,
+      req.body
     )
     return sendSuccess(res, result, 'Check in successful', 201)
   })
@@ -44,7 +45,8 @@ export class AttendanceController {
     const result = await attendanceService.checkOut(
       req.params.id as string,
       req.user!.id,
-      {... req.body, checkout_photo_url: photo_url}
+      photo_url,
+      req.body
     )
     return sendSuccess(res, result, 'Check out successful')
   })

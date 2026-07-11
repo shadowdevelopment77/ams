@@ -44,7 +44,7 @@ private async getUserOrThrow(userId: string) {
       date:             date,
       latitude:         dto.latitude,
       longitude:        dto.longitude,
-      location_addres:  address,
+      location_address:  address,
       notes:            dto.notes,
       visited_at:       today,
     })

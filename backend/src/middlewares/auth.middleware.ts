@@ -8,7 +8,7 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    const sessionId = req.cookies?.session_id
+    const sessionId = req.cookies?.sessionId
     if (!sessionId) return sendError(res, 'Not authenticated', 401)
 
     const session = await sessionRepository.findById(sessionId)
