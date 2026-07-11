@@ -264,6 +264,39 @@ describe('POST /api/attendance/checkin', () => {
     })
     expect(submissions).toHaveLength(0)
   })
+
+  it('handles two simultaneous checkins from the same staff — exactly one succeeds', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id, { start_time: ALWAYS_NOT_YET_STARTED })
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    // Fired truly concurrently — both requests can pass
+    // checkUserDayAttendance's read before either write lands, so this
+    // exercises the P2002 fallback on Attendance's @@unique([user_id, date]).
+    const [resA, resB] = await Promise.all([
+      api()
+        .post('/api/attendance/checkin')
+        .set('Cookie', cookie)
+        .field('shift_id', shift.id)
+        .attach('photo', fakePhoto(), 'photo.jpg'),
+      api()
+        .post('/api/attendance/checkin')
+        .set('Cookie', cookie)
+        .field('shift_id', shift.id)
+        .attach('photo', fakePhoto(), 'photo.jpg'),
+    ])
+
+    const statuses = [resA.status, resB.status].sort()
+    expect(statuses).toEqual([201, 409])
+
+    const loser = resA.status === 409 ? resA : resB
+    expect(loser.body.message).toMatch(/already checked in today/i)
+
+    const count = await prisma.attendance.count({ where: { user_id: user.id } })
+    expect(count).toBe(1)
+  })
 })
 
 describe('PATCH /api/attendance/checkout/:id', () => {
