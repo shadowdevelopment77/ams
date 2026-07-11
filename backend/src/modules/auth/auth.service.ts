@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import {userRepository, sessionRepository, roleRepository} from '../../repositories/index.repositories'
+import {userRepository, sessionRepository, roleRepository, divisionRepository} from '../../repositories/index.repositories'
 import { AppError } from "../../utils/error.response/appError";
 import { RegisterInput, LoginInput } from "./auth.validation";
 
@@ -13,6 +13,14 @@ export class AuthService {
     // check role exists
     const role = await roleRepository.findByName(data.role)
     if (!role) throw new AppError('Role not found', 404)
+
+    if (data.company_id && data.division_id) {
+    const division = await divisionRepository.findById(data.division_id)
+    if (!division) throw new AppError('Division not found', 404)
+    if (division.company_id !== data.company_id) {
+      throw new AppError('Division does not belong to the specified company', 400)
+    }
+  }
 
     // hash password
     const hashed = await bcrypt.hash(data.password, 10)
