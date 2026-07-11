@@ -203,3 +203,25 @@ export async function createChecklistItem(
     },
   })
 }
+
+// Bypasses POST /api/visit — useful for admin-side read/delete tests that
+// need existing visit logs without exercising the create flow every time.
+export async function createVisitLog(
+  userId: string,
+  companyId: number,
+  overrides: Partial<{ notes: string; photoUrl: string; visitedAt: Date }> = {}
+) {
+  const today = new Date()
+  const dateOnly = new Date(today.toISOString().split('T')[0] + 'T00:00:00.000Z')
+
+  return prisma.visitLog.create({
+    data: {
+      user_id: userId,
+      company_id: companyId,
+      date: dateOnly,
+      photo_url: overrides.photoUrl ?? 'https://fake-cdn.test/seed-visit.jpg',
+      notes: overrides.notes ?? null,
+      visited_at: overrides.visitedAt ?? today,
+    },
+  })
+}
