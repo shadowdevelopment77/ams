@@ -25,7 +25,6 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.use(errorMiddleware) // Error handling middleware should be registered after all routes
 app.use('/api', apiLimiter)
 
 app.use("/api/auth", authLimiter, authRouter )
@@ -36,6 +35,6 @@ app.use("/api/attendance", attendanceRouter)
 app.use("/api/checklist", checklistRouter)
 app.use("/api/company", companyRouter)
 app.use("/api/visit", visitRouter)
-
+app.use(errorMiddleware)
 
 export default app
