@@ -3,9 +3,9 @@ import { Request, Response, NextFunction } from 'express'
 import { sendError } from '../../utils/error.response/response'
 
 const createVisitLogSchema = z.object({
-  company_id: z.number({ error: 'Company is required' }),
-  latitude:   z.number().optional(),
-  longitude:  z.number().optional(),
+  company_id: z.coerce.number({ error: 'Company is required' }),
+  latitude:   z.coerce.number().optional(),
+  longitude:  z.coerce.number().optional(),
   notes:      z.string().optional(),
 })
 

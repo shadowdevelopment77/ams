@@ -3,6 +3,7 @@ import { CreateVisitLogInput } from './visit.validation'
 import { AppError } from '../../utils/error.response/appError'
 import { reverseGeocode } from '../../utils/geocode'
 import { PaginationParams } from '../../repositories/interfaces/base.interface'
+import { getToday} from '../../utils/date'
 
 export class VisitLogService {
 
@@ -33,8 +34,8 @@ private async getUserOrThrow(userId: string) {
   ) {
     await this.getCompanyOrThrow(dto.company_id)
 
-    const today   = new Date()
-    const date    = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+   const { today, date } = getToday()
+
     const address = await this.getLocation(dto.latitude, dto.longitude)
 
     return visitLogRepository.create({
