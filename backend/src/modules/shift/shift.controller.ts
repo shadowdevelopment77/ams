@@ -8,12 +8,10 @@ import { sendSuccess } from "../../utils/error.response/response"
 export class ShiftController {
 
 getAll = catchAsync(async (req, res) => {
-    const companyId  = Number(req.user!.companyId)
-    const divisionId = Number(req.user!.divisionId)
-
-
-    const result = await shiftService.getAll(companyId, divisionId)
-    return sendSuccess(res, result, 'Shifts fetched')
+  const companyId  = Number(req.params.companyId)
+  const divisionId = Number(req.params.divisionId)
+  const result = await shiftService.getAll(companyId, divisionId)
+  return sendSuccess(res, result, 'Shifts fetched')
   })
 
   getById = catchAsync(async (req, res) => {

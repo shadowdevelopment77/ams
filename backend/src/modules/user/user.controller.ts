@@ -5,7 +5,7 @@ import { sendError, sendSuccess } from "../../utils/error.response/response";
 export class UserController {
 
   moveCompany = catchAsync(async (req, res) => {
-    const result = await userService.moveToCompany(req.user!.id, req.body)
+    const result = await userService.moveToCompany(req.params.id as string, req.body)
     return sendSuccess(res, result, 'User company and division updated')
   })
   getAllUsers = catchAsync(async (req, res) => {
