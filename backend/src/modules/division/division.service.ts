@@ -1,4 +1,4 @@
-import {companyRepository, divisionRepository} from "../../repositories/index.repositories"
+import {companyRepository, divisionRepository, userRepository} from "../../repositories/index.repositories"
 import { CreateDivisionInput, UpdateDivisionInput } from "./division.validation"
 import { AppError } from "../../utils/error.response/appError"
 import { PaginationParams } from "../../repositories/interfaces/base.interface"
@@ -55,6 +55,14 @@ export class DivisionService {
 
   async delete(id: number) {
     await this.getDivisionOrThrow(id)
+        const activeStaffCount = await userRepository.countActiveByDivision(id)
+    if (activeStaffCount > 0)
+      throw new AppError(
+        `Cannot delete: ${activeStaffCount} staff member(s) are still assigned to this division. Move them first.`,
+        409
+      )
+    
+
     return divisionRepository.softDelete(id)
   }
 
