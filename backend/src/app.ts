@@ -9,7 +9,7 @@ import divisionRouter from "./modules/division/division.router"
 import shiftRouter from "./modules/shift/shift.router"
 import attendanceRouter from "./modules/attendance/attendance.router"
 import checklistRouter from "./modules/checklist/checklist.router"
-import companyRouter from "./modules/company/company.route"
+import companyRouter from "./modules/company/company.router"
 import { errorMiddleware } from "./middlewares/error.middleware";
 import {apiLimiter, authLimiter} from "./middlewares/rate-limit.middleware";
 import visitRouter from "./modules/visit/visit.route"
@@ -30,7 +30,7 @@ app.use('/api', apiLimiter)
 app.use("/api/auth", authLimiter, authRouter )
 app.use("/api/users", userRouter)
 app.use("/api/divisions", divisionRouter)
-app.use("/api/shifts", shiftRouter)
+app.use("/api/shift", shiftRouter)
 app.use("/api/attendance", attendanceRouter)
 app.use("/api/checklist", checklistRouter)
 app.use("/api/company", companyRouter)
