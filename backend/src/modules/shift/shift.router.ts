@@ -9,12 +9,12 @@ const router = Router()
 
 router.use(authMiddleware, roleMiddleware("ADMIN"))
 
-
+// Place more specific routes BEFORE generic /:id routes
+router.get("/company/:companyId/division/:divisionId", shiftController.getAll)
 
 router.post("/",  validateCreateShift, shiftController.create)
+router.get("/:id", shiftController.getById)
 router.put("/:id",  validateUpdateShift, shiftController.update)
 router.delete("/:id", shiftController.delete)
-router.get("/:id", shiftController.getById)
-router.get("/company/:companyId/division/:divisionId", shiftController.getAll)
 
 export default router

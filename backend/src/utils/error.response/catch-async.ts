@@ -8,6 +8,7 @@ export const catchAsync = (fn: (req: Request, res: Response) => Promise<any>) =>
       await fn(req, res)
     } catch (err) {
       if (err instanceof AppError) return sendError(res, err.message, err.statusCode)
+        console.error(err)
       return sendError(res)
     }
   }
