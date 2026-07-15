@@ -1,6 +1,6 @@
 import {AppError} from "../../utils/error.response/appError"
 import {PaginationParams} from "../../repositories/interfaces/base.interface"
-import {userRepository, companyRepository, divisionRepository} from "../../repositories/index.repositories"
+import {userRepository, companyRepository, divisionRepository, sessionRepository} from "../../repositories/index.repositories"
 import {MoveCompanyInput} from "./user.validation"
 
 
@@ -51,12 +51,13 @@ export class UserService {
 async moveToCompany(userId: string, data: MoveCompanyInput) {
     await this.getUserOrThrow(userId)
     await this.getCompanyOrThrow(data.company_id)
-
-    if (data.division_id) {
-      await this.validateDivisionBelongsToCompany(data.division_id, data.company_id)
-    }
+    await this.validateDivisionBelongsToCompany(data.division_id, data.company_id)
+    
 
     const companyRole = await this.getUserRoleOrThrow(userId)
+     if (companyRole.userRole.name !== 'STAFF') {
+    throw new AppError('Only STAFF can be assigned to a company and division', 400)
+  }
 
     return userRepository.updateCompanyRole(companyRole.id, {
       company_id:  data.company_id,
@@ -66,6 +67,8 @@ async moveToCompany(userId: string, data: MoveCompanyInput) {
 
 async delete(id: string) {
     await this.getUserOrThrow(id)
+
+    await sessionRepository.deleteByUser(id)
     return userRepository.softDelete(id)
   }
 

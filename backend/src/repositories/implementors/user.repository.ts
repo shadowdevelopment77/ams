@@ -137,4 +137,20 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
       },
     })
   }
+
+  async countActiveByCompany(companyId:number): Promise<number>{
+    return this.prisma.userCompanyRole.count({
+      where: {
+        company_id: companyId, is_deleted: false
+      },
+    })
+  }
+
+  async countActiveByDivision(divisionId:number): Promise<number>{
+    return this.prisma.userCompanyRole.count({
+      where: {
+        division_id: divisionId, is_deleted: false
+      },
+    })
+  }
 }

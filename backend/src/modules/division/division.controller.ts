@@ -24,7 +24,7 @@ export class DivisionController {
     
     create = catchAsync(async (req,res) =>{
       const result = await divisionService.create(req.body)
-      return sendSuccess(res, result, 'Division created')
+      return sendSuccess(res, result, 'Division created', 201)
     })
 
     update = catchAsync (async (req,res) => {

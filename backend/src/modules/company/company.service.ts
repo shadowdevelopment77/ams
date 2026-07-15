@@ -1,4 +1,4 @@
-import { companyRepository } from '../../repositories/index.repositories'
+import { companyRepository, userRepository } from '../../repositories/index.repositories'
 import {CreateCompanyInput, UpdateCompanyInput} from './company.validation'
 import { AppError } from '../../utils/error.response/appError'
 import { PaginationParams } from '../../repositories/interfaces/base.interface'
@@ -41,6 +41,13 @@ export class CompanyService {
 
   async delete(id: number) {
     await this.getCompanyOrThrow(id)
+
+    const activeStaffCount  = await userRepository.countActiveByCompany(id)
+    if (activeStaffCount > 0 )
+      throw new AppError(`Cannot delete: ${activeStaffCount} staff member(s) are still assigned to this company. Move them first.`,
+        409
+)
+    
     return companyRepository.softDelete(id)
   }
 }
