@@ -225,3 +225,34 @@ export async function createVisitLog(
     },
   })
 }
+
+// Bypasses the checkin flow's automatic bulk-create — creates a single
+// ChecklistSubmission row directly, useful for isolating checklist-endpoint
+// tests from attendance's checkin behavior.
+export async function createChecklistSubmission(
+  attendanceId: string,
+  itemId: number,
+  overrides: Partial<{ isSubmitted: boolean; submittedAt: Date }> = {}
+) {
+  return prisma.checklistSubmission.create({
+    data: {
+      attendance_id: attendanceId,
+      item_id: itemId,
+      is_submitted: overrides.isSubmitted ?? false,
+      submitted_at: overrides.submittedAt ?? null,
+    },
+  })
+}
+
+export async function createChecklistPhoto(
+  submissionId: number,
+  overrides: Partial<{ photoUrl: string; order: number }> = {}
+) {
+  return prisma.checklistPhoto.create({
+    data: {
+      submission_id: submissionId,
+      photo_url: overrides.photoUrl ?? 'https://fake-cdn.test/seed-checklist.jpg',
+      order: overrides.order ?? 1,
+    },
+  })
+}
