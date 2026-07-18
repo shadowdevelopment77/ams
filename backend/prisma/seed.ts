@@ -18,15 +18,6 @@ async function main() {
     skipDuplicates: true,
   })
 
-  await prisma.submissionStatus.createMany({
-    data: [
-      { name: 'PENDING' },
-      { name: 'APPROVED' },
-      { name: 'REJECTED' },
-    ],
-    skipDuplicates: true,
-  })
-
   console.log('Seed done')
 }
 
