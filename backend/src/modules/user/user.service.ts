@@ -1,7 +1,7 @@
 import {AppError} from "../../utils/error.response/appError"
 import {PaginationParams} from "../../repositories/interfaces/base.interface"
 import {userRepository, companyRepository, divisionRepository, sessionRepository} from "../../repositories/index.repositories"
-import {MoveCompanyInput} from "./user.validation"
+import {MoveCompanyInput, UpdateUserInput} from "./user.validation"
 
 
 export class UserService {
@@ -78,6 +78,19 @@ async delete(id: string) {
 
   async getUserById(id: string) {
     return await this.getUserOrThrow(id)
+  }
+
+  async update(id: string, data: UpdateUserInput) {
+    const user = await this.getUserOrThrow(id)
+
+    if (data.email && data.email !== user.email) {
+      const existing = await userRepository.findByEmail(data.email)
+      if (existing) throw new AppError('Email already registered', 409)
+    }
+
+    const updated = await userRepository.update(id, data)
+    const { password, ...safeUser } = updated
+    return safeUser
   }
 
 }

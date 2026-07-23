@@ -20,6 +20,11 @@ export class ChecklistController {
     return sendSuccess(res, result, 'Templates fetched')
   })
 
+  getTemplateById = catchAsync(async (req, res) => {
+    const result = await checklistService.getTemplateById(Number(req.params.id))
+    return sendSuccess(res, result, 'Template fetched')
+  })
+
   updateTemplate = catchAsync(async (req, res) => {
     const result = await checklistService.updateTemplate(Number(req.params.id), req.body)
     return sendSuccess(res, result, 'Template updated')
@@ -44,6 +49,11 @@ export class ChecklistController {
     }
     const result = await checklistService.getItemsByTemplate(templateId, params)
     return sendSuccess(res, result, 'Items fetched')
+  })
+
+  getItemById = catchAsync(async (req, res) => {
+    const result = await checklistService.getItemById(Number(req.params.id))
+    return sendSuccess(res, result, 'Item fetched')
   })
 
   updateItem = catchAsync(async (req, res) => {

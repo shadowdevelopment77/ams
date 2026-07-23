@@ -64,3 +64,17 @@ export const validateUpdateItem = (req: Request, res: Response, next: NextFuncti
   next()
 }
 
+// ─── Query ──────────────────────────────────────────────────────────────────
+
+export const templatesByDivisionQuerySchema = z.object({
+  companyId:  z.coerce.number({ error: 'companyId is required' }),
+  divisionId: z.coerce.number({ error: 'divisionId is required' }),
+})
+
+export const evidenceQuerySchema = z.object({
+  companyId: z.coerce.number({ error: 'companyId is required' }),
+  date:      z.coerce.date().optional(),
+  page:      z.coerce.number().optional(),
+  limit:     z.coerce.number().optional(),
+})
+

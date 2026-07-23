@@ -537,6 +537,19 @@ describe('PATCH /api/attendance/early-leave/:id', () => {
     expect(res.status).toBe(401)
   })
 
+  it('rejects an unauthenticated request with 401 even when the body also fails validation (empty reason)', async () => {
+    // Under the previous (buggy) ordering — validateEarlyLeaveReason, staffOnly
+    // — an empty reason was rejected by Zod with a 400 before the auth check
+    // ever ran, leaking validation feedback to an anonymous caller instead of
+    // failing closed with 401.
+    const res = await api()
+      .patch('/api/attendance/early-leave/some-id')
+      .send({ early_leave_reason: '' })
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+
   it('rejects a non-STAFF user', async () => {
     const { user, rawPassword } = await createAdmin()
     const { cookie } = await loginAs(user.email, rawPassword)

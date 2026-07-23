@@ -32,6 +32,11 @@ export class UserController {
     const result = await userService.delete(String(req.params.id))
     return sendSuccess(res, result, 'User deleted')
   })
+
+  update = catchAsync(async (req, res) => {
+    const result = await userService.update(String(req.params.id), req.body)
+    return sendSuccess(res, result, 'User updated')
+  })
 }
 
 export const userController = new UserController()

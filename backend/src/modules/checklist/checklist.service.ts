@@ -87,6 +87,10 @@ export class ChecklistService{
     return checklistTemplateRepository.findByDivision(companyId, divisionId)
   }
 
+  async getTemplateById(id: number) {
+    return this.getTemplateOrThrow(id)
+  }
+
   async updateTemplate(id: number, dto: UpdateTemplateInput) {
     await this.getTemplateOrThrow(id)
     return checklistTemplateRepository.update(id, dto)
@@ -108,6 +112,10 @@ export class ChecklistService{
   async getItemsByTemplate(templateId: number, params?: PaginationParams) {
     await this.getTemplateOrThrow(templateId)
     return checklistItemRepository.findByTemplate(templateId, params)
+  }
+
+  async getItemById(id: number) {
+    return this.getItemOrThrow(id)
   }
 
   async updateItem(id: number, dto: UpdateItemInput) {
