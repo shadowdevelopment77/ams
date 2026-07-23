@@ -1,15 +1,22 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useMe } from '@/hooks/useMe'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { MobileOnlyGate } from '@/components/MobileOnlyGate'
 import type { Role } from '@/api/auth'
 
 interface ProtectedRouteProps {
   allow: Role[]
+  // See docs/superpowers/plans/2026-07-23-frontend-phase3-device-gate.md —
+  // SUPERVISOR/STAFF are mobile-only so the camera-capture photo screens
+  // can't be bypassed via a desktop file picker. ADMIN never sets this.
+  requireMobile?: boolean
   children: ReactNode
 }
 
-export function ProtectedRoute({ allow, children }: ProtectedRouteProps) {
+export function ProtectedRoute({ allow, requireMobile, children }: ProtectedRouteProps) {
   const { user, isLoading, isAuthenticated } = useMe()
+  const isMobile = useIsMobile()
 
   if (isLoading) {
     return (
@@ -25,6 +32,10 @@ export function ProtectedRoute({ allow, children }: ProtectedRouteProps) {
 
   if (!allow.includes(user!.role)) {
     return <Navigate to="/login" replace />
+  }
+
+  if (requireMobile && !isMobile) {
+    return <MobileOnlyGate />
   }
 
   return <>{children}</>

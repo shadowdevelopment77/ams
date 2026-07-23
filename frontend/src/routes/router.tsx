@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ProtectedRoute allow={['STAFF']}>
+      <ProtectedRoute allow={['STAFF']} requireMobile>
         <DashboardStub />
       </ProtectedRoute>
     ),
