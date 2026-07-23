@@ -78,6 +78,12 @@ private async getUserOrThrow(userId: string) {
     return visitLogRepository.findAll(params)
   }
 
+  async getById(id: number) {
+    const log = await visitLogRepository.findById(id)
+    if (!log) throw new AppError('Visit log not found', 404)
+    return log
+  }
+
   async delete(id: number) {
     const log = await visitLogRepository.findById(id)
     if (!log) throw new AppError('Visit log not found', 404)

@@ -53,6 +53,11 @@ export class VisitLogController {
     return sendSuccess(res, result, 'Visit logs fetched')
   })
 
+  getById = catchAsync(async (req, res) => {
+    const result = await visitLogService.getById(Number(req.params.id))
+    return sendSuccess(res, result, 'Visit log fetched')
+  })
+
   delete = catchAsync(async (req, res) => {
     await visitLogService.delete(Number(req.params.id))
     return sendSuccess(res, null, 'Visit log deleted')

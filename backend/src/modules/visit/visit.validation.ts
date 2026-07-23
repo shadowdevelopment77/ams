@@ -17,3 +17,9 @@ export const validateCreateVisitLog = (req: Request, res: Response, next: NextFu
   req.body = result.data
   next()
 }
+
+export const visitLogQuerySchema = z.object({
+  date:  z.coerce.date().optional(),
+  page:  z.coerce.number().optional(),
+  limit: z.coerce.number().optional(),
+})

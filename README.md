@@ -33,7 +33,7 @@ I used to work as an admin handling outsourced staff — attendance, shift sched
 ## Core Business Rules
 
 - **Three roles:** `ADMIN` (full access, no company/division), `SUPERVISOR` (visit logs only, no company/division), `STAFF` (exactly one company + one division, required).
-- **Staff attendance:** must check in before checking out; must check in before touching today's checklist; one check-in per day, enforced at both the application layer and the database (`@@unique([user_id, date])`, with a real fallback for race conditions 
+- **Staff attendance:** must check in before checking out; must check in before touching today's checklist; one check-in per day, enforced at both the application layer and the database (`@@unique([user_id, date])`), with a graceful fallback for race conditions on double check-in.
 - **Checklists:** each item needs 1–3 photos before it can be submitted; a checklist "belongs" to a single day's attendance and can't be reopened once that day has passed.
 - **Shifts** can cross midnight (e.g. 22:00–06:00) — early-leave detection accounts for this correctly.
 - **Admin actions:** create/manage companies, divisions, shifts, and checklist templates; move staff between companies (which correctly re-validates their division against the *new* company); delete companies/divisions is blocked while active staff are still assigned, preventing orphaned state.
@@ -74,6 +74,10 @@ DATABASE_URL="postgresql://user:password@host:5432/dbname"
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
+
+# Optional — both have working defaults if omitted
+PORT=3000
+CORS_ORIGIN=http://localhost:5173
 ```
 
 Create `.env.test` (a **separate** database — the test suite wipes data between runs):
@@ -86,6 +90,12 @@ Apply the schema:
 ```bash
 npx prisma migrate deploy
 ```
+
+Seed lookup tables and a dev admin account (required — `POST /api/auth/register` needs an existing `ADMIN` session, so this is the only way to get the first user):
+```bash
+npx prisma db seed
+```
+This creates the `ADMIN`/`SUPERVISOR`/`STAFF` roles, the `PRESENT`/`LATE` attendance statuses, and a dev-only admin account (`admin@ams.local` / `Admin123!`, refused outright if `NODE_ENV=production`). Safe to re-run any time.
 
 Run the dev server:
 ```bash
@@ -101,10 +111,23 @@ npm test
 
 ## API Usage
 
-Since there's no frontend, the API is meant to be explored directly:
+Since there's no frontend yet, the API is meant to be explored directly. **Full endpoint reference: [`docs/API.md`](docs/API.md)** — auth model, response envelope details, upload constraints, and every route grouped by module.
 
-- All endpoints require an authenticated session except `POST /api/auth/login`. Registration (`POST /api/auth/register`) requires an existing `ADMIN` session — see the seed script for creating the first admin account.
+The short version:
+- Session-cookie auth (not JWT) — login sets an httpOnly `sessionId` cookie; send it back with every subsequent request (`credentials: 'include'` in fetch, `-b`/`-c` cookie jar in curl).
+- All endpoints require an authenticated session except `POST /api/auth/login`. Registration is itself `ADMIN`-gated — log in as the seeded dev admin to create more users.
 - Responses follow a consistent shape: `{ success: boolean, message: string, data | errors }`.
+
+Quick smoke test once the dev server is running:
+```bash
+curl http://localhost:3000/health
+
+curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@ams.local","password":"Admin123!"}'
+
+curl -b cookies.txt http://localhost:3000/api/auth/me
+```
 
 ---
 
@@ -112,24 +135,21 @@ Since there's no frontend, the API is meant to be explored directly:
 
 ```
 src/
-├── modules/          # one folder per domain: auth, attendance, visit, checklist,
-│                      company, division, shift, user — each with
-│                      controller / service / validation / router
-├── repositories/      # interfaces + Prisma implementations (repository pattern)
-├── middlewares/        # auth, role-based access, rate limiting, error handling
-├── utils/             # shared helpers (date/shift math, error responses, uploads)
-└── __tests__/         # integration tests + shared test helpers/factories
+├── modules/        # one folder per domain: auth, attendance, visit, checklist,
+│                   # company, division, shift, user — each with
+│                   # controller / service / validation / router
+├── repositories/   # interfaces + Prisma implementations (repository pattern)
+├── middlewares/    # auth, role-based access, rate limiting, error handling
+├── jobs/           # scheduled tasks (hourly expired-session cleanup)
+├── lib/            # shared clients: Prisma, Cloudinary, Multer
+├── utils/          # shared helpers (date/shift math, error responses, uploads)
+├── types/          # ambient type augmentation (Express.Request.user/sessionId)
+└── __tests__/      # integration tests + shared test helpers/factories
 ```
 
 ---
 
-## One more things
-if you want sue real Db:
-- You need to seed admin user
-- You need to seed look up tables likes roles and status
-
 ## Author
 
-Adly Fathur
-https://www.linkedin.com/in/adly-fathur-ichsani-kameswara-1a4243369/
-adlydevelopment37@gmail.com
+**Adly Fathur**
+[LinkedIn](https://www.linkedin.com/in/adly-fathur-ichsani-kameswara-1a4243369/) · [adlydevelopment37@gmail.com](mailto:adlydevelopment37@gmail.com)

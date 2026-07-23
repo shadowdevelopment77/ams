@@ -17,6 +17,15 @@ const earlyLeaveReasonSchema = z.object({
   early_leave_reason: z.string().min(1, 'Reason is required'),
 })
 
+export const attendanceQuerySchema = z.object({
+  companyId:  z.coerce.number({ error: 'companyId is required' }),
+  divisionId: z.coerce.number({ error: 'divisionId is required' }),
+  date:       z.coerce.date().optional(),
+  page:       z.coerce.number().optional(),
+  limit:      z.coerce.number().optional(),
+  statusId:   z.coerce.number().optional(),
+})
+
 export type CheckInInput  = z.infer<typeof checkInSchema>
 export type CheckOutInput = z.infer<typeof checkOutSchema>
 export type EarlyLeaveReasonInput = z.infer<typeof earlyLeaveReasonSchema>

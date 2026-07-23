@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"
+import morgan from "morgan"
 import dotenv from "dotenv"
 import authRouter from "./modules/auth/auth.router"
 import cookieParser from "cookie-parser"
@@ -13,6 +14,7 @@ import companyRouter from "./modules/company/company.router"
 import { errorMiddleware } from "./middlewares/error.middleware";
 import {apiLimiter, authLimiter} from "./middlewares/rate-limit.middleware";
 import visitRouter from "./modules/visit/visit.route"
+import { sendSuccess } from "./utils/error.response/response"
 
 dotenv.config()
 
@@ -21,10 +23,17 @@ const app = express()
 
 
 app.use(helmet())
-app.use(cors())
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true,
+}))
+if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+app.get('/health', (req, res) => sendSuccess(res, { status: 'ok' }, 'Healthy'))
+
 app.use('/api', apiLimiter)
 
 app.use("/api/auth", authLimiter, authRouter )
