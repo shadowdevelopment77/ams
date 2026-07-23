@@ -1,8 +1,6 @@
 import app from "./app"
-import { validateEnv } from "./lib/env"
-import { scheduleSessionCleanup } from "./jobs/session-cleanup.job"
 
-validateEnv()
+import { scheduleSessionCleanup } from "./jobs/session-cleanup.job"
 
 const PORT = process.env.PORT || 3000
 

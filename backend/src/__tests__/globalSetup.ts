@@ -11,7 +11,7 @@ export default async function globalSetup() {
 
   if (!process.env.DATABASE_URL) {
     throw new Error(
-      'DATABASE_URL is not set. Did you create .env.test? See .env.test.example.'
+      'DATABASE_URL is not set. Did you create backend/.env.test?'
     )
   }
 
