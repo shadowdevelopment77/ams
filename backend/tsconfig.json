@@ -13,5 +13,8 @@
     "types": ["jest", "node"]
   },
   "include": ["src/**/*", "jest.config.ts"],
-  "exclude": ["node_modules", "dist", "prisma"]
+  "exclude": ["node_modules", "dist", "prisma"],
+  "ts-node": {
+    "files": true
+  }
 }
