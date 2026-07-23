@@ -25,6 +25,23 @@ describe('POST /api/auth/register', () => {
     expect(res.body.success).toBe(false)
   })
 
+  it('rejects an unauthenticated request with 401 even when the body also fails validation', async () => {
+    // Proves adminOnly now runs before validateRegister. Under the current
+    // (buggy) ordering — validateRegister, adminOnly — this invalid body
+    // would be rejected by Zod with a 400 before the auth check is ever
+    // reached, meaning an anonymous caller gets validation feedback instead
+    // of a clean fail-closed 401.
+    const res = await api().post('/api/auth/register').send({
+      name: 'A', // too short
+      email: 'not-an-email',
+      password: '123', // too short
+      role: '',
+    })
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+
   it('rejects registration from a non-admin (STAFF) user', async () => {
     const company = await createCompany()
     const division = await createDivision(company.id)
