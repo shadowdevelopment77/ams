@@ -34,7 +34,10 @@ getAll = catchAsync(async (req, res) => {
     return sendSuccess(res, null, 'Shift deleted')
   })
 
-  // staff gets available shifts for their division
+  getMyDivisionShifts = catchAsync(async (req, res) => {
+    const result = await shiftService.getAll(req.user!.companyId!, req.user!.divisionId!)
+    return sendSuccess(res, result, 'Shifts fetched')
+  })
 
 }
 

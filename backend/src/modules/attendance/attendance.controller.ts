@@ -79,6 +79,11 @@ const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
   )
   return sendSuccess(res, result, 'Early leave reason submitted')
 })
+
+  getToday = catchAsync(async (req, res) => {
+    const result = await attendanceService.getTodayAttendance(req.user!.id)
+    return sendSuccess(res, result, "Today's attendance fetched")
+  })
 }
 
 export const attendanceController = new AttendanceController()

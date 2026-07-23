@@ -652,3 +652,47 @@ describe('PATCH /api/attendance/early-leave/:id', () => {
     expect(inDb?.early_leave_reason).toBe('Doctor appointment')
   })
 })
+
+describe('GET /api/attendance/today', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/attendance/today')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a non-STAFF user (ADMIN)', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const res = await api().get('/api/attendance/today').set('Cookie', cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns null when the caller has not checked in today', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api().get('/api/attendance/today').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toBeNull()
+  })
+
+  it("returns the caller's own attendance row for today, not another user's", async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const otherStaff = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const attendance = await createAttendance(user.id, company.id, division.id, shift.id)
+    await createAttendance(otherStaff.user.id, company.id, division.id, shift.id)
+
+    const res = await api().get('/api/attendance/today').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe(attendance.id)
+    expect(res.body.data.user_id).toBe(user.id)
+  })
+})

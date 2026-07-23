@@ -6,15 +6,17 @@ import { validateCreateShift, validateUpdateShift } from "./shift.validation"
 
 const router = Router()
 
+const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
+const staffOnly = [authMiddleware, roleMiddleware("STAFF")]
 
-router.use(authMiddleware, roleMiddleware("ADMIN"))
 
+router.get("/my-division", staffOnly, shiftController.getMyDivisionShifts)
 
-router.get("/company/:companyId/division/:divisionId", shiftController.getAll)
-router.post("/",  validateCreateShift, shiftController.create)
-router.put("/:id",  validateUpdateShift, shiftController.update)
-router.delete("/:id", shiftController.delete)
-router.get("/:id", shiftController.getById)
+router.get("/company/:companyId/division/:divisionId", adminOnly, shiftController.getAll)
+router.post("/", adminOnly, validateCreateShift, shiftController.create)
+router.put("/:id", adminOnly, validateUpdateShift, shiftController.update)
+router.delete("/:id", adminOnly, shiftController.delete)
+router.get("/:id", adminOnly, shiftController.getById)
 
 
 export default router

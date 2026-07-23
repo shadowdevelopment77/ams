@@ -54,14 +54,22 @@ Full CRUD: `GET /`, `GET /:id`, `POST /` `{name, code, address?, phone?, email?,
 
 Full CRUD: `GET /`, `GET /:id`, `GET /company/:companyId`, `POST /` `{company_id, name, late_tolerance_minutes?}`, `PUT /:id`, `DELETE /:id` (blocked if active staff assigned).
 
-## Shift (`/api/shift`) — all ADMIN
+## Shift (`/api/shift`)
 
-`GET /company/:companyId/division/:divisionId` (no unscoped "list all" — always requires both ids), `GET /:id`, `POST /` `{company_id, division_id, name, start_time, end_time}` (`"HH:mm"` format), `PUT /:id`, `DELETE /:id`.
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | /my-division | STAFF | shifts for the caller's own company/division only — scoped server-side from the session, not a param |
+| GET | /company/:companyId/division/:divisionId | ADMIN | no unscoped "list all" — always requires both ids |
+| GET | /:id | ADMIN | |
+| POST | / | ADMIN | `{company_id, division_id, name, start_time, end_time}` (`"HH:mm"` format) |
+| PUT | /:id | ADMIN | |
+| DELETE | /:id | ADMIN | |
 
 ## Attendance (`/api/attendance`)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
+| GET | /today | STAFF | the caller's own attendance row for today, or `null` if not checked in yet — use this on app load to recover state (e.g. after a page refresh) instead of relying on the checkin response alone |
 | POST | /checkin | STAFF | multipart, field `photo`, body `{shift_id, latitude?, longitude?}` |
 | PATCH | /checkout/:id | STAFF | multipart, field `checkout_photo`, body `{checkout_latitude?, checkout_longitude?}` |
 | PATCH | /early-leave/:id | STAFF | `{early_leave_reason}` |

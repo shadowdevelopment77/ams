@@ -1,6 +1,13 @@
 import prisma from '../lib/prisma'
 import { api, loginAs } from './helpers/request'
-import { createAdmin, createSupervisor, createCompany, createDivision, createShift } from './helpers/factories'
+import {
+  createAdmin,
+  createSupervisor,
+  createStaff,
+  createCompany,
+  createDivision,
+  createShift,
+} from './helpers/factories'
 
 describe('POST /api/shift', () => {
   it('rejects an unauthenticated request', async () => {
@@ -154,6 +161,37 @@ describe('GET /api/shift/company/:companyId/division/:divisionId', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.data.length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('GET /api/shift/my-division', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/shift/my-division')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a non-STAFF user (ADMIN)', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const res = await api().get('/api/shift/my-division').set('Cookie', cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it("returns shifts for the caller's own division only, not other divisions", async () => {
+    const company = await createCompany()
+    const divisionA = await createDivision(company.id)
+    const divisionB = await createDivision(company.id)
+    await createShift(company.id, divisionA.id, { name: 'Morning A' })
+    await createShift(company.id, divisionB.id, { name: 'Morning B' })
+
+    const { user, rawPassword } = await createStaff(company.id, divisionA.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api().get('/api/shift/my-division').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(1)
+    expect(res.body.data[0].name).toBe('Morning A')
   })
 })
 

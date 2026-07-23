@@ -190,7 +190,12 @@ async checkIn(
   return attendanceRepository.update(attendanceId, {
     early_leave_reason: dto.early_leave_reason,
   })
-} 
+}
+
+  async getTodayAttendance(userId: string) {
+    const { date } = getToday()
+    return attendanceRepository.findByUser(userId, date)
+  }
 
 
 async getAttendancePhotos(
