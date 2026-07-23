@@ -40,6 +40,17 @@ describe('POST /api/attendance/checkin', () => {
     expect(res.status).toBe(401)
   })
 
+  it('rejects an unauthenticated request with 401 even when the body also fails validation (no shift_id, no photo)', async () => {
+    // Under the current (buggy) ordering — multer, validateCheckIn, staffOnly
+    // — a missing shift_id gets caught by validateCheckIn's Zod schema with a
+    // 400 before the auth check ever runs, leaking validation feedback to an
+    // anonymous caller instead of failing closed with 401.
+    const res = await api().post('/api/attendance/checkin')
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+
   it('rejects a non-STAFF user (ADMIN)', async () => {
     const { user, rawPassword } = await createAdmin()
     const { cookie } = await loginAs(user.email, rawPassword)
@@ -296,6 +307,63 @@ describe('POST /api/attendance/checkin', () => {
 
     const count = await prisma.attendance.count({ where: { user_id: user.id } })
     expect(count).toBe(1)
+  })
+})
+
+describe('PATCH /api/attendance/checkout/:id — auth-before-upload ordering', () => {
+  it('rejects an unauthenticated request with 401 before multer ever processes the file', async () => {
+    const res = await api()
+      .patch('/api/attendance/checkout/some-nonexistent-id')
+      .attach('checkout_photo', Buffer.from('not-an-image'), {
+        filename: 'malware.exe',
+        contentType: 'application/x-msdownload',
+      })
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+})
+
+describe('POST /api/attendance/checkin — malformed upload handling', () => {
+  it('rejects a disallowed file type with a structured 400 response, not a generic 500', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api()
+      .post('/api/attendance/checkin')
+      .set('Cookie', cookie)
+      .field('shift_id', shift.id)
+      .attach('photo', Buffer.from('not-an-image'), {
+        filename: 'malware.exe',
+        contentType: 'application/x-msdownload',
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.success).toBe(false)
+    expect(res.body.message).toMatch(/jpeg, png, and webp/i)
+  })
+
+  it('rejects a file over the 1MB limit with a structured 413 response, not a generic 500', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const oversized = Buffer.alloc(1 * 1024 * 1024 + 1, 'a') // 1 byte over MAX_SIZE
+
+    const res = await api()
+      .post('/api/attendance/checkin')
+      .set('Cookie', cookie)
+      .field('shift_id', shift.id)
+      .attach('photo', oversized, { filename: 'huge.jpg', contentType: 'image/jpeg' })
+
+    expect(res.status).toBe(413)
+    expect(res.body.success).toBe(false)
+    expect(res.body.message).toMatch(/file too large/i)
   })
 })
 

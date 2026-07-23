@@ -1,4 +1,5 @@
 import multer from "multer"
+import { AppError } from "../utils/error.response/appError"
 
 const imageFilter = (
   req: Express.Request,
@@ -7,7 +8,7 @@ const imageFilter = (
 ) => {
   const allowed = ["image/jpeg", "image/png", "image/webp"]
   if (!allowed.includes(file.mimetype)) {
-    return cb(new Error("Only JPEG, PNG, and WEBP images allowed"))
+    return cb(new AppError("Only JPEG, PNG, and WEBP images allowed", 400))
   }
   cb(null, true)
 }
