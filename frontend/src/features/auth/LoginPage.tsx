@@ -1,0 +1,87 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ApiError } from '@/api/client'
+import { login } from '@/api/auth'
+import { ME_QUERY_KEY } from '@/hooks/useMe'
+
+// Mirrors backend/src/modules/auth/auth.validation.ts's loginSchema exactly —
+// same validation contract on both sides.
+const loginSchema = z.object({
+  email: z.email('Invalid email format'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+type LoginInput = z.infer<typeof loginSchema>
+
+export function LoginPage() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
+
+  const onSubmit = async (data: LoginInput) => {
+    setServerError(null)
+    try {
+      await login(data.email, data.password)
+      // Session cookie is now set — refetch /me so useMe() picks up the
+      // new identity before we navigate into a protected route.
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
+      navigate('/', { replace: true })
+    } catch (err) {
+      setServerError(err instanceof ApiError ? err.message : 'Something went wrong')
+    }
+  }
+
+  return (
+    <div className="flex min-h-svh items-center justify-center p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Sign in</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" autoComplete="email" {...register('email')} />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                {...register('password')}
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+
+            {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+
+            <Button type="submit" disabled={isSubmitting} className="mt-2">
+              {isSubmitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
