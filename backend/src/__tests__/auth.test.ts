@@ -424,6 +424,31 @@ describe('POST /api/auth/login', () => {
   })
 })
 
+describe('GET /api/auth/me', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/auth/me')
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+
+  it('returns the current user for a valid session', async () => {
+    const { user, rawPassword } = await createAdmin({ email: 'me@test.local', name: 'Me Admin' })
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api().get('/api/auth/me').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toMatchObject({
+      id:    user.id,
+      name:  'Me Admin',
+      email: 'me@test.local',
+      role:  'ADMIN',
+    })
+    expect(res.body.data.password).toBeUndefined()
+  })
+})
+
 describe('POST /api/auth/logout', () => {
   it('logs out, clears the cookie, and invalidates the session server-side', async () => {
     const { user, rawPassword } = await createAdmin({ email: 'logout-me@test.local' })

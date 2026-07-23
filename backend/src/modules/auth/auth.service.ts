@@ -87,6 +87,25 @@ export class AuthService {
   async logout(sessionId: string) {
     await sessionRepository.delete(sessionId)
   }
+
+  async getMe(userId: string) {
+    const user = await userRepository.findById(userId)
+    if (!user) throw new AppError('User not found', 404)
+
+    const roleResult = await userRepository.findRoleByUserId(userId)
+    const companyRole = roleResult.data[0]
+    if (!companyRole) throw new AppError('User has no role assigned', 403)
+
+    return {
+      id:         user.id,
+      name:       user.name,
+      email:      user.email,
+      phone:      user.phone,
+      role:       companyRole.userRole.name,
+      companyId:  companyRole.company_id  ?? undefined,
+      divisionId: companyRole.division_id ?? undefined,
+    }
+  }
 }
 
 export const authService = new AuthService()

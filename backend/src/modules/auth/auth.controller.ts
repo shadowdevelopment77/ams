@@ -32,6 +32,11 @@ export class AuthController {
       return sendSuccess(res, null, 'User logged out successfully')
 
     })
+
+    me = catchAsync(async (req, res) => {
+      const result = await authService.getMe(req.user!.id)
+      return sendSuccess(res, result, 'Current user fetched')
+    })
 }
 
 export const authController = new AuthController()

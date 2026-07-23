@@ -12,6 +12,7 @@ const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 router.post("/register", adminOnly, validateRegister, authController.register)
 router.post("/login", validateLogin, authController.login)
 router.post("/logout", authController.logout)
+router.get("/me", authMiddleware, authController.me)
 
 
 export default router
