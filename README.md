@@ -1,8 +1,8 @@
-# AMS — Admin Management System (Backend)
+# AMS — Admin Management System
 
-A backend-only REST API for a **Workforce Field Management System** — built for outsourcing companies that manage field staff (security, cleaning, maintenance, etc.) across multiple client companies. Handles role-based attendance, supervisor visit logging, and photo-verified daily checklists, with strict business rules enforced end-to-end.
+A REST API + web app for a **Workforce Field Management System** — built for outsourcing companies that manage field staff (security, cleaning, maintenance, etc.) across multiple client companies. Handles role-based attendance, supervisor visit logging, and photo-verified daily checklists, with strict business rules enforced end-to-end.
 
-> **No frontend yet.** This project is deliberately backend-first — the focus is on correct business logic, data integrity, and test coverage. See [Testing](#testing) and [API Usage](#api-usage) below for how to explore it without a UI.
+> **Backend-first.** The API (`backend/`) was built and hardened first, with a full integration test suite — see [Testing](#testing) and [API Usage](#api-usage) for how to explore it without a UI. The frontend (`frontend/`) is now being scaffolded on top of it; it's early and not yet usable end-to-end.
 
 ---
 
@@ -13,6 +13,8 @@ I used to work as an admin handling outsourced staff — attendance, shift sched
 ---
 
 ## Tech Stack
+
+**Backend** (`backend/`)
 
 | Layer | Tech |
 |---|---|
@@ -27,6 +29,18 @@ I used to work as an admin handling outsourced staff — attendance, shift sched
 | Rate limiting | express-rate-limit |
 
 **Architecture:** repository pattern (interfaces + Prisma implementations) behind a service layer, soft deletes throughout (`is_deleted`/`deleted_at`, nothing is ever hard-deleted), lookup tables instead of enums for roles/statuses, and role-based middleware guarding every route.
+
+**Frontend** (`frontend/`) — in progress
+
+| Layer | Tech |
+|---|---|
+| Framework | React + Vite, TypeScript |
+| Styling | Tailwind CSS v4 + shadcn/ui |
+| Routing | React Router |
+| Server state | TanStack Query |
+| Forms | react-hook-form + Zod |
+
+Talks to the API directly over cookie-based session auth (`credentials: 'include'`) — no BFF/proxy layer.
 
 ---
 
@@ -107,11 +121,30 @@ Run the tests:
 npm test
 ```
 
+### Frontend setup (in progress)
+
+In a second terminal, from the repo root:
+```bash
+cd frontend
+npm install
+```
+
+Create `frontend/.env.local`:
+```
+VITE_API_URL=http://localhost:3000
+```
+
+Run it (with the backend dev server from above already running):
+```bash
+npm run dev
+```
+Opens on `http://localhost:5173` — matches the backend's default `CORS_ORIGIN`, so no extra config needed on either side.
+
 ---
 
 ## API Usage
 
-Since there's no frontend yet, the API is meant to be explored directly. **Full endpoint reference: [`docs/API.md`](docs/API.md)** — auth model, response envelope details, upload constraints, and every route grouped by module.
+The frontend isn't functional yet, so the API is still worth exploring directly. **Full endpoint reference: [`docs/API.md`](docs/API.md)** — auth model, response envelope details, upload constraints, and every route grouped by module.
 
 The short version:
 - Session-cookie auth (not JWT) — login sets an httpOnly `sessionId` cookie; send it back with every subsequent request (`credentials: 'include'` in fetch, `-b`/`-c` cookie jar in curl).
@@ -133,6 +166,7 @@ curl -b cookies.txt http://localhost:3000/api/auth/me
 
 ## Project Structure
 
+`backend/src/`:
 ```
 src/
 ├── modules/        # one folder per domain: auth, attendance, visit, checklist,
@@ -145,6 +179,17 @@ src/
 ├── utils/          # shared helpers (date/shift math, error responses, uploads)
 ├── types/          # ambient type augmentation (Express.Request.user/sessionId)
 └── __tests__/      # integration tests + shared test helpers/factories
+```
+
+`frontend/src/` (in progress):
+```
+src/
+├── api/            # fetch client + typed endpoint calls
+├── components/     # shared UI, including components/ui (shadcn)
+├── features/       # one folder per domain: auth, attendance, checklist
+├── hooks/          # shared React hooks
+├── lib/            # utilities (e.g. shadcn's cn() helper)
+└── routes/         # route/page components
 ```
 
 ---

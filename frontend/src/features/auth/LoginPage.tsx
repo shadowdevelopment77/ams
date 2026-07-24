@@ -52,7 +52,11 @@ export function LoginPage() {
           <CardTitle>Sign in</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          {/* noValidate: without it, the browser's native type="email" check
+              intercepts submission before react-hook-form/zod ever runs,
+              so our own validation message never shows for a malformed
+              email -- the browser's own tooltip shows instead, silently. */}
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoComplete="email" {...register('email')} />
