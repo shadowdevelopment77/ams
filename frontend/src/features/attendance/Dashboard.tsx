@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useMe } from '@/hooks/useMe'
@@ -6,8 +7,14 @@ import { useTodayAttendance } from '@/hooks/useTodayAttendance'
 
 export function Dashboard() {
   const { user } = useMe()
-  const handleLogout = useLogout()
+  const logout = useLogout()
   const { attendance, isLoading } = useTodayAttendance()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    await logout()
+  }
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-4">
@@ -42,7 +49,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <Button onClick={handleLogout} variant="ghost">
+      <Button onClick={handleLogout} variant="ghost" disabled={isLoggingOut}>
         Logout
       </Button>
     </div>
