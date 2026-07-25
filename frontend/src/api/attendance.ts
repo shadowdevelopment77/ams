@@ -74,7 +74,7 @@ export function getLateAttendance(params: AttendanceQuery) {
 }
 
 export interface AttendancePhotoRecord {
-  user_id: string
+  user: { id: string; name: string }
   checkin_photo: string
   checkin_at: string
   checkout_photo: string | null

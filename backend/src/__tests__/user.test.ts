@@ -31,6 +31,47 @@ describe('GET /api/users', () => {
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
     expect(res.body.data.data.every((u: any) => !('password' in u))).toBe(true)
   })
+
+  it('filters by name via the search param, case-insensitively', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    await createSupervisor({ name: 'Zendaya Searchable' })
+    await createSupervisor({ name: 'Someone Else' })
+
+    const res = await api().get('/api/users?search=zendaya').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBe(1)
+    expect(res.body.data.data[0].name).toBe('Zendaya Searchable')
+  })
+
+  it('filters by role via the role param', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    const { user: supervisor } = await createSupervisor({ name: 'Only Supervisor Here' })
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    await createStaff(company.id, division.id, { name: 'Some Staffer' })
+
+    const res = await api().get('/api/users?role=SUPERVISOR').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
+    expect(res.body.data.data.every((u: any) => u.id !== undefined)).toBe(true)
+    const ids = res.body.data.data.map((u: any) => u.id)
+    expect(ids).toContain(supervisor.id)
+  })
+
+  it('returns an empty result for an unknown role rather than erroring', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get('/api/users?role=NOT_A_REAL_ROLE').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+    expect(res.body.data.total).toBe(0)
+  })
 })
 
 describe('GET /api/users/:id', () => {

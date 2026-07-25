@@ -210,8 +210,8 @@ async getAttendancePhotos(
 
   return {
     ...result,
-    data: result.data.map(a => ({
-      user_id:           a.user_id,
+    data: result.data.map((a: any) => ({
+      user:              { id: a.user.id, name: a.user.name },
       checkin_photo:     a.photo_url,
       checkin_at:        a.check_in_at,
       checkout_photo:    a.checkout_photo_url ?? null,

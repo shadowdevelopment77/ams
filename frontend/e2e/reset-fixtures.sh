@@ -8,5 +8,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 cd "$REPO_ROOT/backend"
 npx ts-node scripts/e2e-test-cleanup.ts
-npx ts-node scripts/e2e-test-seed.ts > "$SCRIPT_DIR/fixtures/data.json"
+# e2e-test-seed.ts writes fixtures/data.json itself (not via stdout
+# redirection -- importing the Prisma client makes dotenv print banner
+# lines to stdout, which would land ahead of the JSON and corrupt the file
+# if this script tried to capture it with `>` instead).
+npx ts-node scripts/e2e-test-seed.ts
 cat "$SCRIPT_DIR/fixtures/data.json"

@@ -9,7 +9,12 @@ export class UserController {
     return sendSuccess(res, result, 'User company and division updated')
   })
   getAllUsers = catchAsync(async (req, res) => {
-    const params = { page: Number(req.query.page) || 1, limit: Number(req.query.limit) || 10 }
+    const params = {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+      search: typeof req.query.search === 'string' ? req.query.search : undefined,
+      role: typeof req.query.role === 'string' ? req.query.role : undefined,
+    }
     const result = await userService.getAll(params)
     return sendSuccess(res, result, 'Users fetched')
   })

@@ -5,6 +5,8 @@ export interface VisitLog {
   id: number
   user_id: string
   company_id: number
+  user: { id: string; name: string }
+  company: { id: number; name: string }
   date: string
   photo_url: string
   latitude: number | null
@@ -14,9 +16,8 @@ export interface VisitLog {
   visited_at: string
 }
 
-// GET /api/visit returns raw rows with no user/company join (findAll, the
-// plain base repository method -- no custom query for this one). Names
-// aren't available without a separate lookup, so the UI shows IDs.
+// GET /api/visit joins user/company (name only) via a custom findAll
+// override on the repository -- see visit-log.repository.ts.
 export function getVisitLogs(params?: PaginationParams) {
   return apiFetch<PaginatedResult<VisitLog>>(`/api/visit${paginationQuery(params)}`)
 }
@@ -26,7 +27,7 @@ export function deleteVisitLog(id: number) {
 }
 
 export interface VisitPhotoRecord {
-  company_id: number
+  company: { id: number; name: string }
   visit_photo: string
   visited_at: string
   notes: string | null

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import {
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ApiError } from '@/api/client'
 import { getVisitLogs, deleteVisitLog, getVisitPhotosByUser, type VisitLog } from '@/api/visit'
+import { getUsers } from '@/api/user'
 
 const VISITS_KEY = ['admin', 'visits'] as const
 
@@ -48,10 +49,27 @@ export function VisitsPage() {
 
   // ── Photos by staff member (the one place `date` filtering actually
   // works -- GET /api/visit's own date param is a known backend no-op). ──
-  const [userId, setUserId] = useState('')
+  // Search by name, restricted to SUPERVISOR (the only role that creates
+  // visit logs) -- the admin never sees or types a raw user id.
+  const [supervisorQuery, setSupervisorQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [selectedSupervisor, setSelectedSupervisor] = useState<{ id: string; name: string } | null>(
+    null
+  )
   const [photoDate, setPhotoDate] = useState('')
   const [lookupUserId, setLookupUserId] = useState('')
   const [lookupDate, setLookupDate] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(supervisorQuery), 300)
+    return () => clearTimeout(timer)
+  }, [supervisorQuery])
+
+  const { data: supervisorResults, isLoading: searchingSupervisors } = useQuery({
+    queryKey: ['admin', 'users', 'search', debouncedQuery],
+    queryFn: () => getUsers({ search: debouncedQuery, role: 'SUPERVISOR', limit: 10 }),
+    enabled: debouncedQuery.length >= 2 && !selectedSupervisor,
+  })
 
   const { data: userPhotos, isLoading: photosLoading } = useQuery({
     queryKey: ['admin', 'visits', 'photos', lookupUserId, lookupDate],
@@ -62,17 +80,13 @@ export function VisitsPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Visit Logs</h1>
-      <p className="text-sm text-muted-foreground">
-        Names aren't shown here — the backend's list endpoint doesn't join user/company data, only
-        their IDs.
-      </p>
 
       <div className="rounded-lg border border-border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User ID</TableHead>
-              <TableHead>Company ID</TableHead>
+              <TableHead>Supervisor</TableHead>
+              <TableHead>Company</TableHead>
               <TableHead>Visited at</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -95,8 +109,8 @@ export function VisitsPage() {
             )}
             {data?.data.map((log) => (
               <TableRow key={log.id}>
-                <TableCell className="font-mono text-xs">{log.user_id}</TableCell>
-                <TableCell>{log.company_id}</TableCell>
+                <TableCell>{log.user.name}</TableCell>
+                <TableCell>{log.company.name}</TableCell>
                 <TableCell>{new Date(log.visited_at).toLocaleString()}</TableCell>
                 <TableCell>{log.notes ?? '—'}</TableCell>
                 <TableCell className="text-right">
@@ -140,15 +154,43 @@ export function VisitsPage() {
       <div className="mt-4 flex flex-col gap-3">
         <h2 className="text-lg font-medium">Photos by staff member</h2>
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="userId">User ID</Label>
+          <div className="relative flex flex-col gap-1.5">
+            <Label htmlFor="supervisorSearch">Supervisor</Label>
             <Input
-              id="userId"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="paste a user id"
+              id="supervisorSearch"
+              value={supervisorQuery}
+              onChange={(e) => {
+                setSupervisorQuery(e.target.value)
+                setSelectedSupervisor(null)
+                setLookupUserId('')
+              }}
+              placeholder="Search by name…"
               className="w-72"
+              autoComplete="off"
             />
+            {supervisorQuery.length >= 2 && !selectedSupervisor && (
+              <div className="absolute top-full z-10 mt-1 w-72 rounded-lg border border-border bg-popover shadow-md">
+                {searchingSupervisors && (
+                  <p className="p-2 text-sm text-muted-foreground">Searching…</p>
+                )}
+                {!searchingSupervisors && supervisorResults?.data.length === 0 && (
+                  <p className="p-2 text-sm text-muted-foreground">No supervisors found.</p>
+                )}
+                {supervisorResults?.data.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setSelectedSupervisor({ id: u.id, name: u.name })
+                      setSupervisorQuery(u.name)
+                    }}
+                  >
+                    {u.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="photoDate">Date</Label>
@@ -162,8 +204,10 @@ export function VisitsPage() {
           </div>
           <Button
             variant="outline"
+            disabled={!selectedSupervisor}
             onClick={() => {
-              setLookupUserId(userId)
+              if (!selectedSupervisor) return
+              setLookupUserId(selectedSupervisor.id)
               setLookupDate(photoDate)
             }}
           >
@@ -180,6 +224,7 @@ export function VisitsPage() {
             {userPhotos?.data.map((photo, i) => (
               <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-2">
                 <img src={photo.visit_photo} alt="Visit" className="h-32 w-full rounded object-cover" />
+                <p className="text-xs font-medium">{photo.company.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(photo.visited_at).toLocaleString()}
                 </p>

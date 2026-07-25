@@ -40,8 +40,19 @@ export interface UserCompanyRoleWithUser {
   }
 }
 
-export function getUsers(params?: PaginationParams) {
-  return apiFetch<PaginatedResult<User>>(`/api/users${paginationQuery(params)}`)
+export interface UserListParams extends PaginationParams {
+  search?: string
+  role?: Role
+}
+
+export function getUsers(params?: UserListParams) {
+  const search = new URLSearchParams()
+  if (params?.page) search.set('page', String(params.page))
+  if (params?.limit) search.set('limit', String(params.limit))
+  if (params?.search) search.set('search', params.search)
+  if (params?.role) search.set('role', params.role)
+  const qs = search.toString()
+  return apiFetch<PaginatedResult<User>>(`/api/users${qs ? `?${qs}` : ''}`)
 }
 
 // Only ever returns STAFF -- ADMIN/SUPERVISOR are never assigned a

@@ -201,6 +201,7 @@ export function AttendancePage() {
           )}
           {photos?.data.map((photo, i) => (
             <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-2">
+              <p className="text-xs font-medium">{photo.user.name}</p>
               <img src={photo.checkin_photo} alt="Check-in" className="h-32 w-full rounded object-cover" />
               <p className="text-xs text-muted-foreground">
                 In: {new Date(photo.checkin_at).toLocaleTimeString()}

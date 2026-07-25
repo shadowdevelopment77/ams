@@ -233,6 +233,22 @@ describe('GET /api/visit (admin - all visit logs)', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(2)
   })
+
+  it('includes the supervisor name and company name, not just their raw IDs', async () => {
+    const company = await createCompany({ name: 'Acme Cleaning Co' })
+    const { user: supervisor } = await createSupervisor({ name: 'Jane Supervisor' })
+    await createVisitLog(supervisor.id, company.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get('/api/visit').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    const row = res.body.data.data.find((v: any) => v.user_id === supervisor.id)
+    expect(row.user).toEqual({ id: supervisor.id, name: 'Jane Supervisor' })
+    expect(row.company).toEqual({ id: company.id, name: 'Acme Cleaning Co' })
+  })
 })
 
 describe('GET /api/visit/user/:userId/photos', () => {
@@ -274,6 +290,21 @@ describe('GET /api/visit/user/:userId/photos', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
     expect(res.body.data.data[0]).toHaveProperty('visit_photo')
+  })
+
+  it('includes the company name, not just the raw company_id', async () => {
+    const company = await createCompany({ name: 'Beta Logistics' })
+    const { user: supervisor } = await createSupervisor()
+    await createVisitLog(supervisor.id, company.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get(`/api/visit/user/${supervisor.id}/photos`).set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data[0].company).toEqual({ id: company.id, name: 'Beta Logistics' })
+    expect(res.body.data.data[0]).not.toHaveProperty('company_id')
   })
 })
 
