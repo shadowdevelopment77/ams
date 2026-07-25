@@ -104,7 +104,7 @@ model UserCompanyRole {
 
 model UserRole{
   id Int @id @default(autoincrement())
-  name String //ADMIN, CLIENT, STAFF, SUPERVISOR
+  name String @unique //ADMIN, CLIENT, STAFF, SUPERVISOR
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
@@ -112,7 +112,7 @@ model UserRole{
   updated_at DateTime @updatedAt
 
   user_company_role UserCompanyRole[]
-  
+
 
 }
 
@@ -168,7 +168,7 @@ model Attendance {
 
 model AttendanceStatus {
   id           Int              @id @default(autoincrement())
-  name String
+  name String @unique
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
