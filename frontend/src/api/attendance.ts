@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { PaginatedResult, PaginationParams } from './pagination'
 
 export interface Attendance {
   id: string
@@ -36,4 +37,52 @@ export function checkOut(attendanceId: string, photo: File) {
     method: 'PATCH',
     body: form,
   })
+}
+
+// ─── Admin: attendance records ─────────────────────────────────────────────
+
+// Wider than STAFF's own Attendance record -- getByDate/getLate join
+// user/shift/status (see backend/src/modules/attendance/attendance.service.ts).
+export interface AdminAttendanceRecord extends Attendance {
+  user: { id: string; name: string; email: string }
+  shift: { id: number; name: string; start_time: string; end_time: string }
+  status: { id: number; name: string }
+}
+
+export interface AttendanceQuery extends PaginationParams {
+  companyId: number
+  divisionId: number
+  date?: string
+}
+
+function attendanceQuery(params: AttendanceQuery): string {
+  const search = new URLSearchParams()
+  search.set('companyId', String(params.companyId))
+  search.set('divisionId', String(params.divisionId))
+  if (params.date) search.set('date', params.date)
+  if (params.page) search.set('page', String(params.page))
+  if (params.limit) search.set('limit', String(params.limit))
+  return `?${search.toString()}`
+}
+
+export function getAttendanceByDate(params: AttendanceQuery) {
+  return apiFetch<PaginatedResult<AdminAttendanceRecord>>(`/api/attendance${attendanceQuery(params)}`)
+}
+
+export function getLateAttendance(params: AttendanceQuery) {
+  return apiFetch<PaginatedResult<AdminAttendanceRecord>>(`/api/attendance/late${attendanceQuery(params)}`)
+}
+
+export interface AttendancePhotoRecord {
+  user_id: string
+  checkin_photo: string
+  checkin_at: string
+  checkout_photo: string | null
+  checkout_at: string | null
+}
+
+export function getAttendancePhotos(params: AttendanceQuery) {
+  return apiFetch<PaginatedResult<AttendancePhotoRecord>>(
+    `/api/attendance/attendance-photos${attendanceQuery(params)}`
+  )
 }

@@ -35,11 +35,14 @@ export function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setServerError(null)
     try {
-      await login(data.email, data.password)
+      const { user } = await login(data.email, data.password)
       // Session cookie is now set — refetch /me so useMe() picks up the
       // new identity before we navigate into a protected route.
       await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
-      navigate('/', { replace: true })
+      // `/` is the STAFF dashboard (ProtectedRoute allow=['STAFF']) -- an
+      // ADMIN landing there would immediately get bounced back to /login by
+      // the role check, so the destination has to depend on who logged in.
+      navigate(user.role === 'ADMIN' ? '/admin' : '/', { replace: true })
     } catch (err) {
       setServerError(err instanceof ApiError ? err.message : 'Something went wrong')
     }

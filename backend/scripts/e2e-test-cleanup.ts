@@ -1,16 +1,22 @@
 // Disposable, reused repeatedly during the frontend E2E testing session
-// (2026-07-23 overnight run) — resets fixed-email E2E test fixtures so
-// Playwright runs are idempotent despite the backend's daily
-// one-checkin-per-user constraint. Deleted once the run is done and
-// stable, per this project's "disposable script" convention.
+// (2026-07-23 overnight run onward) — resets fixed-email/fixed-name E2E test
+// fixtures so Playwright runs are idempotent despite the backend's daily
+// one-checkin-per-user constraint and unique company names. Kept as
+// permanent E2E infra (npm run test:e2e depends on it) rather than deleted,
+// per the reasoning in the Phase 4 report.
 import prisma from '../src/lib/prisma'
 
-const TEST_EMAIL_PREFIX = 'e2e-playwright-'
-const TEST_COMPANY_PREFIX = 'E2E Playwright Co'
+// One prefix pair per spec file that creates fixture data:
+// - "e2e-playwright-" / "E2E Playwright Co": staff-flow.spec.ts +
+//   auth-and-device-gate.spec.ts (via e2e-test-seed.ts).
+// - "e2e-admin-" / "E2E Admin Co": admin-panel.spec.ts, which creates its
+//   own fixtures directly through the UI rather than a seed script.
+const TEST_EMAIL_PREFIXES = ['e2e-playwright-', 'e2e-admin-']
+const TEST_COMPANY_PREFIXES = ['E2E Playwright Co', 'E2E Admin Co']
 
 async function main() {
   const users = await prisma.user.findMany({
-    where: { email: { startsWith: TEST_EMAIL_PREFIX } },
+    where: { OR: TEST_EMAIL_PREFIXES.map((prefix) => ({ email: { startsWith: prefix } })) },
   })
   const userIds = users.map((u) => u.id)
 
@@ -35,7 +41,7 @@ async function main() {
   }
 
   const companies = await prisma.company.findMany({
-    where: { name: { startsWith: TEST_COMPANY_PREFIX } },
+    where: { OR: TEST_COMPANY_PREFIXES.map((prefix) => ({ name: { startsWith: prefix } })) },
   })
   const companyIds = companies.map((c) => c.id)
   if (companyIds.length > 0) {
