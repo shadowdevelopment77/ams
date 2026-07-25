@@ -115,9 +115,38 @@ test.describe('Admin panel: golden path', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/admin-07-attendance.png` })
 
     // -- Visits --
+    // e2e-test-seed.ts seeds a supervisor + visit log directly via Prisma
+    // (not this test) so there's real cross-company data to assert names
+    // render for, without spending another authLimiter-budget login here.
     await page.getByRole('link', { name: 'Visits' }).click()
     await expect(page).toHaveURL(/\/admin\/visits$/)
     await expect(page.getByRole('heading', { name: 'Visit Logs' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Supervisor' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Company' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'E2E Playwright Supervisor' })).toBeVisible()
     await page.screenshot({ path: `${SCREENSHOT_DIR}/admin-08-visits.png` })
+
+    // -- Photos by staff member: search by name, not a pasted ID --
+    await page.getByLabel('Supervisor').fill('Playwright Supervisor')
+    await expect(page.getByRole('button', { name: 'E2E Playwright Supervisor' })).toBeVisible()
+    await page.getByRole('button', { name: 'E2E Playwright Supervisor' }).click()
+    await page.getByRole('button', { name: /look up/i }).click()
+    // Scoped to the photo card itself, not just anywhere on the page --
+    // the same company name is already visible in the table above, so an
+    // unscoped assertion here wouldn't actually prove the picker worked.
+    const photoCard = page.locator('img[alt="Visit"]').locator('xpath=..')
+    await expect(photoCard).toBeVisible()
+    await expect(photoCard.getByText(/^E2E Playwright Co/)).toBeVisible()
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/admin-09-visit-photos-by-supervisor.png` })
+
+    // -- Divisions: reachable from the sidebar, not just nested inside a
+    // specific company's detail page -- proves the new top-level nav entry
+    // actually reaches the division created earlier in this same flow. --
+    await page.getByRole('link', { name: 'Divisions' }).click()
+    await expect(page).toHaveURL(/\/admin\/divisions$/)
+    await page.getByText('Select a company', { exact: true }).click()
+    await page.getByRole('option', { name: companyName }).click()
+    await expect(page.getByText(divisionName)).toBeVisible()
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/admin-10-divisions-nav.png` })
   })
 })

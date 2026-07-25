@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { to: '/admin/companies', label: 'Companies' },
+  { to: '/admin/divisions', label: 'Divisions' },
   { to: '/admin/staff', label: 'Staff' },
   { to: '/admin/attendance', label: 'Attendance' },
   { to: '/admin/visits', label: 'Visits' },
