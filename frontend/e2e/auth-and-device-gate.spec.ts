@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fixtures from './fixtures/data.json' with { type: 'json' }
 
-const SCREENSHOT_DIR = 'e2e/screenshots'
+const SCREENSHOT_DIR = '../Screenshot/phase3.5-device-gate'
 
 test.describe('Auth flow + mobile-only device gate (Phase 3.5 Part A)', () => {
   test('unauthenticated visit to / redirects to /login', async ({ page }) => {

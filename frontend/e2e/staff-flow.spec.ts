@@ -5,7 +5,7 @@ import fixtures from './fixtures/data.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TEST_PHOTO = path.join(__dirname, 'fixtures', 'test-photo.jpg')
-const SCREENSHOT_DIR = 'e2e/screenshots'
+const SCREENSHOT_DIR = '../Screenshot/phase4-staff-flow'
 
 // Only meaningful on a real mobile UA -- desktop would hit MobileOnlyGate
 // before ever reaching these screens (that's Phase 3.5's own coverage).
@@ -36,7 +36,7 @@ test.describe('STAFF daily flow: check-in -> checklist -> check-out', () => {
     await page.getByRole('button', { name: /^check in$/i }).click()
 
     // Back on dashboard, now checked in.
-    await expect(page).toHaveURL('http://localhost:5173/')
+    await expect(page).toHaveURL(/\/$/)
     await expect(page.getByText(/checked in at/i)).toBeVisible()
     await page.screenshot({ path: `${SCREENSHOT_DIR}/12-dashboard-checked-in.png` })
 
@@ -108,7 +108,7 @@ test.describe('STAFF daily flow: check-in -> checklist -> check-out', () => {
     await page.getByRole('button', { name: /submit checklist/i }).click()
 
     // Submitting navigates back to the dashboard.
-    await expect(page).toHaveURL('http://localhost:5173/')
+    await expect(page).toHaveURL(/\/$/)
     await page.screenshot({ path: `${SCREENSHOT_DIR}/14-dashboard-after-checklist-submit.png` })
 
     // -- Check-out --
@@ -120,7 +120,7 @@ test.describe('STAFF daily flow: check-in -> checklist -> check-out', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/15-checkout-form-filled.png` })
     await page.getByRole('button', { name: /^check out$/i }).click()
 
-    await expect(page).toHaveURL('http://localhost:5173/')
+    await expect(page).toHaveURL(/\/$/)
     await expect(page.getByText(/you're done for today/i)).toBeVisible()
     await page.screenshot({ path: `${SCREENSHOT_DIR}/16-dashboard-checked-out.png` })
   })
