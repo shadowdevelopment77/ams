@@ -3,6 +3,8 @@ import { Navigate } from 'react-router-dom'
 import { useMe } from '@/hooks/useMe'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { MobileOnlyGate } from '@/components/MobileOnlyGate'
+import { VirtualMobileBanner } from '@/components/VirtualMobileBanner'
+import { isVirtualMobileEnabled } from '@/lib/virtualMobile'
 import type { Role } from '@/api/auth'
 
 interface ProtectedRouteProps {
@@ -36,6 +38,15 @@ export function ProtectedRoute({ allow, requireMobile, children }: ProtectedRout
 
   if (requireMobile && !isMobile) {
     return <MobileOnlyGate />
+  }
+
+  if (requireMobile && isVirtualMobileEnabled()) {
+    return (
+      <>
+        <VirtualMobileBanner />
+        {children}
+      </>
+    )
   }
 
   return <>{children}</>

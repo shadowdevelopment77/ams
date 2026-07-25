@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ApiError } from '@/api/client'
 import { login } from '@/api/auth'
 import { ME_QUERY_KEY } from '@/hooks/useMe'
+import { isVirtualMobileEnabled, setVirtualMobile } from '@/lib/virtualMobile'
 
 // Mirrors backend/src/modules/auth/auth.validation.ts's loginSchema exactly —
 // same validation contract on both sides.
@@ -25,6 +26,9 @@ export function LoginPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [serverError, setServerError] = useState<string | null>(null)
+  // Persists in localStorage (see virtualMobile.ts) -- reflects whatever
+  // was left on from a previous session rather than always starting unchecked.
+  const [simulateMobile, setSimulateMobile] = useState(() => isVirtualMobileEnabled())
 
   const {
     register,
@@ -82,6 +86,22 @@ export function LoginPage() {
             </div>
 
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+
+            <div className="flex items-center gap-2">
+              <input
+                id="simulateMobile"
+                type="checkbox"
+                checked={simulateMobile}
+                onChange={(e) => {
+                  setSimulateMobile(e.target.checked)
+                  setVirtualMobile(e.target.checked)
+                }}
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="simulateMobile" className="text-sm font-normal text-muted-foreground">
+                Simulate mobile device (for testing)
+              </Label>
+            </div>
 
             <Button type="submit" disabled={isSubmitting} className="mt-2">
               {isSubmitting ? 'Signing in…' : 'Sign in'}

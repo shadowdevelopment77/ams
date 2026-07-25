@@ -84,6 +84,38 @@ test.describe('Mobile-only device gate: desktop vs mobile', () => {
   })
 })
 
+test.describe('Virtual mobile mode: desktop testing override', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('checking "simulate mobile" on login lets a desktop browser reach the real dashboard', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop-chromium',
+      'the whole point is proving this works on a real desktop UA + viewport'
+    )
+    await page.goto('/login')
+    await page.getByLabel('Email').fill(fixtures.staffEmail)
+    await page.getByLabel('Password').fill(fixtures.staffPassword)
+    await page.getByLabel(/simulate mobile device/i).check()
+    await page.getByRole('button', { name: /sign in/i }).click()
+
+    await expect(page.getByText(/logged in as/i)).toBeVisible()
+    await expect(page.getByText(/mobile only/i)).not.toBeVisible()
+    await expect(page.getByText(/simulating mobile/i)).toBeVisible()
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/09-virtual-mobile-reaches-dashboard.png` })
+
+    // Turning it off re-asserts the real gate immediately (reload, not a
+    // fresh login) -- same desktop UA/viewport, now genuinely blocked again.
+    await page.getByRole('button', { name: /turn off/i }).click()
+    await expect(page.getByText(/mobile only/i)).toBeVisible()
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/10-virtual-mobile-turned-off-gate-returns.png` })
+
+    await page.getByRole('button', { name: /logout/i }).click()
+    await expect(page).toHaveURL(/\/login$/)
+  })
+})
+
 test.describe('Mobile-only device gate: mobile succeeds', () => {
   test('STAFF on a real mobile UA reaches the dashboard, not the gate', async ({
     page,
