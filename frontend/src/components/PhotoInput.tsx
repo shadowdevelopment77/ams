@@ -7,11 +7,9 @@ interface PhotoInputProps {
   label?: string
 }
 
-// Native capture="environment" opens the phone's camera directly on mobile
-// browsers (decided project-wide, see docs/superpowers/plans -- this is
-// exactly the input Phase 3.5's mobile-only gate exists to protect, since a
-// desktop browser has no camera to defer to and would fall back to an
-// ordinary file picker instead).
+// Native capture="environment" opens the phone's camera directly on mobile --
+// a desktop browser has no camera to defer to and falls back to a file picker,
+// which is exactly what the mobile-only device gate exists to prevent.
 export function PhotoInput({ value, onChange, label = 'Photo' }: PhotoInputProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)

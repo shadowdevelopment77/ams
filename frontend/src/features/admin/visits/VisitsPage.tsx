@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { downloadImage } from '@/lib/downloadImage'
 import { ApiError } from '@/api/client'
 import { getVisitLogs, deleteVisitLog, getVisitPhotosByUser, type VisitLog } from '@/api/visit'
 import { getUsers } from '@/api/user'
@@ -68,7 +69,7 @@ export function VisitsPage() {
   const { data: supervisorResults, isLoading: searchingSupervisors } = useQuery({
     queryKey: ['admin', 'users', 'search', debouncedQuery],
     queryFn: () => getUsers({ search: debouncedQuery, role: 'SUPERVISOR', limit: 10 }),
-    enabled: debouncedQuery.length >= 2 && !selectedSupervisor,
+    enabled: debouncedQuery.length >= 1 && !selectedSupervisor,
   })
 
   const { data: userPhotos, isLoading: photosLoading } = useQuery({
@@ -168,7 +169,7 @@ export function VisitsPage() {
               className="w-72"
               autoComplete="off"
             />
-            {supervisorQuery.length >= 2 && !selectedSupervisor && (
+            {supervisorQuery.length >= 1 && !selectedSupervisor && (
               <div className="absolute top-full z-10 mt-1 w-72 rounded-lg border border-border bg-popover shadow-md">
                 {searchingSupervisors && (
                   <p className="p-2 text-sm text-muted-foreground">Searching…</p>
@@ -228,7 +229,20 @@ export function VisitsPage() {
                 <p className="text-xs text-muted-foreground">
                   {new Date(photo.visited_at).toLocaleString()}
                 </p>
+                {photo.address && <p className="text-xs text-muted-foreground">{photo.address}</p>}
                 {photo.notes && <p className="text-xs">{photo.notes}</p>}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() =>
+                    downloadImage(
+                      photo.visit_photo,
+                      `visit-${photo.company.name}-${photo.visited_at.slice(0, 10)}.jpg`
+                    )
+                  }
+                >
+                  Download
+                </Button>
               </div>
             ))}
           </div>
