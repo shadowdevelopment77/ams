@@ -262,20 +262,24 @@ export function DivisionDetailPage() {
 
             {templates?.map((template) => (
               <TableRow key={template.id}>
-                <TableCell className="font-medium">
-                  <Link
-                    to={`/admin/companies/${companyIdNum}/divisions/${divisionIdNum}/checklists/${template.id}`}
-                    className="hover:underline"
-                  >
-                    {template.title}
-                  </Link>
-                </TableCell>
+                <TableCell className="font-medium">{template.title}</TableCell>
                 <TableCell>
                   <Badge variant={template.is_active ? 'default' : 'secondary'}>
                     {template.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    render={
+                      <Link
+                        to={`/admin/companies/${companyIdNum}/divisions/${divisionIdNum}/checklists/${template.id}`}
+                      />
+                    }
+                  >
+                    See more detail →
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

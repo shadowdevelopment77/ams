@@ -24,10 +24,9 @@ import {
 } from '@/api/division'
 import { DivisionFormDialog } from './DivisionFormDialog'
 
-// Reused by CompanyDetailPage.tsx (companyId from the URL) and
-// DivisionsPage.tsx (companyId from a top-level company picker) -- same
-// list/create/edit/delete logic either way, just parameterized so it
-// isn't tied to reading companyId from the route.
+// Reused by CompanyDetailPage.tsx -- kept parameterized by companyId
+// (rather than reading it from the route itself) since a prior version of
+// the admin nav also had a top-level Divisions page rendering this.
 export function DivisionsList({ companyId }: { companyId: number }) {
   const queryClient = useQueryClient()
 
@@ -113,14 +112,7 @@ export function DivisionsList({ companyId }: { companyId: number }) {
 
             {divisions?.data.map((division) => (
               <TableRow key={division.id}>
-                <TableCell className="font-medium">
-                  <Link
-                    to={`/admin/companies/${companyId}/divisions/${division.id}`}
-                    className="hover:underline"
-                  >
-                    {division.name}
-                  </Link>
-                </TableCell>
+                <TableCell className="font-medium">{division.name}</TableCell>
                 <TableCell>{division.late_tolerance_minutes} min</TableCell>
                 <TableCell>
                   <Badge variant={division.is_active ? 'default' : 'secondary'}>
@@ -128,6 +120,13 @@ export function DivisionsList({ companyId }: { companyId: number }) {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    render={<Link to={`/admin/companies/${companyId}/divisions/${division.id}`} />}
+                  >
+                    See more detail →
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

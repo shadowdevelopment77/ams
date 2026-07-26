@@ -51,6 +51,46 @@ export interface ChecklistSubmission {
   photos: ChecklistPhoto[]
 }
 
+// Backed by GET /api/checklist/photos/by-division and by-user/:userId --
+// both join company/division/item/submitter context in one shot.
+export interface ChecklistPhotoRecord {
+  id: number
+  submitted_at: string | null
+  item: { id: number; description: string }
+  company: { id: number; name: string }
+  division: { id: number; name: string }
+  user: { id: string; name: string }
+  location_address: string | null
+  photos: ChecklistPhoto[]
+}
+
+export function getChecklistPhotosByDivision(
+  companyId: number,
+  divisionId: number,
+  date?: string,
+  params?: PaginationParams
+) {
+  const search = new URLSearchParams()
+  search.set('companyId', String(companyId))
+  search.set('divisionId', String(divisionId))
+  if (date) search.set('date', date)
+  if (params?.page) search.set('page', String(params.page))
+  if (params?.limit) search.set('limit', String(params.limit))
+  return apiFetch<PaginatedResult<ChecklistPhotoRecord>>(
+    `/api/checklist/photos/by-division?${search.toString()}`
+  )
+}
+
+export function getChecklistPhotosByUser(userId: string, date?: string, params?: PaginationParams) {
+  const search = new URLSearchParams()
+  if (date) search.set('date', date)
+  if (params?.page) search.set('page', String(params.page))
+  if (params?.limit) search.set('limit', String(params.limit))
+  return apiFetch<PaginatedResult<ChecklistPhotoRecord>>(
+    `/api/checklist/photos/by-user/${userId}?${search.toString()}`
+  )
+}
+
 export function getMyChecklist() {
   return apiFetch<ChecklistSubmission[]>('/api/checklist/my-checklist')
 }
