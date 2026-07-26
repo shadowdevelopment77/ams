@@ -12,6 +12,7 @@ const adminOnly = [authMiddleware, roleMiddleware("ADMIN")]
 
 
 router.get("/today", staffOnly, attendanceController.getToday)
+router.get("/history", staffOnly, attendanceController.getMyHistory)
 router.post("/checkin", staffOnly, uploadAttendance.single("photo"), validateCheckIn, attendanceController.checkIn)
 router.patch("/checkout/:id", staffOnly, uploadAttendance.single("checkout_photo"), validateCheckOut, attendanceController.checkOut)
 router.get("/", adminOnly, validateQuery(attendanceQuerySchema), attendanceController.getByDate)

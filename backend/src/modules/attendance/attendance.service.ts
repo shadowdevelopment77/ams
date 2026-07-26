@@ -14,6 +14,7 @@ import { AppError } from '../../utils/error.response/appError'
 import { isNightShift, toDateTime } from '../../utils/shift'
 import { reverseGeocode } from '../../utils/geocode'
 import { AttendanceFilterParams } from '../../repositories/interfaces/attendance.interface'
+import { PaginationParams } from '../../repositories/interfaces/base.interface'
 import {getToday} from '../../utils/date'
 import { Prisma } from '../../../generated/prisma'
 
@@ -181,10 +182,7 @@ async checkIn(
 ) {
   const attendance = await this.getAttendanceOrThrow(attendanceId)
 
-  // ownership check
   if (attendance.user_id !== userId) throw new AppError('Access denied', 403)
-
-  // only if actually early leave
   if (!attendance.early_leave) throw new AppError('Not an early leave', 400)
 
   return attendanceRepository.update(attendanceId, {
@@ -195,6 +193,10 @@ async checkIn(
   async getTodayAttendance(userId: string) {
     const { date } = getToday()
     return attendanceRepository.findByUser(userId, date)
+  }
+
+  async getMyHistory(userId: string, params: PaginationParams) {
+    return attendanceRepository.findHistoryByUser(userId, params)
   }
 
 
@@ -214,8 +216,10 @@ async getAttendancePhotos(
       user:              { id: a.user.id, name: a.user.name },
       checkin_photo:     a.photo_url,
       checkin_at:        a.check_in_at,
+      checkin_address:   a.location_address ?? null,
       checkout_photo:    a.checkout_photo_url ?? null,
       checkout_at:       a.check_out_at ?? null,
+      checkout_address:  a.checkout_address ?? null,
     }))
   }
 }

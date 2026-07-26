@@ -30,21 +30,25 @@ const ALWAYS_NOT_YET_ENDED = '23:59' // any real checkout time is before this ->
 
 const fakePhoto = () => Buffer.from('fake-image-bytes')
 
+// GPS is mandatory on checkin/checkout -- needed to get past validation.
+const FAKE_LAT = -6.2088
+const FAKE_LNG = 106.8456
+
 describe('POST /api/attendance/checkin', () => {
   it('rejects an unauthenticated request', async () => {
     const res = await api()
       .post('/api/attendance/checkin')
       .field('shift_id', 1)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(401)
   })
 
   it('rejects an unauthenticated request with 401 even when the body also fails validation (no shift_id, no photo)', async () => {
-    // Under the current (buggy) ordering — multer, validateCheckIn, staffOnly
-    // — a missing shift_id gets caught by validateCheckIn's Zod schema with a
-    // 400 before the auth check ever runs, leaking validation feedback to an
-    // anonymous caller instead of failing closed with 401.
+    // Order is multer, validateCheckIn, staffOnly -- must still 401, not leak
+    // validation feedback to an anonymous caller via a 400 instead.
     const res = await api().post('/api/attendance/checkin')
 
     expect(res.status).toBe(401)
@@ -59,6 +63,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', 1)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(403)
@@ -72,6 +78,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', 1)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(403)
@@ -88,6 +96,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
 
     expect(res.status).toBe(400)
     expect(res.body.message).toMatch(/photo is required/i)
@@ -102,6 +112,8 @@ describe('POST /api/attendance/checkin', () => {
     const res = await api()
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(400)
@@ -117,6 +129,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', 999999)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(404)
@@ -137,6 +151,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', foreignShift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(403)
@@ -154,6 +170,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -179,6 +197,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -197,6 +217,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -215,6 +237,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
     expect(first.status).toBe(201)
 
@@ -222,6 +246,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(second.status).toBe(409)
@@ -243,6 +269,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -266,6 +294,8 @@ describe('POST /api/attendance/checkin', () => {
       .post('/api/attendance/checkin')
       .set('Cookie', cookie)
       .field('shift_id', shift.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -291,12 +321,16 @@ describe('POST /api/attendance/checkin', () => {
         .post('/api/attendance/checkin')
         .set('Cookie', cookie)
         .field('shift_id', shift.id)
-        .attach('photo', fakePhoto(), 'photo.jpg'),
+        .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
+      .attach('photo', fakePhoto(), 'photo.jpg'),
       api()
         .post('/api/attendance/checkin')
         .set('Cookie', cookie)
         .field('shift_id', shift.id)
-        .attach('photo', fakePhoto(), 'photo.jpg'),
+        .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
+      .attach('photo', fakePhoto(), 'photo.jpg'),
     ])
 
     const statuses = [resA.status, resB.status].sort()
@@ -371,6 +405,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
   it('rejects an unauthenticated request', async () => {
     const res = await api()
       .patch('/api/attendance/checkout/some-id')
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(401)
@@ -383,6 +419,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch('/api/attendance/checkout/some-id')
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(403)
@@ -394,11 +432,13 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const { user, rawPassword } = await createStaff(company.id, division.id)
     const { cookie } = await loginAs(user.email, rawPassword)
 
-    // .send({}) forces a Content-Type + parsed body ({}), so validation
-    // passes through (all fields optional) and we actually reach the
-    // controller's `if (!req.file)` check instead of failing earlier at
-    // validation with an undefined body.
-    const res = await api().patch('/api/attendance/checkout/some-id').set('Cookie', cookie).send({})
+    // GPS is required now, so a bare {} would fail validation before ever
+    // reaching the controller's `if (!req.file)` check -- send valid lat/lng
+    // so validation passes and this actually tests the photo-required path.
+    const res = await api()
+      .patch('/api/attendance/checkout/some-id')
+      .set('Cookie', cookie)
+      .send({ checkout_latitude: FAKE_LAT, checkout_longitude: FAKE_LNG })
 
     expect(res.status).toBe(400)
     expect(res.body.message).toMatch(/photo is required/i)
@@ -413,6 +453,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch('/api/attendance/checkout/00000000-0000-0000-0000-000000000000')
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(404)
@@ -433,6 +475,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch(`/api/attendance/checkout/${attendance.id}`)
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(403)
@@ -453,6 +497,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch(`/api/attendance/checkout/${attendance.id}`)
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(409)
@@ -477,6 +523,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch(`/api/attendance/checkout/${attendance.id}`)
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(200)
@@ -497,6 +545,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch(`/api/attendance/checkout/${attendance.id}`)
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(200)
@@ -521,6 +571,8 @@ describe('PATCH /api/attendance/checkout/:id', () => {
     const res = await api()
       .patch(`/api/attendance/checkout/${attendance.id}`)
       .set('Cookie', cookie)
+      .field('checkout_latitude', FAKE_LAT)
+      .field('checkout_longitude', FAKE_LNG)
       .attach('checkout_photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(200)
@@ -538,10 +590,7 @@ describe('PATCH /api/attendance/early-leave/:id', () => {
   })
 
   it('rejects an unauthenticated request with 401 even when the body also fails validation (empty reason)', async () => {
-    // Under the previous (buggy) ordering — validateEarlyLeaveReason, staffOnly
-    // — an empty reason was rejected by Zod with a 400 before the auth check
-    // ever ran, leaking validation feedback to an anonymous caller instead of
-    // failing closed with 401.
+    // Must still 401, not leak validation feedback via a 400 to an anonymous caller.
     const res = await api()
       .patch('/api/attendance/early-leave/some-id')
       .send({ early_leave_reason: '' })
@@ -694,5 +743,54 @@ describe('GET /api/attendance/today', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.id).toBe(attendance.id)
     expect(res.body.data.user_id).toBe(user.id)
+  })
+})
+
+describe('GET /api/attendance/history', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/attendance/history')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a non-STAFF user (ADMIN)', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const res = await api().get('/api/attendance/history').set('Cookie', cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns an empty list when the caller has no attendance yet', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api().get('/api/attendance/history').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+  })
+
+  it("returns the caller's own history across multiple days, newest first, not another user's", async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const otherStaff = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const older = await createAttendance(user.id, company.id, division.id, shift.id, { date: twoDaysAgo })
+    const recent = await createAttendance(user.id, company.id, division.id, shift.id, { date: yesterday })
+    await createAttendance(otherStaff.user.id, company.id, division.id, shift.id)
+
+    const res = await api().get('/api/attendance/history').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBe(2)
+    expect(res.body.data.data[0].id).toBe(recent.id)
+    expect(res.body.data.data[1].id).toBe(older.id)
+    expect(res.body.data.data.every((a: any) => a.user_id === user.id)).toBe(true)
   })
 })

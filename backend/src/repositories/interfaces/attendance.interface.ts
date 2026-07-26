@@ -34,7 +34,8 @@ export interface AttendanceFilterParams extends PaginationParams {
 export interface AttendanceRepository
   extends BaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO, string> {
   findByUser(userId:string, date: Date): Promise<Attendance | null >;
-  findByDate(companyId:number, divisionId:number, date: Date, params: AttendanceFilterParams): Promise<PaginatedResult<Attendance>>; 
+  findHistoryByUser(userId: string, params?: PaginationParams): Promise<PaginatedResult<Attendance>>;
+  findByDate(companyId:number, divisionId:number, date: Date, params: AttendanceFilterParams): Promise<PaginatedResult<Attendance>>;
   findByLate(companyId:number, divisionId:number, isLate: boolean, date: Date, params: AttendanceFilterParams): Promise <PaginatedResult<Attendance>>;
   checkOut(attendanceId: string, data: UpdateAttendanceDTO): Promise<Attendance>;
 }

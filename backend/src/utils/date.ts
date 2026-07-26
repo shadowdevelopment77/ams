@@ -1,4 +1,3 @@
-// src/utils/date.ts
 export const getToday = () => {
   const today = new Date()
   const utcDateString = today.toISOString().split('T')[0]
