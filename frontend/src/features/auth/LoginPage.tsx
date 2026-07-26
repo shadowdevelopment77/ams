@@ -12,6 +12,7 @@ import { ApiError } from '@/api/client'
 import { login } from '@/api/auth'
 import { ME_QUERY_KEY } from '@/hooks/useMe'
 import { isVirtualMobileEnabled, setVirtualMobile } from '@/lib/virtualMobile'
+import { DemoInfoCard } from './DemoInfoCard'
 
 // Mirrors backend/src/modules/auth/auth.validation.ts's loginSchema exactly —
 // same validation contract on both sides.
@@ -51,7 +52,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-4">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
@@ -109,6 +110,7 @@ export function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      <DemoInfoCard />
     </div>
   )
 }
