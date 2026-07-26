@@ -1,8 +1,11 @@
 name: Keep backend warm
 
 on:
-  schedule:
-    - cron: '*/10 * * * *'  # every ~10 minutes
+  # Schedule disabled until this is actually deployed -- there's no BACKEND_URL
+  # yet, so every scheduled run just fails and emails a failure notice.
+  # Re-add once deployed:
+  #   schedule:
+  #     - cron: '*/10 * * * *'  # every ~10 minutes
   workflow_dispatch: {}
 
 jobs:
