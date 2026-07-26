@@ -4,7 +4,7 @@ import {sendError} from '../../utils/error.response/response';
 
 const createCompanySchema = z.object({
     name: z.string().min(1, "Company name is required"),
-    code: z.string().min(1, "Company code is required"),
+    code: z.string().min(1).optional(),
     address: z.string().optional(),
     phone: z.string().optional(),
     email: z.email("Please enter a valid email address").optional(),

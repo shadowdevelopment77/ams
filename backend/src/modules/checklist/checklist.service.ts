@@ -6,6 +6,7 @@ import {
   attendanceRepository,
   companyRepository,
   divisionRepository,
+  userRepository,
 } from '../../repositories/index.repositories'
 import {getToday} from '../../utils/date'
 
@@ -15,11 +16,10 @@ import {
 } from "./checklist.validation"
 import { AppError } from '../../utils/error.response/appError'
 import { PaginationParams } from '../../repositories/interfaces/base.interface'
+import { Prisma } from '../../../generated/prisma'
 
 export class ChecklistService{
   private readonly  MAX_PHOTOS_PER_ITEM = 3
-
-  //Private Helpers
 
   private async getTemplateOrThrow(id: number) {
     const template = await checklistTemplateRepository.findById(id)
@@ -53,6 +53,12 @@ export class ChecklistService{
     return division
   }
 
+  private async getUserOrThrow(userId: string) {
+    const user = await userRepository.findById(userId)
+    if (!user) throw new AppError('User not found', 404)
+    return user
+  }
+
 
   private async getSubmissionOrThrow(attendanceId: string, itemId: number) {
     const submission = await checklistSubmissionRepository.findByAttendanceAndItem(attendanceId, itemId)
@@ -73,12 +79,25 @@ export class ChecklistService{
   }
 }
 
-  //Template
-
   async createTemplate(dto: CreateTemplateInput) {
     await this.getCompanyOrThrow(dto.company_id)
     await this.getDivisionOrThrow(dto.division_id)
-    return checklistTemplateRepository.create(dto)
+
+    const existing = await checklistTemplateRepository.findByDivision(dto.company_id, dto.division_id)
+    if (existing.length > 0) {
+      throw new AppError('This division already has a checklist template — edit it instead of creating a new one', 409)
+    }
+
+    try {
+      return await checklistTemplateRepository.create(dto)
+    } catch (err) {
+      // Partial unique index (company_id, division_id) WHERE is_deleted = false
+      // is the race-condition fallback for the check above.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new AppError('This division already has a checklist template — edit it instead of creating a new one', 409)
+      }
+      throw err
+    }
   }
 
   async getTemplatesByDivision(companyId: number, divisionId: number) {
@@ -101,8 +120,6 @@ export class ChecklistService{
     return checklistTemplateRepository.softDelete(id)
   }
 
-
-  //checklistItem
 
   async createItem(dto: CreateItemInput) {
     await this.getTemplateOrThrow(dto.template_id)
@@ -128,8 +145,6 @@ export class ChecklistService{
     return checklistItemRepository.softDelete(id)
   }
 
-
-  //submission
 
   async getMyChecklist(userId: string) {
     const {date}      = getToday()
@@ -193,17 +208,42 @@ export class ChecklistService{
   }
 
 
-  //Photo 
-  
-    async getByItemAndDate(
-    itemId:    number,
-    companyId: number,
-    date:      Date,
-    params:    PaginationParams
+  private mapEvidence(result: Awaited<ReturnType<typeof checklistSubmissionRepository.findByDivisionAndDate>>) {
+    return {
+      ...result,
+      data: result.data.map((s: any) => ({
+        id: s.id,
+        submitted_at: s.submitted_at,
+        item: { id: s.item.id, description: s.item.description },
+        company: s.item.template.company,
+        division: s.item.template.division,
+        user: { id: s.attendance.user.id, name: s.attendance.user.name },
+        location_address: s.attendance.location_address ?? null,
+        photos: s.photos,
+      })),
+    }
+  }
+
+  async getPhotosByDivision(
+    companyId:  number,
+    divisionId: number,
+    date:       Date,
+    params:     PaginationParams
   ) {
-    await this.getItemOrThrow(itemId)
     await this.getCompanyOrThrow(companyId)
-    return checklistSubmissionRepository.findByItemAndDate(itemId, companyId, date, params)
+    await this.getDivisionOrThrow(divisionId)
+    const result = await checklistSubmissionRepository.findByDivisionAndDate(companyId, divisionId, date, params)
+    return this.mapEvidence(result)
+  }
+
+  async getPhotosByUser(
+    userId: string,
+    date:   Date,
+    params: PaginationParams
+  ) {
+    await this.getUserOrThrow(userId)
+    const result = await checklistSubmissionRepository.findByUserAndDate(userId, date, params)
+    return this.mapEvidence(result)
   }
 
 }

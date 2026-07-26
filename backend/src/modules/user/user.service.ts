@@ -1,7 +1,12 @@
 import {AppError} from "../../utils/error.response/appError"
 import {PaginationParams} from "../../repositories/interfaces/base.interface"
-import {userRepository, companyRepository, divisionRepository, sessionRepository} from "../../repositories/index.repositories"
+import {userRepository, companyRepository, divisionRepository, sessionRepository, roleRepository} from "../../repositories/index.repositories"
 import {MoveCompanyInput, UpdateUserInput} from "./user.validation"
+
+export interface UserListQuery extends PaginationParams {
+  search?: string
+  role?: string
+}
 
 
 export class UserService {
@@ -49,7 +54,8 @@ export class UserService {
   }
 
 async moveToCompany(userId: string, data: MoveCompanyInput) {
-    await this.getUserOrThrow(userId)
+    const user = await this.getUserOrThrow(userId)
+    if (!user.is_active) throw new AppError('Cannot move an inactive user', 400)
     await this.getCompanyOrThrow(data.company_id)
     await this.validateDivisionBelongsToCompany(data.division_id, data.company_id)
     
@@ -72,8 +78,14 @@ async delete(id: string) {
     return userRepository.softDelete(id)
   }
 
-  async getAll(params: PaginationParams) {
-    return userRepository.findAllSafe(params)
+  async getAll(params: UserListQuery) {
+    const { role, ...rest } = params
+    if (!role) return userRepository.findAllSafe(rest)
+
+    const resolvedRole = await roleRepository.findByName(role)
+    if (!resolvedRole) return { data: [], total: 0, page: rest.page ?? 1, limit: rest.limit ?? 10, totalPages: 0 }
+
+    return userRepository.findAllSafe({ ...rest, roleId: resolvedRole.id })
   }
 
   async getUserById(id: string) {

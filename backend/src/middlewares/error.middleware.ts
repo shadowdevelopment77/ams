@@ -1,4 +1,3 @@
-// src/middlewares/error.middleware.ts
 import { Request, Response, NextFunction } from 'express'
 import multer from 'multer'
 import { sendError,  } from '../utils/error.response/response'
@@ -18,6 +17,6 @@ export const errorMiddleware = (
   if (err instanceof AppError) {
     return sendError(res, err.message, err.statusCode)
   }
-  console.error(err)  // log unexpected errors
+  console.error(err)
   return sendError(res, 'Internal server error', 500)
 }

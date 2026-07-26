@@ -4,13 +4,13 @@ import { sendError } from '../../utils/error.response/response'
 
 const checkInSchema = z.object({
   shift_id:   z.coerce.number({ error: 'Shift is required' }),
-  latitude:   z.coerce.number().optional(),
-  longitude:  z.coerce.number().optional(),
+  latitude:   z.coerce.number({ error: 'Location is required' }),
+  longitude:  z.coerce.number({ error: 'Location is required' }),
 })
 
 const checkOutSchema = z.object({
-  checkout_latitude:  z.coerce.number().optional(),
-  checkout_longitude: z.coerce.number().optional(),
+  checkout_latitude:  z.coerce.number({ error: 'Location is required' }),
+  checkout_longitude: z.coerce.number({ error: 'Location is required' }),
 })
 
 const earlyLeaveReasonSchema = z.object({

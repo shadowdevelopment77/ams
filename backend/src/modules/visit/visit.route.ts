@@ -11,11 +11,9 @@ const router = Router()
 const supervisorOnly = [authMiddleware, roleMiddleware('SUPERVISOR')]
 const adminOnly = [authMiddleware, roleMiddleware('ADMIN')]
 
-//supervisor
 router.post ('/', supervisorOnly, uploadVisit.single('photo'), validateCreateVisitLog, visitLogController.create)
 router.get('/my-visits',supervisorOnly, validateQuery(visitLogQuerySchema), visitLogController.getByUser)
 
-//admin
 router.get('/', adminOnly, validateQuery(visitLogQuerySchema), visitLogController.getAll)
 router.get('/:id', adminOnly, visitLogController.getById)
 router.delete('/:id', adminOnly, visitLogController.delete)

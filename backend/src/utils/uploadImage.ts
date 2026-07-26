@@ -15,7 +15,6 @@ export const uploadImage = async (
     .jpeg({ quality: 70 })
     .toBuffer()
 
-  // step 2 — cloudinary optimizes on delivery
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -31,6 +30,6 @@ export const uploadImage = async (
         resolve(result.secure_url)
       }
     )
-    stream.end(compressed)  // ← send compressed buffer not original
+    stream.end(compressed) // not the original buffer
   })
 }

@@ -32,7 +32,31 @@ export class PrismaVisitLogRepository
         skip,
         take,
         orderBy: { visited_at: "desc" },
-        include: { company: { select: { id: true, name: true } } },
+        include: {
+          user: { select: { id: true, name: true } },
+          company: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.visitLog.count({ where }),
+    ]);
+
+    return this.buildPaginatedResult(data, total, page, limit);
+  }
+
+  async findAll(params?: PaginationParams): Promise<PaginatedResult<VisitLog>> {
+    const { skip, take, page, limit } = this.resolvePagination(params);
+    const where = { is_deleted: false };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.visitLog.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { created_at: "desc" },
+        include: {
+          user: { select: { id: true, name: true } },
+          company: { select: { id: true, name: true } },
+        },
       }),
       this.prisma.visitLog.count({ where }),
     ]);

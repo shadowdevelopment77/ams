@@ -13,7 +13,7 @@ const imageFilter = (
   cb(null, true)
 }
 
-const MAX_SIZE = 1 * 1024 * 1024 // 1MB
+const MAX_SIZE = 1 * 1024 * 1024
 
 export const uploadAttendance = multer({
   storage: multer.memoryStorage(),

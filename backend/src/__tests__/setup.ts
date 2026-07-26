@@ -1,21 +1,29 @@
 // Jest `setupFilesAfterEnv` — runs before EACH test file, after the Jest
 // framework (describe/it/beforeEach/etc.) is available.
 
-import prisma from '../lib/prisma'
+import prisma, { disconnectPrisma } from '../lib/prisma'
 
 // ─── Mock all outbound network calls ───────────────────────────────────────
-// uploadImage() hits real Cloudinary + runs sharp compression. reverseGeocode()
-// hits the real Nominatim API. Neither should run in tests — we care about
-// business logic, not third-party services being up. Every test file that
-// imports a controller which imports these gets the mocked version
-// automatically, since these mocks are registered before any test file body
-// runs.
+// uploadImage() hits Cloudinary, reverseGeocode() hits Nominatim -- neither
+// should run for real in tests. Registered before any test file body runs,
+// so every controller that imports these gets the mock automatically.
 jest.mock('../utils/uploadImage', () => ({
   uploadImage: jest.fn().mockResolvedValue('https://fake-cdn.test/mock-photo.jpg'),
 }))
 
 jest.mock('../utils/geocode', () => ({
   reverseGeocode: jest.fn().mockResolvedValue('Mock Address, Test City'),
+}))
+
+// The reset-demo job calls cloudinary.api.delete_resources() directly
+// (not through uploadImage) -- mocked separately so it's never a real call.
+jest.mock('../lib/cloudinary', () => ({
+  __esModule: true,
+  default: {
+    api: {
+      delete_resources: jest.fn().mockResolvedValue({ deleted: {} }),
+    },
+  },
 }))
 
 // ─── DB cleanup between tests ──────────────────────────────────────────────
@@ -42,5 +50,5 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  await prisma.$disconnect()
+  await disconnectPrisma()
 })

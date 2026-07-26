@@ -18,7 +18,6 @@ export class ShiftService {
     const division = await divisionRepository.findById(divisionId)
     if (!division) throw new AppError('Division not found', 404)
 
-    // make sure division belongs to company
     if (division.company_id !== companyId) {
       throw new AppError('Division does not belong to this company', 400)
     }

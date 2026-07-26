@@ -40,13 +40,18 @@ export type UserCompanyRoleWithRole = Prisma.UserCompanyRoleGetPayload<{
 
 
 
+export interface UserListParams extends PaginationParams {
+  search?: string
+  roleId?: number
+}
+
 export interface UserRepository extends BaseRepository<User, CreateUserDTO, UpdateUserDTO, string> {
   findByEmail(email: string): Promise<User | null>
   findRoleByUserId(userId: string, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRoleWithRole>>
   createCompanyRole(data: CreateUserCompanyRoleDTO): Promise<UserCompanyRole>
   updateCompanyRole(id: number, data: UpdateUserCompanyRoleDTO): Promise<UserCompanyRole>
   findUsersByCompanyAndDivision(companyId: number, divisionId: number, params?: PaginationParams): Promise<PaginatedResult<UserCompanyRole>>
-  findAllSafe(params?: PaginationParams): Promise<PaginatedResult<Omit<User, 'password'>>>
+  findAllSafe(params?: UserListParams): Promise<PaginatedResult<Omit<User, 'password'>>>
 
   countActiveByCompany(companyId: number): Promise<number>
   countActiveByDivision(divisionId:number): Promise<number>

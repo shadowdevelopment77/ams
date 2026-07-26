@@ -11,6 +11,10 @@ import {
 
 const fakePhoto = () => Buffer.from('fake-image-bytes')
 
+// GPS is mandatory on visit-create (Phase 15).
+const FAKE_LAT = -6.2088
+const FAKE_LNG = 106.8456
+
 describe('POST /api/visit', () => {
   it('rejects an unauthenticated request', async () => {
     const res = await api().post('/api/visit').field('company_id', 1).attach('photo', fakePhoto(), 'photo.jpg')
@@ -54,6 +58,8 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', company.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
 
     expect(res.status).toBe(400)
     expect(res.body.message).toMatch(/photo is required/i)
@@ -79,6 +85,8 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', 999999)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(404)
@@ -111,7 +119,7 @@ describe('POST /api/visit', () => {
     expect(inDb).not.toBeNull()
   })
 
-  it('creates a visit log successfully without optional notes/coordinates', async () => {
+  it('creates a visit log successfully without optional notes', async () => {
     const { user, rawPassword } = await createSupervisor()
     const { cookie } = await loginAs(user.email, rawPassword)
     const company = await createCompany()
@@ -120,6 +128,8 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', company.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(res.status).toBe(201)
@@ -135,6 +145,8 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', company.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
     expect(first.status).toBe(201)
 
@@ -142,6 +154,8 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', company.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
     expect(second.status).toBe(201)
 
@@ -159,11 +173,15 @@ describe('POST /api/visit', () => {
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', companyA.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
     const resB = await api()
       .post('/api/visit')
       .set('Cookie', cookie)
       .field('company_id', companyB.id)
+      .field('latitude', FAKE_LAT)
+      .field('longitude', FAKE_LNG)
       .attach('photo', fakePhoto(), 'photo.jpg')
 
     expect(resA.status).toBe(201)
@@ -233,6 +251,22 @@ describe('GET /api/visit (admin - all visit logs)', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(2)
   })
+
+  it('includes the supervisor name and company name, not just their raw IDs', async () => {
+    const company = await createCompany({ name: 'Acme Cleaning Co' })
+    const { user: supervisor } = await createSupervisor({ name: 'Jane Supervisor' })
+    await createVisitLog(supervisor.id, company.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get('/api/visit').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    const row = res.body.data.data.find((v: any) => v.user_id === supervisor.id)
+    expect(row.user).toEqual({ id: supervisor.id, name: 'Jane Supervisor' })
+    expect(row.company).toEqual({ id: company.id, name: 'Acme Cleaning Co' })
+  })
 })
 
 describe('GET /api/visit/user/:userId/photos', () => {
@@ -274,6 +308,21 @@ describe('GET /api/visit/user/:userId/photos', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
     expect(res.body.data.data[0]).toHaveProperty('visit_photo')
+  })
+
+  it('includes the company name, not just the raw company_id', async () => {
+    const company = await createCompany({ name: 'Beta Logistics' })
+    const { user: supervisor } = await createSupervisor()
+    await createVisitLog(supervisor.id, company.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get(`/api/visit/user/${supervisor.id}/photos`).set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data[0].company).toEqual({ id: company.id, name: 'Beta Logistics' })
+    expect(res.body.data.data[0]).not.toHaveProperty('company_id')
   })
 })
 

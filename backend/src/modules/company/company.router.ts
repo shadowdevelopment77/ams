@@ -9,14 +9,14 @@ import {validateCreateCompany, validateUpdateCompany} from './company.validation
 
 const router = Router()
 
+const adminOnly = [authMiddleware, roleMiddleware('ADMIN')]
+// SUPERVISOR needs this to pick a company_id when logging a visit; mutations stay ADMIN-only.
+const readAccess = [authMiddleware, roleMiddleware('ADMIN', 'SUPERVISOR')]
 
-router.use(authMiddleware, roleMiddleware('ADMIN'))
-
-
-router.get ('/', companyController.getAll)
-router.get ('/:id',  companyController.getById)
-router.post('/',  validateCreateCompany, companyController.create)
-router.put ('/:id',  validateUpdateCompany, companyController.update)
-router.delete('/:id',  companyController.delete)
+router.get   ('/',    readAccess, companyController.getAll)
+router.get   ('/:id', readAccess, companyController.getById)
+router.post  ('/',    adminOnly, validateCreateCompany, companyController.create)
+router.put   ('/:id', adminOnly, validateUpdateCompany, companyController.update)
+router.delete('/:id', adminOnly, companyController.delete)
 
 export default router

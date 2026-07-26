@@ -84,6 +84,12 @@ const { companyId, divisionId, date, params } = this.parseAttendanceQuery(req)
     const result = await attendanceService.getTodayAttendance(req.user!.id)
     return sendSuccess(res, result, "Today's attendance fetched")
   })
+
+  getMyHistory = catchAsync(async (req, res) => {
+    const params = { page: Number(req.query.page) || 1, limit: Number(req.query.limit) || 10 }
+    const result = await attendanceService.getMyHistory(req.user!.id, params)
+    return sendSuccess(res, result, 'Attendance history fetched')
+  })
 }
 
 export const attendanceController = new AttendanceController()

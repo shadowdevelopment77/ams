@@ -4,11 +4,8 @@ import { createAdmin, createStaff, createSupervisor, createCompany, createDivisi
 
 describe('POST /api/auth/register', () => {
   it('rejects an unauthenticated request even with a valid body', async () => {
-    // Uses a fully valid body on purpose — STAFF needs company_id/division_id
-    // now that the role-based superRefine exists. If the body were invalid,
-    // validation would fail with 400 before auth is even checked (validation
-    // middleware runs before adminOnly on this route), and we wouldn't
-    // actually be testing the auth gate.
+    // Fully valid body on purpose -- validation runs before adminOnly on this
+    // route, so an invalid body would 400 before the auth gate is even tested.
     const company = await createCompany()
     const division = await createDivision(company.id)
 
@@ -26,11 +23,8 @@ describe('POST /api/auth/register', () => {
   })
 
   it('rejects an unauthenticated request with 401 even when the body also fails validation', async () => {
-    // Proves adminOnly now runs before validateRegister. Under the current
-    // (buggy) ordering — validateRegister, adminOnly — this invalid body
-    // would be rejected by Zod with a 400 before the auth check is ever
-    // reached, meaning an anonymous caller gets validation feedback instead
-    // of a clean fail-closed 401.
+    // Proves adminOnly runs before validateRegister -- otherwise this invalid
+    // body would 400 before the auth check, leaking validation feedback to an anonymous caller.
     const res = await api().post('/api/auth/register').send({
       name: 'A', // too short
       email: 'not-an-email',
@@ -361,6 +355,36 @@ describe('POST /api/auth/login', () => {
     expect(sessionCount).toBe(1)
   })
 
+  it('sets sameSite=lax, non-secure in non-production', async () => {
+    const { user, rawPassword } = await createAdmin({ email: 'cookie-dev@test.local' })
+
+    const res = await api().post('/api/auth/login').send({ email: user.email, password: rawPassword })
+
+    const setCookie = (res.headers['set-cookie'] as unknown as string[]).find((c) =>
+      c.startsWith('sessionId=')
+    )!
+    expect(setCookie.toLowerCase()).toMatch(/samesite=lax/)
+    expect(setCookie.toLowerCase()).not.toMatch(/secure/)
+  })
+
+  it('sets sameSite=none, secure in production (required for a cross-site deploy)', async () => {
+    const { user, rawPassword } = await createAdmin({ email: 'cookie-prod@test.local' })
+
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const res = await api().post('/api/auth/login').send({ email: user.email, password: rawPassword })
+
+      const setCookie = (res.headers['set-cookie'] as unknown as string[]).find((c) =>
+        c.startsWith('sessionId=')
+      )!
+      expect(setCookie.toLowerCase()).toMatch(/samesite=none/)
+      expect(setCookie.toLowerCase()).toMatch(/secure/)
+    } finally {
+      process.env.NODE_ENV = originalEnv
+    }
+  })
+
   it('rejects a wrong password', async () => {
     const { user } = await createAdmin({ email: 'wrongpw@test.local' })
 
@@ -470,6 +494,23 @@ describe('POST /api/auth/logout', () => {
     const res = await api().post('/api/auth/logout')
     expect(res.status).toBe(400)
     expect(res.body.message).toMatch(/no session found/i)
+  })
+
+  it('is not rate-limited by authLimiter -- many accounts logging out from one IP must not 429', async () => {
+    // Regression test: authLimiter's keyGenerator falls back to raw IP when
+    // there's no email in the body (true of every logout request), so
+    // mounting authLimiter (10 req/15min) on this route meant every account
+    // sharing one browser/IP drew from the same bucket. Logout must rely
+    // only on the global, identity-keyed apiLimiter instead.
+    const accounts = await Promise.all(
+      Array.from({ length: 12 }, (_, i) => createAdmin({ email: `logout-burst-${i}@test.local` }))
+    )
+
+    for (const { user } of accounts) {
+      const session = await createSession(user.id)
+      const res = await api().post('/api/auth/logout').set('Cookie', cookieFor(session.id))
+      expect(res.status).toBe(200)
+    }
   })
 })
 

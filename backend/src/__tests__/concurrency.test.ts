@@ -18,6 +18,10 @@ import {
 
 const fakePhoto = () => Buffer.from('fake-image-bytes')
 
+// GPS is mandatory on checkin/visit-create (Phase 15).
+const FAKE_LAT = -6.2088
+const FAKE_LNG = 106.8456
+
 describe('Concurrency: different users, simultaneous requests', () => {
   it('concurrent logins from N distinct users each get back their own identity, mapped to their own session', async () => {
     const admin = await createAdmin()
@@ -100,6 +104,8 @@ describe('Concurrency: different users, simultaneous requests', () => {
           .post('/api/attendance/checkin')
           .set('Cookie', s.cookie)
           .field('shift_id', s.shift.id)
+          .field('latitude', FAKE_LAT)
+          .field('longitude', FAKE_LNG)
           .attach('photo', fakePhoto(), 'photo.jpg')
       )
     )
@@ -167,11 +173,15 @@ describe('Concurrency: different users, simultaneous requests', () => {
         .post('/api/attendance/checkin')
         .set('Cookie', staffLogin.cookie)
         .field('shift_id', shift.id)
+        .field('latitude', FAKE_LAT)
+        .field('longitude', FAKE_LNG)
         .attach('photo', fakePhoto(), 'photo.jpg'),
       api()
         .post('/api/visit')
         .set('Cookie', supervisorLogin.cookie)
         .field('company_id', company.id)
+        .field('latitude', FAKE_LAT)
+        .field('longitude', FAKE_LNG)
         .attach('photo', fakePhoto(), 'photo.jpg'),
       api().get('/api/company').set('Cookie', adminLogin.cookie),
       api()

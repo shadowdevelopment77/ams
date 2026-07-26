@@ -4,8 +4,8 @@ import { sendError } from '../../utils/error.response/response'
 
 const createVisitLogSchema = z.object({
   company_id: z.coerce.number({ error: 'Company is required' }),
-  latitude:   z.coerce.number().optional(),
-  longitude:  z.coerce.number().optional(),
+  latitude:   z.coerce.number({ error: 'Location is required' }),
+  longitude:  z.coerce.number({ error: 'Location is required' }),
   notes:      z.string().optional(),
 })
 

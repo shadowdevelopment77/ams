@@ -6,7 +6,7 @@ import {
   CreateAttendanceDTO,
   UpdateAttendanceDTO,
 } from "../interfaces/attendance.interface";
-import { PaginatedResult } from "../interfaces/base.interface";
+import { PaginatedResult, PaginationParams } from "../interfaces/base.interface";
 
 export class PrismaAttendanceRepository
   extends PrismaBaseRepository<Attendance, CreateAttendanceDTO, UpdateAttendanceDTO, string>
@@ -20,12 +20,7 @@ export class PrismaAttendanceRepository
 
   // ─── AttendanceRepository ─────────────────────────────────────────────────
 
-  /**
-   * findByUser — admin views attendance history for a specific user.
-   * from/to are optional: omit both for all-time history (still paginated).
-   */
-
-
+  // Single exact-date lookup (checkin/getToday) -- see findHistoryByUser for a paginated list.
   async findByUser(
     userId:string, date:Date
   ): Promise<Attendance | null > {
@@ -40,11 +35,27 @@ export class PrismaAttendanceRepository
   })
 }
 
+  async findHistoryByUser(
+    userId: string,
+    params?: PaginationParams,
+  ): Promise<PaginatedResult<Attendance>> {
+    const { skip, take, page, limit } = this.resolvePagination(params);
+    const where = { user_id: userId, is_deleted: false };
 
-  /**
-   * findByDate — all attendance for a company+division within a date range.
-   * Service passes today's midnight-to-midnight for a "daily" view.
-   */
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.attendance.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { date: "desc" },
+        include: { shift: true, status: true },
+      }),
+      this.prisma.attendance.count({ where }),
+    ]);
+
+    return this.buildPaginatedResult(data, total, page, limit);
+  }
+
   async findByDate(
     companyId: number,
     divisionId: number,
@@ -66,7 +77,7 @@ export class PrismaAttendanceRepository
         where,
         skip,
         take,
-        orderBy: { created_at: "desc" }, // chronological for a daily roster view
+        orderBy: { created_at: "desc" },
         include: {
         user: { select: { id: true, name: true, email: true } },
         shift: true,
@@ -79,10 +90,6 @@ export class PrismaAttendanceRepository
     return this.buildPaginatedResult(data, total, page, limit);
   }
 
-  /**
-   * findByLate — records where is_late=true within a date range.
-   * Add companyId/divisionId via params when you need them later.
-   */
   async findByLate(
     companyId: number,
     divisionId: number,
@@ -106,7 +113,7 @@ export class PrismaAttendanceRepository
         where,
         skip,
         take,
-        orderBy: { late_minutes: "desc" }, // worst offenders first
+        orderBy: { late_minutes: "desc" },
         include: {
         user: { select: { id: true, name: true, email: true } },
         shift: true,
@@ -119,13 +126,6 @@ export class PrismaAttendanceRepository
     return this.buildPaginatedResult(data, total, page, limit);
   }
 
-
-
-
-  /**
-   * checkOut — updates the attendance record when a user ends their shift.
-   * Defaults check_out_at to now if the caller doesn't supply it.
-   */
   async checkOut(attendanceId: string, data: UpdateAttendanceDTO): Promise<Attendance> {
     return this.prisma.attendance.update({
       where: { id: attendanceId },

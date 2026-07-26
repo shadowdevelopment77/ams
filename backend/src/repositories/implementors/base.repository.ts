@@ -2,14 +2,10 @@
 import { PrismaClient } from "../../../generated/prisma"
 import { BaseRepository, PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
-// T      = Prisma model type (e.g. User, Company)
-// CreateDTO = shape of data to create
-// UpdateDTO = shape of data to update
 export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO, IDType>
   implements BaseRepository<T, CreateDTO, UpdateDTO, IDType>
 {
-  // Each child class must declare which prisma model it uses
-  // e.g.  protected modelName = "user" as const
+  // Each child class declares which prisma model it uses, e.g. `modelName = "user" as const`
   protected prisma: PrismaClient;
   protected abstract modelName: keyof PrismaClient
 
@@ -17,8 +13,7 @@ export abstract class PrismaBaseRepository<T, CreateDTO, UpdateDTO, IDType>
     this.prisma = prisma
   }
 
-  // Dynamic accessor: turns modelName string into actual prisma delegate
-  // So this.delegate.findFirst() === prisma.user.findFirst()
+  // this.delegate.findFirst() === prisma[modelName].findFirst()
   protected get delegate(): any {
     return (this.prisma as any)[this.modelName]
   }

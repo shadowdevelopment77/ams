@@ -8,8 +8,7 @@ const moveCompanySchema = z.object({
   division_id: z.number({ error: 'Division is required' }),
 })
 
-// Deliberately excludes password and role — this is a profile-edit endpoint,
-// not an account-security or role-change endpoint.
+// No password/role fields -- this is a profile-edit endpoint, not account-security or role-change.
 const updateUserSchema = z.object({
   name:  z.string().min(2).optional(),
   email: z.email().optional(),

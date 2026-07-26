@@ -7,7 +7,8 @@ import {
   UpdateUserDTO,
   CreateUserCompanyRoleDTO,
   UpdateUserCompanyRoleDTO,
-  UserCompanyRoleWithRole
+  UserCompanyRoleWithRole,
+  UserListParams
 } from "../interfaces/user.interface"
 import { PaginatedResult, PaginationParams } from "../interfaces/base.interface"
 
@@ -15,7 +16,6 @@ export class PrismaUserRepository
 extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
   implements UserRepository
 {
-  // tells BaseRepository to use prisma.user for all generic CRUD
   protected modelName = "user" as const
   constructor(prisma: PrismaClient){
     super(prisma)
@@ -29,9 +29,15 @@ extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
     })
   }
 
-  async findAllSafe(params?: PaginationParams): Promise<PaginatedResult<Omit<User, 'password'>>> {
+  async findAllSafe(params?: UserListParams): Promise<PaginatedResult<Omit<User, 'password'>>> {
      const { skip, take, page, limit } = this.resolvePagination(params)
-  const where = { is_deleted: false }
+  const where: any = { is_deleted: false }
+  if (params?.search) {
+    where.name = { contains: params.search, mode: 'insensitive' }
+  }
+  if (params?.roleId) {
+    where.company_roles = { some: { role_id: params.roleId, is_deleted: false } }
+  }
 
   const [data, total] = await this.prisma.$transaction([
     this.prisma.user.findMany({

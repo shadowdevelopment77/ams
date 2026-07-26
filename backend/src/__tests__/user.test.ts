@@ -31,6 +31,47 @@ describe('GET /api/users', () => {
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
     expect(res.body.data.data.every((u: any) => !('password' in u))).toBe(true)
   })
+
+  it('filters by name via the search param, case-insensitively', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    await createSupervisor({ name: 'Zendaya Searchable' })
+    await createSupervisor({ name: 'Someone Else' })
+
+    const res = await api().get('/api/users?search=zendaya').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBe(1)
+    expect(res.body.data.data[0].name).toBe('Zendaya Searchable')
+  })
+
+  it('filters by role via the role param', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    const { user: supervisor } = await createSupervisor({ name: 'Only Supervisor Here' })
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    await createStaff(company.id, division.id, { name: 'Some Staffer' })
+
+    const res = await api().get('/api/users?role=SUPERVISOR').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
+    expect(res.body.data.data.every((u: any) => u.id !== undefined)).toBe(true)
+    const ids = res.body.data.data.map((u: any) => u.id)
+    expect(ids).toContain(supervisor.id)
+  })
+
+  it('returns an empty result for an unknown role rather than erroring', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get('/api/users?role=NOT_A_REAL_ROLE').set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+    expect(res.body.data.total).toBe(0)
+  })
 })
 
 describe('GET /api/users/:id', () => {
@@ -215,6 +256,53 @@ describe('PUT /api/users/:id/move-company', () => {
     const role = await prisma.userCompanyRole.findFirst({ where: { user_id: staff.id } })
     expect(role?.company_id).toBe(newCompany.id)
     expect(role?.division_id).toBe(newDivision.id)
+  })
+
+  it('rejects moving a deactivated STAFF member', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    const oldCompany = await createCompany()
+    const oldDivision = await createDivision(oldCompany.id)
+    const { user: staff } = await createStaff(oldCompany.id, oldDivision.id, { isActive: false })
+
+    const newCompany = await createCompany()
+    const newDivision = await createDivision(newCompany.id)
+
+    const res = await api()
+      .put(`/api/users/${staff.id}/move-company`)
+      .set('Cookie', cookie)
+      .send({ company_id: newCompany.id, division_id: newDivision.id })
+
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/cannot move an inactive user/i)
+
+    // Original assignment untouched, per the "deactivated staff keep their
+    // company/division on record" decision -- deactivation alone never
+    // clears it, and a rejected move certainly shouldn't either.
+    const role = await prisma.userCompanyRole.findFirst({ where: { user_id: staff.id } })
+    expect(role?.company_id).toBe(oldCompany.id)
+    expect(role?.division_id).toBe(oldDivision.id)
+  })
+})
+
+describe('UserCompanyRole data integrity', () => {
+  it('does not allow a second role-assignment row for the same user (unique constraint)', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user: staff } = await createStaff(company.id, division.id)
+
+    const existing = await prisma.userCompanyRole.findFirstOrThrow({ where: { user_id: staff.id } })
+
+    await expect(
+      prisma.userCompanyRole.create({
+        data: {
+          user_id: staff.id,
+          role_id: existing.role_id,
+          company_id: company.id,
+          division_id: division.id,
+        },
+      })
+    ).rejects.toThrow()
   })
 })
 
