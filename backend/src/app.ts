@@ -15,6 +15,7 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 import {apiLimiter} from "./middlewares/rate-limit.middleware";
 import { resolveUser } from "./middlewares/resolve-user.middleware";
 import visitRouter from "./modules/visit/visit.route"
+import adminRouter from "./modules/admin/admin.router"
 import { sendSuccess } from "./utils/error.response/response"
 
 dotenv.config()
@@ -57,6 +58,7 @@ app.use("/api/attendance", attendanceRouter)
 app.use("/api/checklist", checklistRouter)
 app.use("/api/company", companyRouter)
 app.use("/api/visit", visitRouter)
+app.use("/api/admin", adminRouter)
 app.use(errorMiddleware)
 
 export default app

@@ -15,6 +15,17 @@ jest.mock('../utils/geocode', () => ({
   reverseGeocode: jest.fn().mockResolvedValue('Mock Address, Test City'),
 }))
 
+// The reset-demo job calls cloudinary.api.delete_resources() directly
+// (not through uploadImage) -- mocked separately so it's never a real call.
+jest.mock('../lib/cloudinary', () => ({
+  __esModule: true,
+  default: {
+    api: {
+      delete_resources: jest.fn().mockResolvedValue({ deleted: {} }),
+    },
+  },
+}))
+
 // ─── DB cleanup between tests ──────────────────────────────────────────────
 // Deletes rows (not schema) in FK-safe order: children before parents.
 // UserRole and AttendanceStatus are lookup tables seeded once in
