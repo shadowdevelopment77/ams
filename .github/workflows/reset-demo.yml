@@ -1,0 +1,16 @@
+name: Reset demo data
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch: {}      # lets you trigger it manually from the Actions tab
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reset-demo endpoint
+        run: |
+          curl -sS -X POST "${{ secrets.BACKEND_URL }}/api/admin/reset-demo" \
+            -H "Authorization: Bearer ${{ secrets.RESET_DEMO_SECRET }}" \
+            --fail-with-body
