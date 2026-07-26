@@ -355,6 +355,36 @@ describe('POST /api/auth/login', () => {
     expect(sessionCount).toBe(1)
   })
 
+  it('sets sameSite=lax, non-secure in non-production', async () => {
+    const { user, rawPassword } = await createAdmin({ email: 'cookie-dev@test.local' })
+
+    const res = await api().post('/api/auth/login').send({ email: user.email, password: rawPassword })
+
+    const setCookie = (res.headers['set-cookie'] as unknown as string[]).find((c) =>
+      c.startsWith('sessionId=')
+    )!
+    expect(setCookie.toLowerCase()).toMatch(/samesite=lax/)
+    expect(setCookie.toLowerCase()).not.toMatch(/secure/)
+  })
+
+  it('sets sameSite=none, secure in production (required for a cross-site deploy)', async () => {
+    const { user, rawPassword } = await createAdmin({ email: 'cookie-prod@test.local' })
+
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const res = await api().post('/api/auth/login').send({ email: user.email, password: rawPassword })
+
+      const setCookie = (res.headers['set-cookie'] as unknown as string[]).find((c) =>
+        c.startsWith('sessionId=')
+      )!
+      expect(setCookie.toLowerCase()).toMatch(/samesite=none/)
+      expect(setCookie.toLowerCase()).toMatch(/secure/)
+    } finally {
+      process.env.NODE_ENV = originalEnv
+    }
+  })
+
   it('rejects a wrong password', async () => {
     const { user } = await createAdmin({ email: 'wrongpw@test.local' })
 
