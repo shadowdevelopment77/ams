@@ -85,21 +85,23 @@ export function LoginPage() {
 
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
-            <div className="flex items-center gap-2">
-              <input
-                id="simulateMobile"
-                type="checkbox"
-                checked={simulateMobile}
-                onChange={(e) => {
-                  setSimulateMobile(e.target.checked)
-                  setVirtualMobile(e.target.checked)
-                }}
-                className="h-4 w-4 rounded border-input"
-              />
-              <Label htmlFor="simulateMobile" className="text-sm font-normal text-muted-foreground">
-                Simulate mobile device (for testing)
-              </Label>
-            </div>
+            {import.meta.env.DEV && (
+              <div className="flex items-center gap-2">
+                <input
+                  id="simulateMobile"
+                  type="checkbox"
+                  checked={simulateMobile}
+                  onChange={(e) => {
+                    setSimulateMobile(e.target.checked)
+                    setVirtualMobile(e.target.checked)
+                  }}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="simulateMobile" className="text-sm font-normal text-muted-foreground">
+                  Simulate mobile device (for testing)
+                </Label>
+              </div>
+            )}
 
             <Button type="submit" disabled={isSubmitting} className="mt-2">
               {isSubmitting ? 'Signing in…' : 'Sign in'}
