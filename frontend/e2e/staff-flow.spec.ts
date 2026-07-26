@@ -123,5 +123,13 @@ test.describe('STAFF daily flow: check-in -> checklist -> check-out', () => {
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByText(/you're done for today/i)).toBeVisible()
     await page.screenshot({ path: `${SCREENSHOT_DIR}/16-dashboard-checked-out.png` })
+
+    // -- History: today's just-completed cycle shows up, not just an
+    // empty state -- this is the first time this page is ever exercised. --
+    await page.getByRole('link', { name: /view history/i }).click()
+    await expect(page).toHaveURL(/\/history$/)
+    await expect(page.getByText(/in:/i)).toBeVisible()
+    await expect(page.getByText(/out:/i)).toBeVisible()
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/17-attendance-history.png` })
   })
 })

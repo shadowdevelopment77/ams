@@ -10,6 +10,11 @@ export default defineConfig({
     baseURL: 'http://localhost:5174',
     screenshot: 'on',
     trace: 'retain-on-failure',
+    // GPS is mandatory-blocking for check-in/check-out/visit-log (CLAUDE.md);
+    // Chromium doesn't grant real location without this, so staff/supervisor
+    // flows would otherwise hang on the browser permission prompt.
+    permissions: ['geolocation'],
+    geolocation: { latitude: -6.2088, longitude: 106.8456 },
   },
   projects: [
     {
