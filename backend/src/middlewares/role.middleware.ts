@@ -1,4 +1,3 @@
-// src/middlewares/role.middleware.ts
 import { Request, Response, NextFunction } from 'express'
 import { sendError } from '../utils/error.response/response'
 

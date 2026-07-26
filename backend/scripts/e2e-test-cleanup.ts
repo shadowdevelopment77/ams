@@ -53,8 +53,41 @@ async function main() {
       })
       const templateIds = templates.map((t) => t.id)
       if (templateIds.length > 0) {
+        // Submissions/photos against these items can belong to attendance
+        // from ANY user (not just the e2e-* prefixed ones above -- e.g. a
+        // real manual-test checkin against a same-named company) -- clean
+        // those up by item, not by user, or the item delete below hits the
+        // ChecklistSubmission_item_id_fkey RESTRICT constraint.
+        const items = await prisma.checklistItem.findMany({ where: { template_id: { in: templateIds } } })
+        const itemIds = items.map((i) => i.id)
+        if (itemIds.length > 0) {
+          const submissions = await prisma.checklistSubmission.findMany({
+            where: { item_id: { in: itemIds } },
+          })
+          const submissionIds = submissions.map((s) => s.id)
+          if (submissionIds.length > 0) {
+            await prisma.checklistPhoto.deleteMany({ where: { submission_id: { in: submissionIds } } })
+            await prisma.checklistSubmission.deleteMany({ where: { id: { in: submissionIds } } })
+          }
+        }
         await prisma.checklistItem.deleteMany({ where: { template_id: { in: templateIds } } })
         await prisma.checklistTemplate.deleteMany({ where: { id: { in: templateIds } } })
+      }
+      // Same story as above: attendance under this division can belong to
+      // ANY user, not just the e2e-* prefixed ones -- an orphaned row here
+      // blocks the shift delete below via Attendance_shift_id_fkey.
+      const attendances = await prisma.attendance.findMany({ where: { division_id: { in: divisionIds } } })
+      const attendanceIds = attendances.map((a) => a.id)
+      if (attendanceIds.length > 0) {
+        const submissions = await prisma.checklistSubmission.findMany({
+          where: { attendance_id: { in: attendanceIds } },
+        })
+        const submissionIds = submissions.map((s) => s.id)
+        if (submissionIds.length > 0) {
+          await prisma.checklistPhoto.deleteMany({ where: { submission_id: { in: submissionIds } } })
+          await prisma.checklistSubmission.deleteMany({ where: { id: { in: submissionIds } } })
+        }
+        await prisma.attendance.deleteMany({ where: { id: { in: attendanceIds } } })
       }
       await prisma.shift.deleteMany({ where: { division_id: { in: divisionIds } } })
       await prisma.division.deleteMany({ where: { id: { in: divisionIds } } })

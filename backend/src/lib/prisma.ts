@@ -13,4 +13,11 @@ const adapter = new PrismaPg(pool)
 
 const prisma = new PrismaClient({ adapter })
 
+// prisma.$disconnect() doesn't close the underlying pg.Pool (built externally
+// and passed into the adapter) -- use this instead, not $disconnect() alone.
+export async function disconnectPrisma() {
+  await prisma.$disconnect()
+  await pool.end()
+}
+
 export default prisma

@@ -102,11 +102,12 @@ async function main() {
 
   const supervisorName = 'E2E Playwright Supervisor'
   const supervisorEmail = 'e2e-playwright-supervisor@test.local'
+  const supervisorPassword = 'Password123!'
   const supervisor = await prisma.user.create({
     data: {
       name: supervisorName,
       email: supervisorEmail,
-      password: await bcrypt.hash('Password123!', 10),
+      password: await bcrypt.hash(supervisorPassword, 10),
     },
   })
   await prisma.userCompanyRole.create({
@@ -134,6 +135,7 @@ async function main() {
     staffPassword,
     supervisorName,
     supervisorEmail,
+    supervisorPassword,
   }
   fs.writeFileSync(FIXTURES_PATH, JSON.stringify(fixtures))
   console.log(JSON.stringify(fixtures))
