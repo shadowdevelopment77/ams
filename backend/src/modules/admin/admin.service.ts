@@ -2,10 +2,6 @@ import bcrypt from 'bcryptjs'
 import prisma from '../../lib/prisma'
 import cloudinary from '../../lib/cloudinary'
 import { extractCloudinaryPublicId } from '../../utils/cloudinaryUrl'
-import { seedCompaniesAndStaff } from '../../seed/demoCompaniesAndStaff'
-import { seedChecklistData } from '../../seed/demoChecklists'
-import { seedAttendanceData } from '../../seed/demoAttendance'
-import { seedVisitData } from '../../seed/demoVisits'
 
 // The only two admin accounts this job ever creates or touches. Any OTHER
 // admin account (the dev-seed admin@ams.local, or one you register for
@@ -97,12 +93,7 @@ async function ensureDemoAdmins() {
 
 export async function resetDemo() {
   const wipeResult = await wipeTransactionalAndDemoData()
-
-  const staffResult = await seedCompaniesAndStaff()
-  const checklistResult = await seedChecklistData()
-  const attendanceResult = await seedAttendanceData()
-  const visitResult = await seedVisitData()
   const adminsResult = await ensureDemoAdmins()
 
-  return { wipeResult, staffResult, checklistResult, attendanceResult, visitResult, adminsResult }
+  return { wipeResult, adminsResult }
 }

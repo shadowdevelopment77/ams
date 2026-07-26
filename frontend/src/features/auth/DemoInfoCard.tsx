@@ -43,7 +43,7 @@ export function DemoInfoCard() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Demo data resets automatically every 2 hours.
+          All data resets automatically every 2 hours — feel free to create your own companies, staff, and records.
         </p>
       </CardContent>
     </Card>

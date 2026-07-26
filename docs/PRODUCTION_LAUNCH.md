@@ -11,7 +11,7 @@ This is the complete runbook for taking AMS from "runs in a Codespace" to "perma
 You want a live link you can hand to recruiters, indefinitely, at **zero ongoing cost**, that:
 - Always works when someone clicks it (accepting a short "waking up" delay is fine, a broken app is not).
 - Lets a visitor log in as ADMIN, STAFF, or SUPERVISOR and actually use the real flows (check-in/out, checklists with real camera photos, visit logging, the admin panel).
-- Resets itself automatically every 2 hours to a clean, working demo state — so it never accumulates junk, never runs out of free storage, and never looks "broken" because a previous visitor left it in a weird state.
+- Resets itself automatically every 2 hours to a clean, empty slate (just the 3 admin logins + role/status lookup tables) — so it never accumulates junk, never runs out of free storage, and every visitor (or you, live in an interview) builds their own example data from scratch rather than seeing canned content.
 - Looks and feels like a real installed app on a phone (an icon on the home screen, no browser address bar), even though it's just a website underneath.
 
 Everything below is designed around **$0/month**, using services you already have accounts on (Neon, Cloudinary) plus a small number of new free signups.
@@ -87,25 +87,27 @@ Neither `backend/` nor `frontend/` has one today. Full content is in §6 below �
 
 ## 4. The scheduled demo-reset job
 
-**✅ Done** (full report on the `staging` branch). This is the core new feature: every 2 hours, an automated job wipes real-visitor-generated data and reseeds a fresh, ready-to-explore demo — so the app never runs out of free storage and never looks broken from accumulated cruft.
+**✅ Done** (full report on the `staging` branch). This is the core new feature: every 2 hours, an automated job wipes all real-visitor-generated data back to a clean, **empty** slate — no pre-seeded demo dataset. So the app never runs out of free storage, never looks broken from accumulated cruft, and every visitor (or you, live in an interview) builds their own companies/staff/checklists/attendance from scratch through the actual UI, rather than exploring canned data.
 
 Some details below changed slightly from the original draft during implementation — corrected in place, not just appended, so this stays the accurate reference.
 
 ### 4.1 What gets wiped
 
 - Every `Attendance` row, every `ChecklistSubmission` + `ChecklistPhoto` row, every `VisitLog` row.
-- Every Cloudinary image those rows point to — but **only** the ones actually on Cloudinary. The existing `manual-test-seed*.ts` scripts deliberately use fast placeholder images from `picsum.photos` (not Cloudinary), so reseeded demo data costs zero Cloudinary storage. Only photos a *real visitor* uploaded through the actual camera-capture flow (check-in/out, checklist items, visit logs) live on Cloudinary and need explicit deletion via Cloudinary's Admin API (`cloudinary.api.delete_resources([...public_ids])`) before the DB rows referencing them are dropped.
-- Every non-admin `User` + their `UserCompanyRole` (the demo companies/divisions/staff/supervisor get fully replaced, not edited in place).
+- Every Cloudinary image those rows point to — but **only** the ones actually on Cloudinary. Since production no longer reseeds any placeholder data, the only photos that can exist at all are ones a *real visitor* uploaded through the actual camera-capture flow (check-in/out, checklist items, visit logs) — these need explicit deletion via Cloudinary's Admin API (`cloudinary.api.delete_resources([...public_ids])`) before the DB rows referencing them are dropped.
+- Every non-admin `User` + their `UserCompanyRole`, plus `Company`, `Division`, `Shift`, `ChecklistTemplate`, `ChecklistItem` — all of it deleted, none of it recreated. Whatever an ADMIN (a visitor, or you) built up gets fully removed, not replaced with fresh canned data.
 
 ### 4.2 What's kept, untouched
 
 - `UserRole` and `AttendanceStatus` lookup tables (never touched by any cleanup — they're structural, not demo data).
-- `Company`, `Division`, `Shift`, `ChecklistTemplate`, `ChecklistItem` — actually, these **are** part of the reseed (see 4.3): the reset deletes and recreates them fresh each cycle too, so a visitor who created a 4th company as ADMIN doesn't leave it lying around forever. If you'd rather these survive resets and only get created once, tell me and I'll adjust — the plan above assumes "everything except the 3 admin logins and lookup tables gets reset to the same known demo baseline every cycle."
 - All 3 ADMIN `User` rows are **never deleted**. Two of them (the public demo admins) have their password reset to a fixed known value each cycle. The third (your personal admin, real email) is left completely alone — password, session, everything.
+- That's it. Everything else — companies, divisions, shifts, checklist templates/items, STAFF/SUPERVISOR users, attendance, checklists, visits — is wiped every cycle and stays empty until an ADMIN creates it again through the real UI.
 
-### 4.3 What gets reseeded
+### 4.3 Local dev seeding — unaffected, separate from production
 
-Your existing seed scripts already do almost all of this — `manual-test-seed.ts` (companies/divisions/staff/supervisor), `manual-test-seed-checklist.ts` (checklist templates + checked-in attendance + submitted checklists with photos), `manual-test-seed-attendance.ts` (a mix of checkin-only and checkin+checkout records), `manual-test-seed-visits.ts` (visit logs). The reset job wraps these into one callable function (not separate manually-run scripts) that runs in this order: wipe → reseed companies/staff → reseed checklist templates/photos → reseed attendance → reseed visits.
+`resetDemo()` no longer seeds anything — this was a deliberate decision: production should always settle back to just the 3 admin logins + lookup tables, so real content only ever exists because someone (a visitor, or you live in an interview) built it through the actual UI, not because it was pre-seeded.
+
+The seed functions themselves (`backend/src/seed/demo*.ts` — companies/divisions/staff/supervisor, checklist templates + submissions, attendance, visit logs) still exist in the codebase and are still useful — but only for **local development**, via `backend/scripts/manual-test-seed*.ts`, so you (or an assistant working on the codebase) have a realistic dataset to test features against locally. Production never calls them.
 
 ### 4.4 The admin accounts
 
