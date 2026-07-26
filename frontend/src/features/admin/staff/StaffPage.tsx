@@ -22,11 +22,14 @@ import {
   registerUser,
   updateUser,
   deleteUser,
+  moveUserCompany,
   type User,
   type RegisterUserInput,
+  type UserCompanyRoleWithUser,
 } from '@/api/user'
 import { RegisterUserDialog } from './RegisterUserDialog'
 import { EditUserDialog } from './EditUserDialog'
+import { MoveCompanyDialog } from './MoveCompanyDialog'
 
 const USERS_KEY = ['admin', 'users'] as const
 
@@ -66,6 +69,7 @@ export function StaffPage() {
     try {
       await deleteUser(deleteTarget.id)
       await invalidateUsers()
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'roster'] })
       setDeleteTarget(null)
     } catch (err) {
       setDeleteError(err instanceof ApiError ? err.message : 'Something went wrong')
@@ -90,11 +94,20 @@ export function StaffPage() {
     enabled: !!rosterCompanyId,
   })
 
+  const rosterKey = ['admin', 'roster', rosterCompanyId, rosterDivisionId] as const
   const { data: roster, isLoading: rosterLoading } = useQuery({
-    queryKey: ['admin', 'roster', rosterCompanyId, rosterDivisionId],
+    queryKey: rosterKey,
     queryFn: () => getUsersByCompanyDivision(Number(rosterCompanyId), Number(rosterDivisionId), { limit: 100 }),
     enabled: !!rosterCompanyId && !!rosterDivisionId,
   })
+
+  const [moveTarget, setMoveTarget] = useState<UserCompanyRoleWithUser['user'] | null>(null)
+
+  const handleMove = async (companyId: number, divisionId: number) => {
+    if (!moveTarget) return
+    await moveUserCompany(moveTarget.id, companyId, divisionId)
+    await queryClient.invalidateQueries({ queryKey: ['admin', 'roster'] })
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -240,26 +253,27 @@ export function StaffPage() {
 
         {rosterCompanyId && rosterDivisionId && (
           <div className="rounded-lg border border-border">
-            <Table>
+            <Table aria-label="Staff roster">
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rosterLoading && (
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!rosterLoading && roster?.data.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No one assigned to this division yet.
                     </TableCell>
                   </TableRow>
@@ -273,6 +287,13 @@ export function StaffPage() {
                       <Badge variant={entry.user.is_active ? 'default' : 'secondary'}>
                         {entry.user.is_active ? 'Active' : 'Inactive'}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {entry.userRole.name === 'STAFF' && entry.user.is_active && (
+                        <Button variant="ghost" size="sm" onClick={() => setMoveTarget(entry.user)}>
+                          Move Company
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -300,6 +321,13 @@ export function StaffPage() {
         onConfirm={handleDelete}
         isConfirming={isDeleting}
         error={deleteError}
+      />
+
+      <MoveCompanyDialog
+        open={!!moveTarget}
+        onOpenChange={(open) => !open && setMoveTarget(null)}
+        user={moveTarget}
+        onSubmit={handleMove}
       />
     </div>
   )

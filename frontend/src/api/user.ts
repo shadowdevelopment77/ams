@@ -81,8 +81,8 @@ export function updateUser(id: string, input: { name?: string; email?: string; p
   })
 }
 
-// STAFF-only on the backend -- moving an ADMIN/SUPERVISOR isn't supported
-// (see the Phase 5 plan's noted backend gap).
+// Backend only allows moving STAFF -- ADMIN/SUPERVISOR are rejected with a
+// 400, by design (they're never assigned a company/division).
 export function moveUserCompany(id: string, companyId: number, divisionId: number) {
   return apiFetch<unknown>(`/api/users/${id}/move-company`, {
     method: 'PUT',
