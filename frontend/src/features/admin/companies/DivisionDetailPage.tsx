@@ -224,6 +224,7 @@ export function DivisionDetailPage() {
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-lg font-medium">Checklist Templates</h2>
         <Button
+          disabled={!!templates && templates.length > 0}
           onClick={() => {
             setEditingTemplate(null)
             setTemplateFormOpen(true)
@@ -232,6 +233,11 @@ export function DivisionDetailPage() {
           New Template
         </Button>
       </div>
+      {templates && templates.length > 0 && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          This division already has a checklist template — edit it instead of creating a new one.
+        </p>
+      )}
 
       <div className="rounded-lg border border-border">
         <Table>
