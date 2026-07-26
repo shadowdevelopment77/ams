@@ -33,7 +33,7 @@ describe('POST /api/admin/reset-demo', () => {
     expect(res.status).toBe(401)
   })
 
-  it('wipes real Cloudinary photos, reseeds a fresh demo, resets the 2 demo admins, and never touches other admins', async () => {
+  it('wipes real Cloudinary photos, empties all company/staff data, resets the 2 demo admins, and never touches other admins', async () => {
     // Fixture: a "real visitor" attendance with a genuine Cloudinary URL --
     // this is what the job's Cloudinary-deletion path should pick up.
     const company = await createCompany()
@@ -91,11 +91,12 @@ describe('POST /api/admin/reset-demo', () => {
     expect(await bcrypt.compare('DemoAdmin123!', demo1!.password)).toBe(true)
     expect(await bcrypt.compare('DemoAdmin123!', demo2!.password)).toBe(true)
 
-    // Fresh demo companies/staff exist again.
-    expect(await prisma.company.count()).toBeGreaterThan(0)
+    // Nothing gets reseeded anymore -- production stays empty until an
+    // ADMIN creates real content through the UI.
+    expect(await prisma.company.count()).toBe(0)
     expect(
       await prisma.user.count({ where: { company_roles: { some: { userRole: { name: 'STAFF' } } } } })
-    ).toBeGreaterThan(0)
+    ).toBe(0)
   })
 
   it('resets an existing demo admin password back to the known value', async () => {

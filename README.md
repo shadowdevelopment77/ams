@@ -146,7 +146,7 @@ Opens on `http://localhost:5174` (pinned via `vite.config.ts`'s `strictPort`) �
 
 ## Deployment
 
-Not live yet — the full runbook for a free, permanently-online, self-resetting public demo (Render + Vercel/Netlify + Neon + Cloudinary + GitHub Actions, all $0/month) is written up in [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md), including a `POST /api/admin/reset-demo` job that wipes and reseeds fresh demo data every 2 hours so a stream of visitors can always try a clean, working instance.
+Not live yet — the full runbook for a free, permanently-online, self-resetting public demo (Render + Vercel/Netlify + Neon + Cloudinary + GitHub Actions, all $0/month) is written up in [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md), including a `POST /api/admin/reset-demo` job that wipes all visitor-generated data every 2 hours, back to a clean empty slate (just the 3 admin logins + role/status lookup tables) — so each visitor builds their own example data live rather than exploring pre-seeded content.
 
 ---
 
