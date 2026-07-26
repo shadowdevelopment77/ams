@@ -28,10 +28,9 @@ export interface ChecklistTemplateRepository
 // ─── ChecklistItem ──────────────────────────────────────────────────────────
 
 export interface CreateChecklistItemDTO {
-  template_id:    number;
-  order_no:       number;
-  description:    string;
-  requires_photo: boolean;
+  template_id: number;
+  order_no:    number;
+  description: string;
 }
 
 export interface UpdateChecklistItemDTO {

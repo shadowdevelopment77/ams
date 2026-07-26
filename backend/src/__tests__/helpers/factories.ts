@@ -192,14 +192,13 @@ export async function createChecklistTemplate(
 
 export async function createChecklistItem(
   templateId: number,
-  overrides: Partial<{ order_no: number; description: string; requires_photo: boolean }> = {}
+  overrides: Partial<{ order_no: number; description: string }> = {}
 ) {
   return prisma.checklistItem.create({
     data: {
       template_id: templateId,
       order_no: overrides.order_no ?? 1,
       description: overrides.description ?? unique('Item'),
-      requires_photo: overrides.requires_photo ?? true,
     },
   })
 }

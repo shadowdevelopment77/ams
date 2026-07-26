@@ -35,10 +35,9 @@ export const validateUpdateTemplate = (req: Request, res: Response, next: NextFu
 // ─── Item ───────────────────────────────────────────────────────────────────
 
 const createItemSchema = z.object({
-  template_id:    z.coerce.number({ error: 'Template is required' }),
-  order_no:       z.coerce.number({ error: 'Order is required' }),
-  description:    z.string().min(1, 'Description is required'),
-  requires_photo: z.boolean()
+  template_id: z.coerce.number({ error: 'Template is required' }),
+  order_no:    z.coerce.number({ error: 'Order is required' }),
+  description: z.string().min(1, 'Description is required')
 })
 
 const updateItemSchema = z.object({

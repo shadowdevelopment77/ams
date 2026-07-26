@@ -254,7 +254,6 @@ model ChecklistItem {
   template_id    Int
   order_no       Int
   description    String
-  requires_photo Boolean  @default(true)
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())

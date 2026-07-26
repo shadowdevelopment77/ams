@@ -167,7 +167,7 @@ describe('POST /api/checklist/items', () => {
     const res = await api()
       .post('/api/checklist/items')
       .set('Cookie', cookie)
-      .send({ template_id: 1, order_no: 1, description: 'Check fire extinguisher', requires_photo: true })
+      .send({ template_id: 1, order_no: 1, description: 'Check fire extinguisher' })
     expect(res.status).toBe(403)
   })
 
@@ -178,7 +178,7 @@ describe('POST /api/checklist/items', () => {
     const res = await api()
       .post('/api/checklist/items')
       .set('Cookie', cookie)
-      .send({ template_id: 999999, order_no: 1, description: 'Check fire extinguisher', requires_photo: true })
+      .send({ template_id: 999999, order_no: 1, description: 'Check fire extinguisher' })
 
     expect(res.status).toBe(404)
   })
@@ -197,7 +197,6 @@ describe('POST /api/checklist/items', () => {
         template_id: template.id,
         order_no: 1,
         description: 'Check fire extinguisher',
-        requires_photo: true,
       })
 
     expect(res.status).toBe(201)
