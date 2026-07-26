@@ -62,14 +62,59 @@ describe('POST /api/company', () => {
   })
 })
 
+// Company.code is a display-only alias, auto-generated from `name` whenever
+// the caller omits it -- see backend/src/utils/companyCode.ts.
+describe('POST /api/company -- auto-generated code', () => {
+  it('generates a plain initials code when code is omitted', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api()
+      .post('/api/company')
+      .set('Cookie', cookie)
+      .send({ name: 'Sanjaya Abadi' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.code).toBe('SA')
+  })
+
+  it('keeps an all-caps legal-entity prefix whole', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api()
+      .post('/api/company')
+      .set('Cookie', cookie)
+      .send({ name: 'PT Sanjaya Abadi' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.code).toBe('PTSA')
+  })
+
+  it('allows two different companies to generate the same code with no uniqueness error', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const first = await api().post('/api/company').set('Cookie', cookie).send({ name: 'PT Sanjaya Abadi' })
+    expect(first.status).toBe(201)
+    expect(first.body.data.code).toBe('PTSA')
+
+    const second = await api().post('/api/company').set('Cookie', cookie).send({ name: 'PT Semesta Alam' })
+    expect(second.status).toBe(201)
+    expect(second.body.data.code).toBe('PTSA')
+  })
+})
+
 describe('GET /api/company', () => {
   it('rejects an unauthenticated request', async () => {
     const res = await api().get('/api/company')
     expect(res.status).toBe(401)
   })
 
-  it('rejects a non-ADMIN user', async () => {
-    const { user, rawPassword } = await createSupervisor()
+  it('rejects a STAFF user', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
     const { cookie } = await loginAs(user.email, rawPassword)
     const res = await api().get('/api/company').set('Cookie', cookie)
     expect(res.status).toBe(403)
@@ -84,14 +129,36 @@ describe('GET /api/company', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
   })
+
+  it('allows a SUPERVISOR to list companies (needed to log a visit)', async () => {
+    const { user, rawPassword } = await createSupervisor()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    await createCompany()
+
+    const res = await api().get('/api/company').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.data.data.length).toBeGreaterThanOrEqual(1)
+  })
 })
 
 describe('GET /api/company/:id', () => {
-  it('rejects a non-ADMIN user', async () => {
+  it('rejects a STAFF user', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user, rawPassword } = await createStaff(company.id, division.id)
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const res = await api().get(`/api/company/${company.id}`).set('Cookie', cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('allows a SUPERVISOR to view a company', async () => {
     const { user, rawPassword } = await createSupervisor()
     const { cookie } = await loginAs(user.email, rawPassword)
-    const res = await api().get('/api/company/1').set('Cookie', cookie)
-    expect(res.status).toBe(403)
+    const company = await createCompany()
+
+    const res = await api().get(`/api/company/${company.id}`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe(company.id)
   })
 
   it('returns 404 for a nonexistent company', async () => {

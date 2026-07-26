@@ -2,6 +2,7 @@ import { companyRepository, userRepository } from '../../repositories/index.repo
 import {CreateCompanyInput, UpdateCompanyInput} from './company.validation'
 import { AppError } from '../../utils/error.response/appError'
 import { PaginationParams } from '../../repositories/interfaces/base.interface'
+import { generateCompanyCode } from '../../utils/companyCode'
 
 export class CompanyService {
 
@@ -26,7 +27,8 @@ export class CompanyService {
 
   async create(data: CreateCompanyInput) {
     await this.validateCompanyName(data.name)
-    return companyRepository.create(data)
+    const code = data.code || generateCompanyCode(data.name)
+    return companyRepository.create({ ...data, code })
   }
 
   async update(id: number, data: UpdateCompanyInput) {
