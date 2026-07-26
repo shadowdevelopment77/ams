@@ -88,4 +88,4 @@ TanStack Query, with a global `staleTime: 30_000` (`lib/queryClient.ts`) — thi
 
 ## Current status
 
-Backend: all 8 modules built and fully tested. Frontend: built out through many phases (admin panel, STAFF/SUPERVISOR flows, checklist evidence, GPS, rate-limit hardening) — see `docs/superpowers/plans/` and `docs/superpowers/reports/` for phase-by-phase history. Not yet deployed (paused on free-tier hosting constraints).
+Backend: all 8 modules built and fully tested. Frontend: built out through many phases (admin panel, STAFF/SUPERVISOR flows, checklist evidence, GPS, rate-limit hardening) — the phase-by-phase plans/reports live in the project's `staging` branch history, not on `main`. Not yet deployed (paused on free-tier hosting constraints).

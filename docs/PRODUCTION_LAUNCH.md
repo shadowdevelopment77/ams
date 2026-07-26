@@ -2,7 +2,7 @@
 
 This is the complete runbook for taking AMS from "runs in a Codespace" to "permanently online, free, portfolio-ready demo."
 
-**Status: all the code/config work is done (Phases A-D below). What's left is entirely manual steps only you can do** — creating accounts, clicking deploy, entering secrets. See §9 for exactly what's left and in what order. Detailed reports for each phase are in `docs/superpowers/reports/2026-07-26-production-launch-phase-*-report.md`.
+**Status: all the code/config work is done (Phases A-D below). What's left is entirely manual steps only you can do** — creating accounts, clicking deploy, entering secrets. See §9 for exactly what's left and in what order. Detailed reports for each phase live in the project's `staging` branch history, not `main`.
 
 ---
 
@@ -40,7 +40,7 @@ What we'll do about it:
 
 ## 3. Real blockers — fix these first
 
-**✅ Done** (see `docs/superpowers/reports/2026-07-26-production-launch-phase-a-blockers-report.md`). These were found during a production-readiness audit and would cause actual breakage or risk once deployed, independent of everything else in this doc.
+**✅ Done** (full report on the `staging` branch). These were found during a production-readiness audit and would cause actual breakage or risk once deployed, independent of everything else in this doc.
 
 ### 3.1 Cross-site session cookie is currently broken for a real deploy
 
@@ -87,7 +87,7 @@ Neither `backend/` nor `frontend/` has one today. Full content is in §6 below �
 
 ## 4. The scheduled demo-reset job
 
-**✅ Done** (see `docs/superpowers/reports/2026-07-26-production-launch-phase-b-reset-demo-job-report.md`). This is the core new feature: every 2 hours, an automated job wipes real-visitor-generated data and reseeds a fresh, ready-to-explore demo — so the app never runs out of free storage and never looks broken from accumulated cruft.
+**✅ Done** (full report on the `staging` branch). This is the core new feature: every 2 hours, an automated job wipes real-visitor-generated data and reseeds a fresh, ready-to-explore demo — so the app never runs out of free storage and never looks broken from accumulated cruft.
 
 Some details below changed slightly from the original draft during implementation — corrected in place, not just appended, so this stays the accurate reference.
 
@@ -138,7 +138,7 @@ If the header doesn't match the `RESET_DEMO_SECRET` env var, `401`. This keeps t
 
 ## 5. Installable PWA
 
-**✅ Done, with a placeholder icon** (see `docs/superpowers/reports/2026-07-26-production-launch-phase-d-pwa-setup-report.md`).
+**✅ Done, with a placeholder icon** (full report on the `staging` branch).
 
 ### 5.1 The icon situation right now
 

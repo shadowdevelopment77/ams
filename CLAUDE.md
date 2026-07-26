@@ -40,7 +40,7 @@ Zod, React Router, shadcn/ui, Tailwind v4.
 
 ## Current status (remove this after phase complete, this is just hook what we do right now)
 Backend: all 8 modules built and fully tested.
-Frontend: in progress via Claude Code, phased (see docs/superpowers/plans/ and docs/superpowers/reports/ for phase-by-phase history).
+Frontend: in progress via Claude Code, phased (the phase-by-phase plans/reports live on the `staging` branch, not `main`).
 Not yet deployed (deployment paused — see docs for reasoning around free-tier hosting constraints).
 
 
