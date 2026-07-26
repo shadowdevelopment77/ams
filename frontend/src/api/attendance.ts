@@ -23,15 +23,35 @@ export function getTodayAttendance() {
   return apiFetch<Attendance | null>('/api/attendance/today')
 }
 
-export function checkIn(shiftId: number, photo: File) {
+// Joins shift/status (see attendance.repository.ts's findHistoryByUser) --
+// no `user` field, unlike AdminAttendanceRecord below, since the caller is
+// always looking at their own history.
+export interface MyAttendanceRecord extends Attendance {
+  shift: { id: number; name: string; start_time: string; end_time: string }
+  status: { id: number; name: string }
+}
+
+export function getMyAttendanceHistory(params?: PaginationParams) {
+  const search = new URLSearchParams()
+  if (params?.page) search.set('page', String(params.page))
+  if (params?.limit) search.set('limit', String(params.limit))
+  const qs = search.toString()
+  return apiFetch<PaginatedResult<MyAttendanceRecord>>(`/api/attendance/history${qs ? `?${qs}` : ''}`)
+}
+
+export function checkIn(shiftId: number, photo: File, latitude: number, longitude: number) {
   const form = new FormData()
   form.append('shift_id', String(shiftId))
+  form.append('latitude', String(latitude))
+  form.append('longitude', String(longitude))
   form.append('photo', photo)
   return apiFetch<Attendance>('/api/attendance/checkin', { method: 'POST', body: form })
 }
 
-export function checkOut(attendanceId: string, photo: File) {
+export function checkOut(attendanceId: string, photo: File, latitude: number, longitude: number) {
   const form = new FormData()
+  form.append('checkout_latitude', String(latitude))
+  form.append('checkout_longitude', String(longitude))
   form.append('checkout_photo', photo)
   return apiFetch<Attendance>(`/api/attendance/checkout/${attendanceId}`, {
     method: 'PATCH',
@@ -77,8 +97,10 @@ export interface AttendancePhotoRecord {
   user: { id: string; name: string }
   checkin_photo: string
   checkin_at: string
+  checkin_address: string | null
   checkout_photo: string | null
   checkout_at: string | null
+  checkout_address: string | null
 }
 
 export function getAttendancePhotos(params: AttendanceQuery) {
