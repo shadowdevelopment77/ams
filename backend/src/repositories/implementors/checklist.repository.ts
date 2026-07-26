@@ -138,19 +138,40 @@ export class PrismaChecklistSubmissionRepository
   }
 
 
-  async findByItemAndDate(
-    itemId: number,
+  private readonly evidenceInclude = {
+    photos: { orderBy: { order: "asc" as const } },
+    attendance: {
+      include: { user: { select: { id: true, name: true } } },
+    },
+    item: {
+      include: {
+        template: {
+          include: {
+            company:  { select: { id: true, name: true } },
+            division: { select: { id: true, name: true } },
+          }
+        }
+      }
+    },
+  };
+
+  async findByDivisionAndDate(
     companyId: number,
+    divisionId: number,
     date: Date,
     params: PaginationParams,
   ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>> {
     const { skip, take, page, limit } = this.resolvePagination(params);
 
     const where = {
-      item_id: itemId,
       is_deleted: false,
+      item: {
+        template: {
+          company_id: companyId,
+          division_id: divisionId,
+        },
+      },
       attendance: {
-        company_id: companyId,
         date: date,
         is_deleted: false,
       },
@@ -161,12 +182,37 @@ export class PrismaChecklistSubmissionRepository
         where,
         skip,
         take,
-        include: {
-          photos: { orderBy: { order: "asc" } },
-          attendance: {
-            include: { user: { select: { id: true, name: true } } },
-          },
-        },
+        include: this.evidenceInclude,
+        orderBy: { created_at: "asc" },
+      }),
+      this.prisma.checklistSubmission.count({ where }),
+    ]);
+
+    return this.buildPaginatedResult(data, total, page, limit);
+  }
+
+  async findByUserAndDate(
+    userId: string,
+    date: Date,
+    params: PaginationParams,
+  ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>> {
+    const { skip, take, page, limit } = this.resolvePagination(params);
+
+    const where = {
+      is_deleted: false,
+      attendance: {
+        user_id: userId,
+        date: date,
+        is_deleted: false,
+      },
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.checklistSubmission.findMany({
+        where,
+        skip,
+        take,
+        include: this.evidenceInclude,
         orderBy: { created_at: "asc" },
       }),
       this.prisma.checklistSubmission.count({ where }),

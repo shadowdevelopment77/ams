@@ -63,7 +63,17 @@ export type ChecklistSubmissionWithPhotos = Prisma.ChecklistSubmissionGetPayload
 export type ChecklistSubmissionWithEvidence = Prisma.ChecklistSubmissionGetPayload<{
     include: {
     photos: true,
-    attendance: { include: { user: { select: { id: true, name: true } } } }
+    attendance: { include: { user: { select: { id: true, name: true } } } },
+    item: {
+      include: {
+        template: {
+          include: {
+            company:  { select: { id: true, name: true } },
+            division: { select: { id: true, name: true } },
+          }
+        }
+      }
+    }
   }
 }>
 export interface ChecklistSubmissionRepository
@@ -72,11 +82,16 @@ export interface ChecklistSubmissionRepository
   findByAttendance(attendanceId: string): Promise<ChecklistSubmissionWithPhotos[]>;
   bulkCreate(attendanceId: string, itemIds: number[]): Promise<ChecklistSubmission[]>;
   submitAll(attendanceId: string): Promise<void>;
-  findByItemAndDate(
-    itemId:    number,
-    companyId: number,
-    date:      Date,
-    params:    PaginationParams
+  findByDivisionAndDate(
+    companyId:  number,
+    divisionId: number,
+    date:       Date,
+    params:     PaginationParams
+  ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>>;
+  findByUserAndDate(
+    userId: string,
+    date:   Date,
+    params: PaginationParams
   ): Promise<PaginatedResult<ChecklistSubmissionWithEvidence>>;
 }
 

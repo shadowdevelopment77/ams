@@ -6,8 +6,6 @@ import { AppError } from '../../utils/error.response/appError'
 
 export class ChecklistController {
 
-  //template
-
   createTemplate = catchAsync(async (req, res) => {
     const result = await checklistService.createTemplate(req.body)
     return sendSuccess(res, result, 'Template created', 201)
@@ -35,7 +33,6 @@ export class ChecklistController {
     return sendSuccess(res, null, 'Template deleted')
   })
 
-//checklist Item
   createItem = catchAsync(async (req, res) => {
     const result = await checklistService.createItem(req.body)
     return sendSuccess(res, result, 'Item created', 201)
@@ -67,9 +64,7 @@ export class ChecklistController {
   })
 
 
-  //submission
-
-   getMyChecklist = catchAsync(async (req, res) => {
+  getMyChecklist = catchAsync(async (req, res) => {
     const result = await checklistService.getMyChecklist(req.user!.id)
     return sendSuccess(res, result, 'Checklist fetched')
   })
@@ -98,21 +93,31 @@ export class ChecklistController {
   })
 
 
-  // photo veiwer
-  getByItemAndDate = catchAsync(async (req, res) => {
-    const itemId    = Number(req.params.itemId)
-    const companyId = Number(req.query.companyId)
-    const date      = req.query.date
-      ? new Date(req.query.date as string)
-      : new Date()
-
-    const params = {
-      page:  Number(req.query.page)  || 1,
-      limit: Number(req.query.limit) || 10,
+  private parsePhotoQuery(req: any) {
+    return {
+      date: req.query.date ? new Date(req.query.date as string) : new Date(),
+      params: {
+        page:  Number(req.query.page)  || 1,
+        limit: Number(req.query.limit) || 10,
+      }
     }
+  }
 
-    const result = await checklistService.getByItemAndDate(itemId, companyId, date, params)
-    return sendSuccess(res, result, 'Photos fetched')
+  getPhotosByDivision = catchAsync(async (req, res) => {
+    const companyId  = Number(req.query.companyId)
+    const divisionId = Number(req.query.divisionId)
+    const { date, params } = this.parsePhotoQuery(req)
+
+    const result = await checklistService.getPhotosByDivision(companyId, divisionId, date, params)
+    return sendSuccess(res, result, 'Checklist photos fetched')
+  })
+
+  getPhotosByUser = catchAsync(async (req, res) => {
+    const userId = req.params.userId as string
+    const { date, params } = this.parsePhotoQuery(req)
+
+    const result = await checklistService.getPhotosByUser(userId, date, params)
+    return sendSuccess(res, result, 'Checklist photos fetched')
   })
 }
 

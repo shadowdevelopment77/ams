@@ -565,3 +565,177 @@ describe('POST /api/checklist/:attendanceId/submit', () => {
     expect(submissions.every((s) => s.is_submitted === true)).toBe(true)
   })
 })
+
+// ─── Admin: photo evidence, browsed by division ────────────────────────────
+
+describe('GET /api/checklist/photos/by-division', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/checklist/photos/by-division?companyId=1&divisionId=1')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a non-ADMIN user', async () => {
+    const { user: supervisor, rawPassword } = await createSupervisor()
+    const { cookie } = await loginAs(supervisor.email, rawPassword)
+
+    const res = await api()
+      .get('/api/checklist/photos/by-division?companyId=1&divisionId=1')
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 404 for a company that does not exist', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api()
+      .get('/api/checklist/photos/by-division?companyId=999999&divisionId=1')
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(404)
+    expect(res.body.message).toMatch(/company not found/i)
+  })
+
+  it('returns an empty list for a division with no submissions', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api()
+      .get(`/api/checklist/photos/by-division?companyId=${company.id}&divisionId=${division.id}`)
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+  })
+
+  it('returns submitted photos with item, company, division and submitter context', async () => {
+    const company = await createCompany({ name: 'Gamma Facilities' })
+    const division = await createDivision(company.id, { name: 'Cleaning' })
+    const shift = await createShift(company.id, division.id)
+    const { user } = await createStaff(company.id, division.id, { name: 'Photo Staffer' })
+    const template = await createChecklistTemplate(company.id, division.id)
+    const item = await createChecklistItem(template.id, { description: 'Mop the lobby' })
+    const attendance = await createAttendance(user.id, company.id, division.id, shift.id)
+    const submission = await createChecklistSubmission(attendance.id, item.id, {
+      isSubmitted: true,
+      submittedAt: new Date(),
+    })
+    await createChecklistPhoto(submission.id, { order: 1 })
+    await createChecklistPhoto(submission.id, { order: 2 })
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api()
+      .get(`/api/checklist/photos/by-division?companyId=${company.id}&divisionId=${division.id}`)
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toHaveLength(1)
+    const row = res.body.data.data[0]
+    expect(row.item).toEqual({ id: item.id, description: 'Mop the lobby' })
+    expect(row.company).toEqual({ id: company.id, name: 'Gamma Facilities' })
+    expect(row.division).toEqual({ id: division.id, name: 'Cleaning' })
+    expect(row.user).toEqual({ id: user.id, name: 'Photo Staffer' })
+    expect(row.photos).toHaveLength(2)
+  })
+
+  it('does not return submissions from a different division', async () => {
+    const company = await createCompany()
+    const divisionA = await createDivision(company.id)
+    const divisionB = await createDivision(company.id)
+    const shiftA = await createShift(company.id, divisionA.id)
+    const { user } = await createStaff(company.id, divisionA.id)
+    const templateA = await createChecklistTemplate(company.id, divisionA.id)
+    const itemA = await createChecklistItem(templateA.id)
+    const attendance = await createAttendance(user.id, company.id, divisionA.id, shiftA.id)
+    const submission = await createChecklistSubmission(attendance.id, itemA.id)
+    await createChecklistPhoto(submission.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api()
+      .get(`/api/checklist/photos/by-division?companyId=${company.id}&divisionId=${divisionB.id}`)
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+  })
+})
+
+// ─── Admin: photo evidence, browsed by staff member ────────────────────────
+
+describe('GET /api/checklist/photos/by-user/:userId', () => {
+  it('rejects an unauthenticated request', async () => {
+    const res = await api().get('/api/checklist/photos/by-user/some-id')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a non-ADMIN user', async () => {
+    const { user, rawPassword } = await createSupervisor()
+    const { cookie } = await loginAs(user.email, rawPassword)
+
+    const res = await api().get(`/api/checklist/photos/by-user/${user.id}`).set('Cookie', cookie)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 404 for a user that does not exist', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api()
+      .get('/api/checklist/photos/by-user/00000000-0000-0000-0000-000000000000')
+      .set('Cookie', cookie)
+
+    expect(res.status).toBe(404)
+    expect(res.body.message).toMatch(/user not found/i)
+  })
+
+  it("returns the target staff member's checklist photos with item context", async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user } = await createStaff(company.id, division.id)
+    const template = await createChecklistTemplate(company.id, division.id)
+    const item = await createChecklistItem(template.id, { description: 'Check fire extinguisher' })
+    const attendance = await createAttendance(user.id, company.id, division.id, shift.id)
+    const submission = await createChecklistSubmission(attendance.id, item.id)
+    await createChecklistPhoto(submission.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get(`/api/checklist/photos/by-user/${user.id}`).set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toHaveLength(1)
+    expect(res.body.data.data[0].item.description).toBe('Check fire extinguisher')
+    expect(res.body.data.data[0].photos).toHaveLength(1)
+  })
+
+  it('does not return another staff member\'s checklist photos', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const shift = await createShift(company.id, division.id)
+    const { user: userA } = await createStaff(company.id, division.id)
+    const { user: userB } = await createStaff(company.id, division.id)
+    const template = await createChecklistTemplate(company.id, division.id)
+    const item = await createChecklistItem(template.id)
+    const attendance = await createAttendance(userA.id, company.id, division.id, shift.id)
+    const submission = await createChecklistSubmission(attendance.id, item.id)
+    await createChecklistPhoto(submission.id)
+
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+
+    const res = await api().get(`/api/checklist/photos/by-user/${userB.id}`).set('Cookie', cookie)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.data).toEqual([])
+  })
+})

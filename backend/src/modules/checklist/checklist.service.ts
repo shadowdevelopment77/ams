@@ -6,6 +6,7 @@ import {
   attendanceRepository,
   companyRepository,
   divisionRepository,
+  userRepository,
 } from '../../repositories/index.repositories'
 import {getToday} from '../../utils/date'
 
@@ -18,8 +19,6 @@ import { PaginationParams } from '../../repositories/interfaces/base.interface'
 
 export class ChecklistService{
   private readonly  MAX_PHOTOS_PER_ITEM = 3
-
-  //Private Helpers
 
   private async getTemplateOrThrow(id: number) {
     const template = await checklistTemplateRepository.findById(id)
@@ -53,6 +52,12 @@ export class ChecklistService{
     return division
   }
 
+  private async getUserOrThrow(userId: string) {
+    const user = await userRepository.findById(userId)
+    if (!user) throw new AppError('User not found', 404)
+    return user
+  }
+
 
   private async getSubmissionOrThrow(attendanceId: string, itemId: number) {
     const submission = await checklistSubmissionRepository.findByAttendanceAndItem(attendanceId, itemId)
@@ -72,8 +77,6 @@ export class ChecklistService{
     throw new AppError('Checklist is no longer open — it belonged to a previous check-in', 403)
   }
 }
-
-  //Template
 
   async createTemplate(dto: CreateTemplateInput) {
     await this.getCompanyOrThrow(dto.company_id)
@@ -102,8 +105,6 @@ export class ChecklistService{
   }
 
 
-  //checklistItem
-
   async createItem(dto: CreateItemInput) {
     await this.getTemplateOrThrow(dto.template_id)
     return checklistItemRepository.create(dto)
@@ -128,8 +129,6 @@ export class ChecklistService{
     return checklistItemRepository.softDelete(id)
   }
 
-
-  //submission
 
   async getMyChecklist(userId: string) {
     const {date}      = getToday()
@@ -193,17 +192,42 @@ export class ChecklistService{
   }
 
 
-  //Photo 
-  
-    async getByItemAndDate(
-    itemId:    number,
-    companyId: number,
-    date:      Date,
-    params:    PaginationParams
+  private mapEvidence(result: Awaited<ReturnType<typeof checklistSubmissionRepository.findByDivisionAndDate>>) {
+    return {
+      ...result,
+      data: result.data.map((s: any) => ({
+        id: s.id,
+        submitted_at: s.submitted_at,
+        item: { id: s.item.id, description: s.item.description },
+        company: s.item.template.company,
+        division: s.item.template.division,
+        user: { id: s.attendance.user.id, name: s.attendance.user.name },
+        location_address: s.attendance.location_address ?? null,
+        photos: s.photos,
+      })),
+    }
+  }
+
+  async getPhotosByDivision(
+    companyId:  number,
+    divisionId: number,
+    date:       Date,
+    params:     PaginationParams
   ) {
-    await this.getItemOrThrow(itemId)
     await this.getCompanyOrThrow(companyId)
-    return checklistSubmissionRepository.findByItemAndDate(itemId, companyId, date, params)
+    await this.getDivisionOrThrow(divisionId)
+    const result = await checklistSubmissionRepository.findByDivisionAndDate(companyId, divisionId, date, params)
+    return this.mapEvidence(result)
+  }
+
+  async getPhotosByUser(
+    userId: string,
+    date:   Date,
+    params: PaginationParams
+  ) {
+    await this.getUserOrThrow(userId)
+    const result = await checklistSubmissionRepository.findByUserAndDate(userId, date, params)
+    return this.mapEvidence(result)
   }
 
 }
