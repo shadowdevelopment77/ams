@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { downloadImage } from '@/lib/downloadImage'
 import { getCompanies } from '@/api/company'
 import { getDivisionsByCompany } from '@/api/division'
 import {
@@ -34,6 +36,7 @@ export function AttendancePage() {
   const [divisionId, setDivisionId] = useState('')
   const [date, setDate] = useState(todayIso())
   const [view, setView] = useState<ViewMode>('all')
+  const [page, setPage] = useState(1)
 
   const { data: companies } = useQuery({
     queryKey: ['admin', 'companies', 'all'],
@@ -50,6 +53,8 @@ export function AttendancePage() {
     companyId: Number(companyId),
     divisionId: Number(divisionId),
     date,
+    page,
+    limit: 10,
   }
   const enabled = !!companyId && !!divisionId
 
@@ -65,6 +70,8 @@ export function AttendancePage() {
     enabled: enabled && view === 'photos',
   })
 
+  const pagination = view === 'photos' ? photos : records
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Attendance</h1>
@@ -77,6 +84,7 @@ export function AttendancePage() {
             onValueChange={(v) => {
               setCompanyId(v ?? '')
               setDivisionId('')
+              setPage(1)
             }}
           >
             <SelectTrigger className="w-56">
@@ -98,7 +106,14 @@ export function AttendancePage() {
 
         <div className="flex flex-col gap-1.5">
           <Label>Division</Label>
-          <Select value={divisionId} onValueChange={(v) => setDivisionId(v ?? '')} disabled={!companyId}>
+          <Select
+            value={divisionId}
+            onValueChange={(v) => {
+              setDivisionId(v ?? '')
+              setPage(1)
+            }}
+            disabled={!companyId}
+          >
             <SelectTrigger className="w-56">
               <SelectValue>
                 {(value: string | null) =>
@@ -118,7 +133,16 @@ export function AttendancePage() {
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value)
+              setPage(1)
+            }}
+            className="w-40"
+          />
         </div>
       </div>
 
@@ -127,7 +151,10 @@ export function AttendancePage() {
           <button
             key={mode}
             type="button"
-            onClick={() => setView(mode)}
+            onClick={() => {
+              setView(mode)
+              setPage(1)
+            }}
             className={cn(
               'rounded-md px-3 py-1 text-sm font-medium capitalize',
               view === mode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
@@ -194,7 +221,7 @@ export function AttendancePage() {
       )}
 
       {enabled && view === 'photos' && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
           {photosLoading && <Skeleton className="h-40 w-full" />}
           {!photosLoading && photos?.data.length === 0 && (
             <p className="col-span-full text-center text-muted-foreground">No photos for this date.</p>
@@ -206,6 +233,16 @@ export function AttendancePage() {
               <p className="text-xs text-muted-foreground">
                 In: {new Date(photo.checkin_at).toLocaleTimeString()}
               </p>
+              {photo.checkin_address && (
+                <p className="text-xs text-muted-foreground">{photo.checkin_address}</p>
+              )}
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => downloadImage(photo.checkin_photo, `checkin-${photo.user.name}-${date}.jpg`)}
+              >
+                Download
+              </Button>
               {photo.checkout_photo && (
                 <>
                   <img
@@ -216,10 +253,41 @@ export function AttendancePage() {
                   <p className="text-xs text-muted-foreground">
                     Out: {photo.checkout_at && new Date(photo.checkout_at).toLocaleTimeString()}
                   </p>
+                  {photo.checkout_address && (
+                    <p className="text-xs text-muted-foreground">{photo.checkout_address}</p>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() =>
+                      downloadImage(photo.checkout_photo!, `checkout-${photo.user.name}-${date}.jpg`)
+                    }
+                  >
+                    Download
+                  </Button>
                 </>
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {enabled && pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= pagination.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>
