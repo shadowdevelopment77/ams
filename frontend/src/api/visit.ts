@@ -31,6 +31,7 @@ export interface VisitPhotoRecord {
   visit_photo: string
   visited_at: string
   notes: string | null
+  address: string | null
 }
 
 // Unlike GET /api/visit, this one's `date` query param genuinely works
@@ -42,4 +43,28 @@ export function getVisitPhotosByUser(userId: string, date?: string, params?: Pag
   if (params?.limit) search.set('limit', String(params.limit))
   const qs = search.toString()
   return apiFetch<PaginatedResult<VisitPhotoRecord>>(`/api/visit/user/${userId}/photos${qs ? `?${qs}` : ''}`)
+}
+
+// ── SUPERVISOR-facing ──────────────────────────────────────────────────────
+
+export function createVisitLog(
+  companyId: number,
+  photo: File,
+  latitude: number,
+  longitude: number,
+  notes?: string
+) {
+  const form = new FormData()
+  form.append('company_id', String(companyId))
+  form.append('latitude', String(latitude))
+  form.append('longitude', String(longitude))
+  form.append('photo', photo)
+  if (notes) form.append('notes', notes)
+  return apiFetch<VisitLog>('/api/visit', { method: 'POST', body: form })
+}
+
+// Same join as the admin list (company: {id,name}) -- findByUser already
+// includes it server-side, see visit-log.repository.ts.
+export function getMyVisits(params?: PaginationParams) {
+  return apiFetch<PaginatedResult<VisitLog>>(`/api/visit/my-visits${paginationQuery(params)}`)
 }
