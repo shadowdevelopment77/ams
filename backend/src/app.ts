@@ -13,6 +13,7 @@ import checklistRouter from "./modules/checklist/checklist.router"
 import companyRouter from "./modules/company/company.router"
 import { errorMiddleware } from "./middlewares/error.middleware";
 import {apiLimiter} from "./middlewares/rate-limit.middleware";
+import { resolveUser } from "./middlewares/resolve-user.middleware";
 import visitRouter from "./modules/visit/visit.route"
 import { sendSuccess } from "./utils/error.response/response"
 
@@ -39,7 +40,9 @@ app.use(cookieParser())
 
 app.get('/health', (req, res) => sendSuccess(res, { status: 'ok' }, 'Healthy'))
 
-app.use('/api', apiLimiter)
+// resolveUser runs first so apiLimiter can key by authenticated user id
+// instead of raw IP -- see rate-limit.middleware.ts.
+app.use('/api', resolveUser, apiLimiter)
 
 // authLimiter is applied per-route inside auth.router.ts (login/register/
 // logout only) rather than blanket here -- GET /me is a passive session

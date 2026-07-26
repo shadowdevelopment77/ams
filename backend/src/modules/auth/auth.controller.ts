@@ -19,7 +19,7 @@ export class AuthController {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 2, // 2 hours, matches session expiry
+    maxAge: 1000 * 60 * 60 * 2, // must match auth.service.ts's session expires_at
   })
       return sendSuccess(res, { user: result.user }, 'Login successful')
     })
