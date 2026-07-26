@@ -12,10 +12,11 @@ export interface Company {
   is_active: boolean
 }
 
-// Mirrors backend/src/modules/company/company.validation.ts.
+// Mirrors backend/src/modules/company/company.validation.ts. `code` is
+// auto-generated server-side from `name` when omitted (an alias like "PT
+// Sanjaya Abadi" -> "PTSA"), so it's never sent from this form.
 export interface CompanyInput {
   name: string
-  code: string
   address?: string
   phone?: string
   email?: string

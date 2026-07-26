@@ -118,11 +118,7 @@ export function CompaniesPage() {
 
             {data?.data.map((company) => (
               <TableRow key={company.id}>
-                <TableCell className="font-medium">
-                  <Link to={`/admin/companies/${company.id}`} className="hover:underline">
-                    {company.name}
-                  </Link>
-                </TableCell>
+                <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell>{company.code}</TableCell>
                 <TableCell>{company.email ?? '—'}</TableCell>
                 <TableCell>
@@ -131,6 +127,9 @@ export function CompaniesPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
+                  <Button variant="ghost" size="sm" render={<Link to={`/admin/companies/${company.id}`} />}>
+                    See more detail →
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(company)}>
                     Edit
                   </Button>

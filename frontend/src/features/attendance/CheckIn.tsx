@@ -9,6 +9,7 @@ import { ApiError } from '@/api/client'
 import { getMyDivisionShifts } from '@/api/shift'
 import { checkIn } from '@/api/attendance'
 import { useInvalidateTodayAttendance } from '@/hooks/useTodayAttendance'
+import { getCurrentPosition } from '@/lib/geolocation'
 
 export function CheckIn() {
   const navigate = useNavigate()
@@ -36,11 +37,12 @@ export function CheckIn() {
     }
     setIsSubmitting(true)
     try {
-      await checkIn(Number(shiftId), photo)
+      const { latitude, longitude } = await getCurrentPosition()
+      await checkIn(Number(shiftId), photo, latitude, longitude)
       await invalidateToday()
       navigate('/', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong')
+      setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setIsSubmitting(false)
     }

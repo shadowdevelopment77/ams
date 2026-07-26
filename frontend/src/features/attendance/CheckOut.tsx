@@ -6,6 +6,7 @@ import { PhotoInput } from '@/components/PhotoInput'
 import { ApiError } from '@/api/client'
 import { checkOut } from '@/api/attendance'
 import { useTodayAttendance, useInvalidateTodayAttendance } from '@/hooks/useTodayAttendance'
+import { getCurrentPosition } from '@/lib/geolocation'
 
 export function CheckOut() {
   const navigate = useNavigate()
@@ -32,11 +33,12 @@ export function CheckOut() {
     }
     setIsSubmitting(true)
     try {
-      await checkOut(attendance.id, photo)
+      const { latitude, longitude } = await getCurrentPosition()
+      await checkOut(attendance.id, photo, latitude, longitude)
       await invalidateToday()
       navigate('/', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong')
+      setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setIsSubmitting(false)
     }

@@ -18,11 +18,11 @@ import type { Company, CompanyInput } from '@/api/company'
 // Mirrors backend/src/modules/company/company.validation.ts's
 // createCompanySchema -- used for both create and edit, since the backend's
 // update schema is just this made partial (sending the full shape on edit
-// is still valid).
+// is still valid). `code` is deliberately absent -- it's auto-generated
+// server-side from `name` and never user-set.
 const companySchema = z
   .object({
     name: z.string().min(1, 'Company name is required'),
-    code: z.string().min(1, 'Company code is required'),
     address: z.string().optional(),
     phone: z.string().optional(),
     email: z.string().optional(),
@@ -66,7 +66,6 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSubmit }: Com
       setFormError(null)
       reset({
         name: company?.name ?? '',
-        code: company?.code ?? '',
         address: company?.address ?? '',
         phone: company?.phone ?? '',
         email: company?.email ?? '',
@@ -80,7 +79,6 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSubmit }: Com
     try {
       await onSubmit({
         name: data.name,
-        code: data.code,
         address: emptyToUndefined(data.address),
         phone: emptyToUndefined(data.phone),
         email: emptyToUndefined(data.email),
@@ -108,12 +106,6 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSubmit }: Com
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register('name')} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="code">Code</Label>
-            <Input id="code" {...register('code')} />
-            {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">

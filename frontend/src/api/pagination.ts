@@ -1,8 +1,6 @@
-// Mirrors backend/src/repositories/interfaces/base.interface.ts's
-// PaginatedResult<T>, nested under the envelope's `data` (so a paginated
-// endpoint's full response is `data.data`). NOT every list endpoint uses
-// this -- GET /api/checklist/templates returns a plain array instead, so
-// don't assume this shape without checking the specific endpoint first.
+// Nested under the envelope's `data` -- a paginated endpoint's full response
+// is `data.data`. Not every list endpoint uses this (e.g. checklist templates
+// return a plain array), so check the specific endpoint before assuming it.
 export interface PaginatedResult<T> {
   data: T[]
   total: number
