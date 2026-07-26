@@ -16,7 +16,6 @@ export class PrismaUserRepository
 extends PrismaBaseRepository<User, CreateUserDTO, UpdateUserDTO, string>
   implements UserRepository
 {
-  // tells BaseRepository to use prisma.user for all generic CRUD
   protected modelName = "user" as const
   constructor(prisma: PrismaClient){
     super(prisma)

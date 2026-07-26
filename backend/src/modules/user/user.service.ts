@@ -54,7 +54,8 @@ export class UserService {
   }
 
 async moveToCompany(userId: string, data: MoveCompanyInput) {
-    await this.getUserOrThrow(userId)
+    const user = await this.getUserOrThrow(userId)
+    if (!user.is_active) throw new AppError('Cannot move an inactive user', 400)
     await this.getCompanyOrThrow(data.company_id)
     await this.validateDivisionBelongsToCompany(data.division_id, data.company_id)
     

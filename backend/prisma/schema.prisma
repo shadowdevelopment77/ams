@@ -92,13 +92,13 @@ model UserCompanyRole {
 
 
   user    User    @relation(fields: [user_id], references: [id])
-  company Company? @relation(fields: [company_id], references: [id])
-  division Division? @relation(fields: [division_id], references: [id])
+  company Company? @relation(fields: [company_id], references: [id], onDelete: Restrict)
+  division Division? @relation(fields: [division_id], references: [id], onDelete: Restrict)
   userRole UserRole @relation(fields: [role_id], references: [id])
-  
 
 
-  @@index([user_id]) 
+
+  @@unique([user_id])
   @@index([company_id, division_id])
 }
 

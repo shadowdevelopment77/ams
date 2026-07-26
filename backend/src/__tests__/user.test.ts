@@ -257,6 +257,53 @@ describe('PUT /api/users/:id/move-company', () => {
     expect(role?.company_id).toBe(newCompany.id)
     expect(role?.division_id).toBe(newDivision.id)
   })
+
+  it('rejects moving a deactivated STAFF member', async () => {
+    const { user: admin, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(admin.email, rawPassword)
+    const oldCompany = await createCompany()
+    const oldDivision = await createDivision(oldCompany.id)
+    const { user: staff } = await createStaff(oldCompany.id, oldDivision.id, { isActive: false })
+
+    const newCompany = await createCompany()
+    const newDivision = await createDivision(newCompany.id)
+
+    const res = await api()
+      .put(`/api/users/${staff.id}/move-company`)
+      .set('Cookie', cookie)
+      .send({ company_id: newCompany.id, division_id: newDivision.id })
+
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/cannot move an inactive user/i)
+
+    // Original assignment untouched, per the "deactivated staff keep their
+    // company/division on record" decision -- deactivation alone never
+    // clears it, and a rejected move certainly shouldn't either.
+    const role = await prisma.userCompanyRole.findFirst({ where: { user_id: staff.id } })
+    expect(role?.company_id).toBe(oldCompany.id)
+    expect(role?.division_id).toBe(oldDivision.id)
+  })
+})
+
+describe('UserCompanyRole data integrity', () => {
+  it('does not allow a second role-assignment row for the same user (unique constraint)', async () => {
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const { user: staff } = await createStaff(company.id, division.id)
+
+    const existing = await prisma.userCompanyRole.findFirstOrThrow({ where: { user_id: staff.id } })
+
+    await expect(
+      prisma.userCompanyRole.create({
+        data: {
+          user_id: staff.id,
+          role_id: existing.role_id,
+          company_id: company.id,
+          division_id: division.id,
+        },
+      })
+    ).rejects.toThrow()
+  })
 })
 
 describe('DELETE /api/users/:id', () => {
