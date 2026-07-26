@@ -6,6 +6,30 @@ A REST API + web app for a **Workforce Field Management System** — built for o
 
 ---
 
+## Screenshots
+
+<table>
+<tr>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/01-login.png" width="100%"/><br/><sub><b>Login</b> — with a one-click demo credentials card for anyone trying the app</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/02-admin-companies.png" width="100%"/><br/><sub><b>Admin</b> — companies at a glance</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/03-admin-attendance.png" width="100%"/><br/><sub><b>Admin</b> — attendance, filtered by company/division</sub></td>
+</tr>
+<tr>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/04-admin-checklists.png" width="100%"/><br/><sub><b>Admin</b> — photo-verified checklist evidence, grouped by item</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/05-admin-visits.png" width="100%"/><br/><sub><b>Admin</b> — supervisor visit logs across companies</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/06-device-gate.png" width="100%"/><br/><sub><b>Device gate</b> — STAFF/SUPERVISOR routes refuse desktop browsers</sub></td>
+</tr>
+<tr>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/07-staff-dashboard.png" width="100%"/><br/><sub><b>Staff</b> — checked in for the day</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/08-staff-checklist.png" width="100%"/><br/><sub><b>Staff</b> — submitting the daily checklist with photo evidence</sub></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/shadowdevelopment77/ams/staging/Screenshot/readme-gallery/09-supervisor-dashboard.png" width="100%"/><br/><sub><b>Supervisor</b> — today's client visits</sub></td>
+</tr>
+</table>
+
+More screenshots (every phase of the build, staff check-in/out, PWA install, etc.) are on the [`staging`](https://github.com/shadowdevelopment77/ams/tree/staging/Screenshot) branch, alongside the full phase-by-phase implementation plans and test reports.
+
+---
+
 ## Why this project
 
 I used to work as an admin handling outsourced staff — attendance, shift schedules, checklists, that kind of day-to-day operational work. This project is my attempt to build the backend for a system that would have solved real problems I saw in that job: staff spread across multiple client companies, shift-based check-in/out, and proof-of-work checklists with photos. It's also how I taught myself backend development and testing while transitioning into it.
