@@ -43,7 +43,7 @@ export function DemoInfoCard() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Demo data resets automatically every 6 hours.
+          Demo data resets automatically every 2 hours.
         </p>
       </CardContent>
     </Card>

@@ -11,7 +11,7 @@ This is the complete runbook for taking AMS from "runs in a Codespace" to "perma
 You want a live link you can hand to recruiters, indefinitely, at **zero ongoing cost**, that:
 - Always works when someone clicks it (accepting a short "waking up" delay is fine, a broken app is not).
 - Lets a visitor log in as ADMIN, STAFF, or SUPERVISOR and actually use the real flows (check-in/out, checklists with real camera photos, visit logging, the admin panel).
-- Resets itself automatically every 6 hours to a clean, working demo state — so it never accumulates junk, never runs out of free storage, and never looks "broken" because a previous visitor left it in a weird state.
+- Resets itself automatically every 2 hours to a clean, working demo state — so it never accumulates junk, never runs out of free storage, and never looks "broken" because a previous visitor left it in a weird state.
 - Looks and feels like a real installed app on a phone (an icon on the home screen, no browser address bar), even though it's just a website underneath.
 
 Everything below is designed around **$0/month**, using services you already have accounts on (Neon, Cloudinary) plus a small number of new free signups.
@@ -26,7 +26,7 @@ Everything below is designed around **$0/month**, using services you already hav
 | Photo storage | **Cloudinary** (already in use) | Already set up, 25GB storage + bandwidth free tier | Free |
 | Backend hosting | **Render** (free Web Service) | Deploys a Node/Express app straight from GitHub, zero config beyond env vars | Free |
 | Frontend hosting | **Vercel** or **Netlify** (free tier) | Static SPA hosting, both auto-detect Vite, instant global CDN, no spin-down (unlike the backend) | Free |
-| Scheduling | **GitHub Actions** (scheduled workflows) | Free for public repos (2,000 min/month free even for private repos), used for the 6-hourly reset and a keep-alive ping | Free |
+| Scheduling | **GitHub Actions** (scheduled workflows) | Free for public repos (2,000 min/month free even for private repos), used for the 2-hourly reset and a keep-alive ping | Free |
 
 ### The one tradeoff you should know about upfront
 
@@ -87,7 +87,7 @@ Neither `backend/` nor `frontend/` has one today. Full content is in §6 below �
 
 ## 4. The scheduled demo-reset job
 
-**✅ Done** (see `docs/superpowers/reports/2026-07-26-production-launch-phase-b-reset-demo-job-report.md`). This is the core new feature: every 6 hours, an automated job wipes real-visitor-generated data and reseeds a fresh, ready-to-explore demo — so the app never runs out of free storage and never looks broken from accumulated cruft.
+**✅ Done** (see `docs/superpowers/reports/2026-07-26-production-launch-phase-b-reset-demo-job-report.md`). This is the core new feature: every 2 hours, an automated job wipes real-visitor-generated data and reseeds a fresh, ready-to-explore demo — so the app never runs out of free storage and never looks broken from accumulated cruft.
 
 Some details below changed slightly from the original draft during implementation — corrected in place, not just appended, so this stays the accurate reference.
 
@@ -111,8 +111,8 @@ Your existing seed scripts already do almost all of this — `manual-test-seed.t
 
 | Account | Email | Password | Purpose | Reset behavior |
 |---|---|---|---|---|
-| Demo Admin 1 | `admin.demo1@ams.local` | `DemoAdmin123!` | Public, listed on your portfolio/README for anyone to try | Password reset to this value every 6h |
-| Demo Admin 2 | `admin.demo2@ams.local` | `DemoAdmin123!` | Same as above — a second public login so two visitors browsing at once each have "their own" admin session without any perceived conflict | Password reset every 6h |
+| Demo Admin 1 | `admin.demo1@ams.local` | `DemoAdmin123!` | Public, listed on your portfolio/README for anyone to try | Password reset to this value every 2h |
+| Demo Admin 2 | `admin.demo2@ams.local` | `DemoAdmin123!` | Same as above — a second public login so two visitors browsing at once each have "their own" admin session without any perceived conflict | Password reset every 2h |
 | Your personal admin | *your real email, your choice* | *your choice* | For you specifically — ongoing access, testing, showing recruiters live if you want to drive it yourself | **Never touched** |
 
 **How the personal admin actually works — simpler than the original draft assumed**: no code creates or manages it. The reset job's wipe logic only ever touches `STAFF`/`SUPERVISOR` users — every `ADMIN` account is automatically safe, whichever email it uses. So once the 2 demo admins exist (the reset job creates them on its very first run) and you can log in as one of them, register your own account with your real email through the normal admin-gated `POST /api/auth/register` flow, once. It then persists forever across every future reset, with zero special-casing needed. This also solves the bootstrapping problem: on a brand-new production database with no admin at all yet, the *first* reset-demo run (triggered manually or by the first scheduled tick) is what creates the 2 demo admins in the first place.
@@ -132,7 +132,7 @@ If the header doesn't match the `RESET_DEMO_SECRET` env var, `401`. This keeps t
 ### 4.6 Explicitly out of scope (your call, both reasonable to skip for now)
 
 - **Verifying that registered emails are real/deliverable.** Right now, `email` fields are only format-validated (looks like an email), never actually verified (no confirmation link sent). Doing this properly needs an email-sending service — there are free tiers (e.g. Resend's free plan) that would work, but it's a real feature addition (confirmation tokens, an email template, a "resend confirmation" flow) and not something this launch needs. Flagged here as a good "v2" improvement, not a blocker.
-- **Password change/reset for end users.** Confirmed: nothing like this exists in the codebase today. Fine for an MVP portfolio demo where accounts are either disposable (reset every 6h) or personal (only you use it).
+- **Password change/reset for end users.** Confirmed: nothing like this exists in the codebase today. Fine for an MVP portfolio demo where accounts are either disposable (reset every 2h) or personal (only you use it).
 
 ---
 
