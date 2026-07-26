@@ -16,6 +16,7 @@ import {
 } from "./checklist.validation"
 import { AppError } from '../../utils/error.response/appError'
 import { PaginationParams } from '../../repositories/interfaces/base.interface'
+import { Prisma } from '../../../generated/prisma'
 
 export class ChecklistService{
   private readonly  MAX_PHOTOS_PER_ITEM = 3
@@ -81,7 +82,22 @@ export class ChecklistService{
   async createTemplate(dto: CreateTemplateInput) {
     await this.getCompanyOrThrow(dto.company_id)
     await this.getDivisionOrThrow(dto.division_id)
-    return checklistTemplateRepository.create(dto)
+
+    const existing = await checklistTemplateRepository.findByDivision(dto.company_id, dto.division_id)
+    if (existing.length > 0) {
+      throw new AppError('This division already has a checklist template — edit it instead of creating a new one', 409)
+    }
+
+    try {
+      return await checklistTemplateRepository.create(dto)
+    } catch (err) {
+      // Partial unique index (company_id, division_id) WHERE is_deleted = false
+      // is the race-condition fallback for the check above.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new AppError('This division already has a checklist template — edit it instead of creating a new one', 409)
+      }
+      throw err
+    }
   }
 
   async getTemplatesByDivision(companyId: number, divisionId: number) {

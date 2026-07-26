@@ -63,6 +63,40 @@ describe('POST /api/checklist/templates', () => {
     expect(res.status).toBe(201)
     expect(res.body.data.title).toBe('Opening Checklist')
   })
+
+  it('rejects a second template for a division that already has one', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    await createChecklistTemplate(company.id, division.id)
+
+    const res = await api()
+      .post('/api/checklist/templates')
+      .set('Cookie', cookie)
+      .send({ company_id: company.id, division_id: division.id, title: 'Duplicate Checklist' })
+
+    expect(res.status).toBe(409)
+    expect(res.body.message).toMatch(/already has a checklist template/i)
+  })
+
+  it('allows creating a new template after the old one was soft-deleted', async () => {
+    const { user, rawPassword } = await createAdmin()
+    const { cookie } = await loginAs(user.email, rawPassword)
+    const company = await createCompany()
+    const division = await createDivision(company.id)
+    const oldTemplate = await createChecklistTemplate(company.id, division.id)
+
+    await api().delete(`/api/checklist/templates/${oldTemplate.id}`).set('Cookie', cookie)
+
+    const res = await api()
+      .post('/api/checklist/templates')
+      .set('Cookie', cookie)
+      .send({ company_id: company.id, division_id: division.id, title: 'Replacement Checklist' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.title).toBe('Replacement Checklist')
+  })
 })
 
 describe('GET /api/checklist/templates', () => {
