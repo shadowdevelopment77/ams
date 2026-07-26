@@ -2,7 +2,7 @@
 
 A REST API + web app for a **Workforce Field Management System** — built for outsourcing companies that manage field staff (security, cleaning, maintenance, etc.) across multiple client companies. Handles role-based attendance, supervisor visit logging, and photo-verified daily checklists, with strict business rules enforced end-to-end.
 
-> **Backend-first, frontend now built out.** The API (`backend/`) was built and hardened first, with a full integration test suite. The frontend (`frontend/`) covers the full admin panel plus the STAFF and SUPERVISOR daily flows, with Playwright E2E coverage across both. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's all put together.
+> **Full-stack and tested end-to-end.** The API (`backend/`) has a full integration test suite; the frontend (`frontend/`) covers the full admin panel plus the STAFF and SUPERVISOR daily flows, installable as a PWA, with Playwright E2E coverage across both. Currently being prepped for a live, free-tier public deploy — see [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md) for that plan, and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's all put together.
 
 ---
 
@@ -39,6 +39,7 @@ I used to work as an admin handling outsourced staff — attendance, shift sched
 | Routing | React Router v7 |
 | Server state | TanStack Query |
 | Forms | react-hook-form + Zod |
+| PWA | vite-plugin-pwa — installable (manifest + service worker), no browser chrome once added to a phone's home screen |
 | E2E testing | Playwright (desktop + mobile-viewport projects) |
 
 Talks to the API directly over cookie-based session auth (`credentials: 'include'`) — no BFF/proxy layer. Covers the full admin panel (companies/divisions/shifts/checklists/staff/attendance/visits) and the STAFF (check-in → checklist → check-out) and SUPERVISOR (visit logging) daily flows, with a mobile-only device gate on the latter two roles (camera-capture integrity, not a hard security boundary — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)).
@@ -59,7 +60,7 @@ Talks to the API directly over cookie-based session auth (`credentials: 'include
 
 **Backend** has **full integration tests, not just unit tests** — every test hits real HTTP routes via Supertest, exercises real middleware (auth, role checks, multipart file uploads, Zod validation), and reads/writes a real PostgreSQL test database. The only things mocked are outbound third-party calls (Cloudinary uploads, reverse geocoding) — everything else, including race-condition handling, runs for real.
 
-**Modules covered:** Auth, Attendance, Visit Log, Checklist, Company, Division, Shift, User (including the staff-move and delete flows).
+**Modules covered:** Auth, Attendance, Visit Log, Checklist, Company, Division, Shift, User (including the staff-move and delete flows), Admin (the production reset-demo job).
 
 Run the suite:
 ```bash
@@ -90,16 +91,9 @@ cd backend
 npm install
 ```
 
-Create `.env`:
-```
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-
-# Optional — both have working defaults if omitted
-PORT=3000
-CORS_ORIGIN=http://localhost:5174
+Copy `backend/.env.example` to `backend/.env` and fill in real values — it documents every variable, including the optional ones (`PORT`, `CORS_ORIGIN`, `SESSION_TTL_HOURS` all have working defaults if omitted; `RESET_DEMO_SECRET` is only needed for the production reset-demo job, see [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md)):
+```bash
+cp backend/.env.example backend/.env
 ```
 
 Create `.env.test` (a **separate** database — the test suite wipes data between runs):
@@ -137,9 +131,9 @@ cd frontend
 npm install
 ```
 
-Create `frontend/.env.local`:
-```
-VITE_API_URL=http://localhost:3000
+Copy `frontend/.env.example` to `frontend/.env.local`:
+```bash
+cp frontend/.env.example frontend/.env.local
 ```
 
 Run it (with the backend dev server from above already running):
@@ -147,6 +141,12 @@ Run it (with the backend dev server from above already running):
 npm run dev
 ```
 Opens on `http://localhost:5174` (pinned via `vite.config.ts`'s `strictPort`) — update the backend's `CORS_ORIGIN` to match if you change it.
+
+---
+
+## Deployment
+
+Not live yet — the full runbook for a free, permanently-online, self-resetting public demo (Render + Vercel/Netlify + Neon + Cloudinary + GitHub Actions, all $0/month) is written up in [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md), including a `POST /api/admin/reset-demo` job that wipes and reseeds fresh demo data every 6 hours so a stream of visitors can always try a clean, working instance.
 
 ---
 
@@ -178,11 +178,13 @@ curl -b cookies.txt http://localhost:3000/api/auth/me
 ```
 src/
 ├── modules/        # one folder per domain: auth, attendance, visit, checklist,
-│                   # company, division, shift, user — each with
-│                   # controller / service / validation / router
+│                   # company, division, shift, user, admin (reset-demo job) —
+│                   # each with controller / service / validation / router
 ├── repositories/   # interfaces + Prisma implementations (repository pattern)
 ├── middlewares/    # auth, role-based access, rate limiting, error handling
 ├── jobs/           # scheduled tasks (hourly expired-session cleanup)
+├── seed/           # shared demo-data seed logic, used by both the manual
+│                   # scripts/ and the production reset-demo endpoint
 ├── lib/            # shared clients: Prisma, Cloudinary, Multer
 ├── utils/          # shared helpers (date/shift math, error responses, uploads)
 ├── types/          # ambient type augmentation (Express.Request.user/sessionId)
