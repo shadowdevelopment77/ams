@@ -2,7 +2,7 @@
 
 A REST API + web app for a **Workforce Field Management System** — built for outsourcing companies that manage field staff (security, cleaning, maintenance, etc.) across multiple client companies. Handles role-based attendance, supervisor visit logging, and photo-verified daily checklists, with strict business rules enforced end-to-end.
 
-> **Backend-first.** The API (`backend/`) was built and hardened first, with a full integration test suite — see [Testing](#testing) and [API Usage](#api-usage) for how to explore it without a UI. The frontend (`frontend/`) is now being scaffolded on top of it; it's early and not yet usable end-to-end.
+> **Backend-first, frontend now built out.** The API (`backend/`) was built and hardened first, with a full integration test suite. The frontend (`frontend/`) covers the full admin panel plus the STAFF and SUPERVISOR daily flows, with Playwright E2E coverage across both. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's all put together.
 
 ---
 
@@ -30,17 +30,18 @@ I used to work as an admin handling outsourced staff — attendance, shift sched
 
 **Architecture:** repository pattern (interfaces + Prisma implementations) behind a service layer, soft deletes throughout (`is_deleted`/`deleted_at`, nothing is ever hard-deleted), lookup tables instead of enums for roles/statuses, and role-based middleware guarding every route.
 
-**Frontend** (`frontend/`) — in progress
+**Frontend** (`frontend/`)
 
 | Layer | Tech |
 |---|---|
 | Framework | React + Vite, TypeScript |
-| Styling | Tailwind CSS v4 + shadcn/ui |
-| Routing | React Router |
+| Styling | Tailwind CSS v4 + shadcn/ui (Base UI) |
+| Routing | React Router v7 |
 | Server state | TanStack Query |
 | Forms | react-hook-form + Zod |
+| E2E testing | Playwright (desktop + mobile-viewport projects) |
 
-Talks to the API directly over cookie-based session auth (`credentials: 'include'`) — no BFF/proxy layer.
+Talks to the API directly over cookie-based session auth (`credentials: 'include'`) — no BFF/proxy layer. Covers the full admin panel (companies/divisions/shifts/checklists/staff/attendance/visits) and the STAFF (check-in → checklist → check-out) and SUPERVISOR (visit logging) daily flows, with a mobile-only device gate on the latter two roles (camera-capture integrity, not a hard security boundary — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)).
 
 ---
 
@@ -56,7 +57,7 @@ Talks to the API directly over cookie-based session auth (`credentials: 'include
 
 ## Testing
 
-This project has **full integration tests, not just unit tests** — every test hits real HTTP routes via Supertest, exercises real middleware (auth, role checks, multipart file uploads, Zod validation), and reads/writes a real PostgreSQL test database. The only things mocked are outbound third-party calls (Cloudinary uploads, reverse geocoding) — everything else, including race-condition handling, runs for real.
+**Backend** has **full integration tests, not just unit tests** — every test hits real HTTP routes via Supertest, exercises real middleware (auth, role checks, multipart file uploads, Zod validation), and reads/writes a real PostgreSQL test database. The only things mocked are outbound third-party calls (Cloudinary uploads, reverse geocoding) — everything else, including race-condition handling, runs for real.
 
 **Modules covered:** Auth, Attendance, Visit Log, Checklist, Company, Division, Shift, User (including the staff-move and delete flows).
 
@@ -66,6 +67,13 @@ npm test
 ```
 
 A handful of real bugs were caught and fixed *because* of this test suite, not despite it — including a session cookie name mismatch that silently broke all authenticated routes, an inverted conditional that let staff check in with shifts belonging to other divisions, a missing route parameter that made checkout permanently non-functional, and a couple of race conditions on double check-in / duplicate registration (now handled via database-level unique constraints with a graceful fallback, verified by firing concurrent requests in the test suite itself).
+
+**Frontend** has Playwright E2E coverage across two projects (`desktop-chromium`, `mobile-chromium`): auth + device gate, the full admin panel golden path, the STAFF daily flow, and the SUPERVISOR visit flow. Run per-project with a fresh backend restart between each (the suite's real auth-call volume sits close to `authLimiter`'s budget in one continuous run):
+```bash
+cd frontend
+npm run test:e2e -- --project=desktop-chromium
+npm run test:e2e -- --project=mobile-chromium
+```
 
 ---
 
@@ -91,7 +99,7 @@ CLOUDINARY_API_SECRET=...
 
 # Optional — both have working defaults if omitted
 PORT=3000
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5174
 ```
 
 Create `.env.test` (a **separate** database — the test suite wipes data between runs):
@@ -121,7 +129,7 @@ Run the tests:
 npm test
 ```
 
-### Frontend setup (in progress)
+### Frontend setup
 
 In a second terminal, from the repo root:
 ```bash
@@ -138,13 +146,13 @@ Run it (with the backend dev server from above already running):
 ```bash
 npm run dev
 ```
-Opens on `http://localhost:5173` — matches the backend's default `CORS_ORIGIN`, so no extra config needed on either side.
+Opens on `http://localhost:5174` (pinned via `vite.config.ts`'s `strictPort`) — update the backend's `CORS_ORIGIN` to match if you change it.
 
 ---
 
 ## API Usage
 
-The frontend isn't functional yet, so the API is still worth exploring directly. **Full endpoint reference: [`docs/API.md`](docs/API.md)** — auth model, response envelope details, upload constraints, and every route grouped by module.
+The full endpoint reference is at [`docs/API.md`](docs/API.md) — auth model, response envelope details, upload constraints, and every route grouped by module. Handy for exploring the API directly (curl, Postman) alongside or instead of the UI.
 
 The short version:
 - Session-cookie auth (not JWT) — login sets an httpOnly `sessionId` cookie; send it back with every subsequent request (`credentials: 'include'` in fetch, `-b`/`-c` cookie jar in curl).
@@ -181,16 +189,20 @@ src/
 └── __tests__/      # integration tests + shared test helpers/factories
 ```
 
-`frontend/src/` (in progress):
+`frontend/src/`:
 ```
 src/
-├── api/            # fetch client + typed endpoint calls
-├── components/     # shared UI, including components/ui (shadcn)
-├── features/       # one folder per domain: auth, attendance, checklist
-├── hooks/          # shared React hooks
-├── lib/            # utilities (e.g. shadcn's cn() helper)
-└── routes/         # route/page components
+├── api/            # one file per backend module: fetch calls + typed responses
+├── components/     # shared UI, including components/ui (shadcn, Base UI-backed)
+├── features/       # one folder per domain: auth, attendance, checklist, visit,
+│                   # and admin/ (mirrors the backend's module list: companies,
+│                   # staff, attendance, checklists, visits)
+├── hooks/          # useMe, useLogout, useIsMobile, useTodayAttendance
+├── lib/            # queryClient, geolocation, downloadImage, virtualMobile, cn()
+└── routes/         # router.tsx — the full route tree
 ```
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how these pieces fit together.
 
 ---
 
