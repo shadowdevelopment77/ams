@@ -22,7 +22,6 @@ export interface ChecklistItem {
   template_id: number
   order_no: number
   description: string
-  requires_photo: boolean
   is_active: boolean
 }
 
@@ -31,7 +30,6 @@ export interface ChecklistItemInput {
   template_id: number
   order_no: number
   description: string
-  requires_photo: boolean
 }
 
 export interface ChecklistPhoto {

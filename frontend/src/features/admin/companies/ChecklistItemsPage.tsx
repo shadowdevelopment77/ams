@@ -49,7 +49,7 @@ export function ChecklistItemsPage() {
 
   const nextOrderNo = (items?.data.length ?? 0) + 1
 
-  const handleSubmit = async (input: { description: string; order_no: number; requires_photo: boolean }) => {
+  const handleSubmit = async (input: { description: string; order_no: number }) => {
     if (editing) {
       await updateItem(editing.id, { description: input.description, order_no: input.order_no })
     } else {
@@ -104,7 +104,6 @@ export function ChecklistItemsPage() {
             <TableRow>
               <TableHead className="w-16">Order</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Requires photo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -113,7 +112,7 @@ export function ChecklistItemsPage() {
             {isLoading &&
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={4}>
                     <Skeleton className="h-5 w-full" />
                   </TableCell>
                 </TableRow>
@@ -121,7 +120,7 @@ export function ChecklistItemsPage() {
 
             {!isLoading && sortedItems?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
                   No checklist items yet.
                 </TableCell>
               </TableRow>
@@ -131,7 +130,6 @@ export function ChecklistItemsPage() {
               <TableRow key={item.id}>
                 <TableCell>{item.order_no}</TableCell>
                 <TableCell className="font-medium">{item.description}</TableCell>
-                <TableCell>{item.requires_photo ? 'Yes' : 'No'}</TableCell>
                 <TableCell>
                   <Badge variant={item.is_active ? 'default' : 'secondary'}>
                     {item.is_active ? 'Active' : 'Inactive'}
