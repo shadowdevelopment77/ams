@@ -32,7 +32,10 @@ export class PrismaVisitLogRepository
         skip,
         take,
         orderBy: { visited_at: "desc" },
-        include: { company: { select: { id: true, name: true } } },
+        include: {
+          user: { select: { id: true, name: true } },
+          company: { select: { id: true, name: true } },
+        },
       }),
       this.prisma.visitLog.count({ where }),
     ]);

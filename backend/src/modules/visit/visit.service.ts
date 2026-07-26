@@ -7,8 +7,6 @@ import { getToday} from '../../utils/date'
 
 export class VisitLogService {
 
-//helper
-
 private async getUserOrThrow(userId: string) {
   const user = await userRepository.findById(userId)
   if (!user) throw new AppError('User not found', 404)
@@ -62,6 +60,7 @@ private async getUserOrThrow(userId: string) {
         visit_photo: a.photo_url,
         visited_at: a.visited_at,
         notes: a.notes,
+        address: a.location_address ?? null,
         }))
     }
   }
