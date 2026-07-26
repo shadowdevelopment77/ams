@@ -1,8 +1,6 @@
-// A workflow guardrail, not a security boundary — see
-// docs/superpowers/plans/2026-07-23-frontend-phase3-device-gate.md. Both
-// signals are client-controlled and can be spoofed via devtools; this only
-// stops accidental desktop use, which is what was actually asked for
-// (avoiding the photo-capture-via-file-picker mismatch on desktop).
+// A workflow guardrail, not a security boundary -- both signals are
+// client-controlled and can be spoofed via devtools. This only stops
+// accidental desktop use (the photo-capture-via-file-picker mismatch).
 
 import { isVirtualMobileEnabled } from '@/lib/virtualMobile'
 

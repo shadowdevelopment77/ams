@@ -9,9 +9,8 @@ import type { Role } from '@/api/auth'
 
 interface ProtectedRouteProps {
   allow: Role[]
-  // See docs/superpowers/plans/2026-07-23-frontend-phase3-device-gate.md —
-  // SUPERVISOR/STAFF are mobile-only so the camera-capture photo screens
-  // can't be bypassed via a desktop file picker. ADMIN never sets this.
+  // SUPERVISOR/STAFF are mobile-only so camera-capture photo screens can't
+  // be bypassed via a desktop file picker. ADMIN never sets this.
   requireMobile?: boolean
   children: ReactNode
 }

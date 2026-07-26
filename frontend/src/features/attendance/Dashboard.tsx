@@ -49,6 +49,10 @@ export function Dashboard() {
         </div>
       )}
 
+      <Button render={<Link to="/history" />} variant="ghost">
+        View History
+      </Button>
+
       <Button onClick={handleLogout} variant="ghost" disabled={isLoggingOut}>
         Logout
       </Button>
