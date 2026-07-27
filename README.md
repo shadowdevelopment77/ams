@@ -104,6 +104,16 @@ npm run test:e2e -- --project=mobile-chromium
 
 ## Getting Started
 
+**Quick start** (assumes Postgres is already running):
+```bash
+git clone https://github.com/shadowdevelopment77/ams.git && cd ams/backend
+npm install && cp .env.example .env   # fill in DATABASE_URL
+npx prisma migrate deploy && npx prisma db seed && npm run dev
+# in a second terminal:
+cd ../frontend && npm install && cp .env.example .env.local && npm run dev
+```
+Login with `admin@ams.local` / `Admin123!`. Full details, including the separate test database setup, below.
+
 ### Prerequisites
 - Node.js 20+
 - A PostgreSQL database
@@ -170,7 +180,7 @@ Opens on `http://localhost:5174` (pinned via `vite.config.ts`'s `strictPort`) �
 
 ## Deployment
 
-Not live yet — the full runbook for a free, permanently-online, self-resetting public demo (Render + Vercel/Netlify + Neon + Cloudinary + GitHub Actions, all $0/month) is written up in [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md), including a `POST /api/admin/reset-demo` job that wipes all visitor-generated data every 2 hours, back to a clean empty slate (just the 3 admin logins + role/status lookup tables) — so each visitor builds their own example data live rather than exploring pre-seeded content.
+Not deployed to a public URL yet, but fully working right now — clone it and it's running locally in two commands per side (`npm install && npm run dev`, both backend and frontend), no cloud setup required. The full runbook for a free, permanently-online, self-resetting public demo (Render + Vercel/Netlify + Neon + Cloudinary + GitHub Actions, all $0/month) is written up in [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md), including a `POST /api/admin/reset-demo` job that would wipe all visitor-generated data every 2 hours, back to a clean empty slate (just the 3 admin logins + role/status lookup tables) — so each visitor builds their own example data live rather than exploring pre-seeded content.
 
 ---
 
